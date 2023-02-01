@@ -8,6 +8,7 @@ include 'functions.php';
 // get query parameters
 $benchmark = get_param('test', 'all');
 $metric    = get_param('metric', 'bleu');
+$model     = get_param('model', 'top');
 $model1    = get_param('model1', 'unknown');
 $model2    = get_param('model2', 'unknown');
 
@@ -16,14 +17,22 @@ list($srclang, $trglang, $langpair) = get_langpair();
 $showlang  = get_param('scoreslang', $langpair);
 
 
-if ($model1 != 'unknown'){
-    list($pkg1, $lang1, $name1) = explode('/',$model1);
-    $lines1 = read_scores($langpair, 'all', $metric, implode('/',[$lang1,$name1]), $pkg1);
+if ($model == 'top'){
+    list($srclang, $trglang, $langpair) = get_langpair();
+    $lines1 = read_scores($langpair, 'all', $metric, 'all', 'internal', 'scores');
+    $lines2 = read_scores($langpair, 'all', $metric, 'all', 'external', 'external-scores');
+    $topscores = true;
 }
+elseif ($model1 != 'unknown' and $model2 != 'unknown'){
+    $parts = explode('/',$model1);
+    $pkg1 = array_shift($parts);
+    $name1 = implode('/',$parts);
+    $lines1 = read_scores($langpair, 'all', $metric, $name1, $pkg1);
 
-if ($model2 != 'unknown'){
-    list($pkg2, $lang2, $name2) = explode('/',$model2);
-    $lines2 = read_scores($langpair, 'all', $metric, implode('/',[$lang2,$name2]), $pkg2);
+    $parts = explode('/',$model2);
+    $pkg2 = array_shift($parts);
+    $name2 = implode('/',$parts);
+    $lines2 = read_scores($langpair, 'all', $metric, $name2, $pkg2);
 }
 
 
@@ -37,9 +46,16 @@ $maxscore = 0;
 $scores1 = array();
 foreach($lines1 as $line1) {
     $array = explode("\t", $line1);
-    if ($showlang == 'all' || $showlang == $array[0]){
+    if ($topscores){
+        $score = (float) $array[1];
+        $key = $array[0];
+        $scores1[$key] = $score;
+        if ( $maxscore < $score ){
+            $maxscore = $score;
+        }
+    }
+    elseif ($showlang == 'all' || $showlang == $array[0]){
         if ($benchmark == 'all' || $benchmark == $array[1]){
-            // $score = $metric == 'bleu' ? $array[3] : $array[2];
             $score = (float) $array[2];
             $key = $array[0].'/'.$array[1];
             $scores1[$key] = $score;
@@ -52,9 +68,16 @@ foreach($lines1 as $line1) {
 
 foreach($lines2 as $line2) {
     $array = explode("\t", $line2);
-    if ($showlang == 'all' || $showlang == $array[0]){
+    if ($topscores){
+        $score = (float) $array[1];
+        $key = $array[0];
+        $scores2[$key] = $score;
+        if ( $maxscore < $score ){
+            $maxscore = $score;
+        }
+    }
+    elseif ($showlang == 'all' || $showlang == $array[0]){
         if ($benchmark == 'all' || $benchmark == $array[1]){
-            // $score = $metric == 'bleu' ? $array[3] : $array[2];
             $score = (float) $array[2];
             $key = $array[0].'/'.$array[1];
             $scores2[$key] = $score;
@@ -134,8 +157,16 @@ $labelColor = $axisColor;
 $gridColor = imagecolorallocate($chart, 212, 212, 212);
 $barColor = imagecolorallocate($chart, 47, 133, 217);
 
-$barColors = array('model1' => imagecolorallocate($chart, 47, 133, 217),
-                   'model2' => imagecolorallocate($chart, 217, 133, 47));
+
+if ($topscores){
+    $barColors = array('model1' => imagecolorallocate($chart, 47, 133, 217),
+                       'model2' => imagecolorallocate($chart, 164, 164, 164));
+}
+else{
+    $barColors = array('model1' => imagecolorallocate($chart, 47, 133, 217),
+                       'model2' => imagecolorallocate($chart, 217, 133, 47));
+
+}
 
 imagefill($chart, 0, 0, $backgroundColor);
 
@@ -165,7 +196,7 @@ if ($yMaxValue > 0 && $yLabelSpan > 0){
 
 $metricLabelX = ceil($gridLeft - $labelMargin);
 imagettftext($chart, $fontSize, 90, $metricLabelX, $gridTop+20, $labelColor, $font, $metric);
-imagettftext($chart, $fontSize, 0, 200, $imageHeight-20, $labelColor, $font, 'model index (see ID in table of scores)');
+imagettftext($chart, $fontSize, 0, 200, $imageHeight-20, $labelColor, $font, 'benchmark index (see ID in table of scores)');
 
 
 /*

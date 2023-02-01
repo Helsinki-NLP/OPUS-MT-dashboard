@@ -33,8 +33,6 @@ $diffstyle = get_param('diff', 'wdiff'); // can be diff, wdiff or gitdiff
 $start     = get_param('start', 0);
 $end       = get_param('end', 9);
 
-$diffstyles = array('diff','wdiff','gitdiff');
-
 
 list($srclang, $trglang, $langpair) = get_langpair();
 

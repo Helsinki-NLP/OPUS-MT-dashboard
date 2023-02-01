@@ -40,11 +40,18 @@ list($srclang, $trglang, $langpair) = get_langpair();
 
 if ($model1 != 'all' && $model2 != 'all'){
 
-    list($pkg1,$lang,$name) = explode('/',$model1);
-    $model1 = implode('/',[$lang,$name]);
+    $parts = explode('/',$model1);
+    $pkg1 = array_shift($parts);
+    $model1 = implode('/',$parts);
+    // list($pkg1,$lang,$name) = explode('/',$model1);
+    // $model1 = implode('/',[$lang,$name]);
 
-    list($pkg2,$lang,$name) = explode('/',$model2);
-    $model2 = implode('/',[$lang,$name]);
+    $parts = explode('/',$model2);
+    $pkg2 = array_shift($parts);
+    $model2 = implode('/',$parts);
+    // list($pkg2,$lang,$name) = explode('/',$model2);
+    // $model2 = implode('/',[$lang,$name]);
+
 
     if ($benchmark != 'all'){
 
@@ -59,7 +66,7 @@ if ($model1 != 'all' && $model2 != 'all'){
         echo '<ul><li>Model 1: <a rel="nofollow" href="index.php?'.$query.'">'.$model1.'</a></li>';
         $query = make_query(array('model' => $model2, 'pkg' => $pkg2, 'test' => 'all'));
         echo '<li>Model 2: <a rel="nofollow" href="index.php?'.$query.'">'.$model2.'</a></li>';
-        $query = make_query(['test' => 'all']);
+        $query = make_query(['test' => 'all', 'model' => 'all']);
         echo '<li><a rel="nofollow" href="compare.php?'.SID.'&'.$query.'">Return to model comparison</a></li>';
         echo '<li>Test Set: '.$benchmark.'</li>';
         echo '<li>Language Pair: '.$langpair.'</li>';

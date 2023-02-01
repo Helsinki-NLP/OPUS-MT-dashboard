@@ -42,15 +42,23 @@ echo('<h1>Compare OPUS-MT models</h1>');
 
 if ($model1 != 'unknown'){
     echo('<div id="chart"><ul>');
-    
-    list($m1_pkg, $m1_lang, $m1_name) = explode('/',$model1);
-    $url_param = make_query(['model' => $m1_lang.'/'.$m1_name, 'pkg' => $m1_pkg]);
+
+    $parts = explode('/',$model1);
+    $m1_pkg = array_shift($parts);
+    $m1_name = implode('/',$parts);
+    $url_param = make_query(['model' => $m1_name, 'pkg' => $m1_pkg]);
+    // list($m1_pkg, $m1_lang, $m1_name) = explode('/',$model1);
+    // $url_param = make_query(['model' => $m1_lang.'/'.$m1_name, 'pkg' => $m1_pkg]);
     $m_link = "<a rel=\"nofollow\" href=\"index.php?".$url_param."\">";
     echo('<li><b>Model 1 (blue):</b> '.$m_link.$model1.'</a></li>');
 
     if ($model2 != 'unknown'){
-        list($m2_pkg, $m2_lang, $m2_name) = explode('/',$model2);
-        $url_param = make_query(['model' => $m2_lang.'/'.$m2_name, 'pkg' => $m2_pkg]);    
+        $parts = explode('/',$model2);
+        $m2_pkg = array_shift($parts);
+        $m2_name = implode('/',$parts);
+        $url_param = make_query(['model' => $m2_name, 'pkg' => $m2_pkg]);
+        // list($m2_pkg, $m2_lang, $m2_name) = explode('/',$model2);
+        // $url_param = make_query(['model' => $m2_lang.'/'.$m2_name, 'pkg' => $m2_pkg]);    
         echo('<li><b>Model 2 (orange):</b> '.$m_link.$model2.'</a></li>');
     }
     echo('</ul>');
@@ -88,14 +96,11 @@ if (($model1 != 'unknown') && ($model2 != 'unknown')){
 
 
 
-// TODO: do we also want to cache model lists in the SESSION variable?
-$models = file(implode('/',[$scores_url,$langpair,'model-list.txt']));
-
 
 if ($model1 != 'unknown'){
     if ($model2 != 'unknown'){
         echo('<br/><div id="list">');
-        if (count($langpairs) > 1){
+        if (count($langpairs) > 1 && count($langpairs) < 20){
             echo('<ul><li><b>Langpair(s):</b> ');
             ksort($langpairs);
             foreach ($langpairs as $lp => $count){
@@ -123,6 +128,21 @@ else{
     echo('<h2>Select a model</h2>');
 }
 
+echo('<table><tr><th>OPUS-MT models</th><th>External models</th><tr><tr><td>');
+print_model_list($internal_scores_url, $langpair, $model1, $model2);
+echo('</td><td>');
+print_model_list($external_scores_url, $langpair, $model1, $model2);
+echo('</td></tr></tarble>');
+
+echo("</div>");
+
+
+
+function print_model_list($scores_url, $langpair, $model1, $model2){
+
+// TODO: do we also want to cache model lists in the SESSION variable?
+$models = file(implode('/',[$scores_url,$langpair,'model-list.txt']));
+
 $sorted_models = array();
 foreach ($models as $model){
     $parts = explode('-',rtrim($model));
@@ -138,28 +158,45 @@ echo("<ul>");
 foreach ($sorted_models as $model => $release){
     $parts = explode('/',rtrim($model));
     $modelzip = array_pop($parts);
-    $modellang = array_pop($parts);
-    $modelpkg = array_pop($parts);
-    $modelbase = substr($modelzip, 0, -4);
-    $new_model = implode('/',[$modelpkg, $modellang, $modelbase]);
+
+    // echo $model;
+    if (count($parts) > 4){
+        $modellang = array_pop($parts);
+        $modelpkg = array_pop($parts);
+        $modelzip = implode('/',[$modellang,$modelzip]);
+    }
+    else{
+        $modelpkg = array_pop($parts);
+    }
+    if (substr($modelzip, -4) == '.zip'){
+        $modelbase = substr($modelzip, 0, -4);
+    }
+    else{
+        $modelbase = $modelzip;
+    }
+
+    // $modellang = array_pop($parts);
+    // $modelpkg = array_pop($parts);
+    // $modelbase = substr($modelzip, 0, -4);
+    $new_model = implode('/',[$modelpkg, $modelbase]);
 
     if (($model1 != 'unknown') && ($model2 == 'unknown')){
         if ($model1 == $new_model){
-            echo("<li>$modellang/$modelbase</li>");
+            echo("<li>$modelbase</li>");
         }
         else{
             $url_param = make_query(['model1' => $model1, 'model2' => $new_model]);
-            echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$modellang/$modelbase</a></li>");
+            echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$modelbase</a></li>");
         }
     }
     else{        
         $url_param = make_query(['model1' => $new_model, 'model2' => 'unknown']);
-        echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$modellang/$modelbase</a></li>");
+        echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$modelbase</a></li>");
     }   
 }
-echo("</ul></div>");
+echo("</ul>");
 
-
+}
 
 
 
@@ -167,8 +204,12 @@ echo("</ul></div>");
 
 function print_score_table($model1,$model2,$langpair='all',$benchmark='all', $metric='bleu'){
 
-    list($pkg1, $lang1, $name1) = explode('/',$model1);
-    $lines1 = read_scores($langpair, 'all', $metric, implode('/',[$lang1,$name1]), $pkg1);
+    $parts = explode('/',$model1);
+    $pkg1 = array_shift($parts);
+    $name1 = implode('/',$parts);
+    $lines1 = read_scores($langpair, 'all', $metric, $name1, $pkg1);
+    // list($pkg1, $lang1, $name1) = explode('/',$model1);
+    // $lines1 = read_scores($langpair, 'all', $metric, implode('/',[$lang1,$name1]), $pkg1);
 
     $testsets = array();
     $langpairs = array();
@@ -188,8 +229,13 @@ function print_score_table($model1,$model2,$langpair='all',$benchmark='all', $me
         }
     }
 
-    list($pkg2, $lang2, $name2) = explode('/',$model2);
-    $lines2 = read_scores($langpair, 'all', $metric, implode('/',[$lang2,$name2]), $pkg2);
+    $parts = explode('/',$model2);
+    $pkg2 = array_shift($parts);
+    $name2 = implode('/',$parts);
+    $lines2 = read_scores($langpair, 'all', $metric, $name2, $pkg2);
+    // list($pkg2, $lang2, $name2) = explode('/',$model2);
+    // $lines2 = read_scores($langpair, 'all', $metric, implode('/',[$lang2,$name2]), $pkg2);
+
 
     $common_langs = array();
     $common_tests = array();
@@ -199,7 +245,7 @@ function print_score_table($model1,$model2,$langpair='all',$benchmark='all', $me
         if (array_key_exists($array[0],$langpairs)){
             $common_langs[$array[0]]++;
         }
-        if (array_key_exists($array[0],$testsets)){
+        if (array_key_exists($array[1],$testsets)){
             $common_tests[$array[1]]++;
         }
         if ($langpair == 'all' || $langpair == $array[0]){

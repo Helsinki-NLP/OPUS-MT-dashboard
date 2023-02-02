@@ -85,10 +85,16 @@ foreach($lines2 as $line2) {
     }
 }
 
+$nrscores=0;
 foreach($scores1 as $key => $value) {
+    if ($nrscores > $chart_max_scores){
+        break;
+    }
+
     if (array_key_exists($key,$scores2)){
         $diff = $value - $scores2[$key];
         array_push($data,$diff);
+        $nrscores++;
         if ($diff > 0){
             array_push($model,'model1');
             if ( $maxscore < $diff ){

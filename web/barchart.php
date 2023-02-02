@@ -24,11 +24,16 @@ if ($benchmark == 'avg'){
 
 $data = array();
 $pkg = array();
+$nrscores = 0;
+
 // get model-specific scores
 if ($model != 'all' && $model != 'top'){
     $maxscore = 0;
     $index_label = 'benchmark index (see ID in table of scores)';
     foreach($lines as $line) {
+        if ($nrscores > $chart_max_scores){
+            break;
+        }
         $array = explode("\t", $line);
         if ($showlang != 'all'){
             if ($showlang != $array[0]){
@@ -44,6 +49,7 @@ if ($model != 'all' && $model != 'top'){
         $score = (float) $array[2];
         array_push($data,$score);
         array_push($pkg,$package);
+        $nrscores++;
         if ( $maxscore < $score ){
             $maxscore = $score;
         }
@@ -55,6 +61,7 @@ elseif ($benchmark != 'all'){
     foreach($lines as $line) {
         $array = explode("\t", $line);
         array_unshift($data,$array[0]);
+        $nrscores++;
         /*
         if (strpos($array[1],'transformer-big') !== false){
             array_unshift($pkg,'transformer-big');
@@ -80,6 +87,7 @@ else{
     foreach($lines as $line) {
         $array = explode("\t", $line);
         array_push($data,$array[1]);
+        $nrscores++;
         if (strpos($array[2],'transformer-small') !== false){
             array_push($pkg,'transformer-small');
         }

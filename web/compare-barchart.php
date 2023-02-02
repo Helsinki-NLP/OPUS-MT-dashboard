@@ -37,7 +37,7 @@ elseif ($model1 != 'unknown' and $model2 != 'unknown'){
 
 
 $data = array();
-$model = array();
+$models = array();
 
 
 $maxscore = 0;
@@ -66,6 +66,7 @@ foreach($lines1 as $line1) {
     }
 }
 
+$scores2 = array();
 foreach($lines2 as $line2) {
     $array = explode("\t", $line2);
     if ($topscores){
@@ -88,12 +89,23 @@ foreach($lines2 as $line2) {
     }
 }
 
+$nrscores=0;
 foreach($scores1 as $key => $value) {
-    if (array_key_exists($key,$scores2)){
+    if ($nrscores > $chart_max_scores){
+        break;
+    }
+    if ((array_key_exists($key,$scores2)) or ($model == 'top')){
         array_push($data,$value);
-        array_push($model,'model1');
-        array_push($data,$scores2[$key]);
-        array_push($model,'model2');
+        array_push($models,'model1');
+        $nrscores++;
+        if (array_key_exists($key,$scores2)){
+            array_push($data,$scores2[$key]);
+            array_push($models,'model2');
+        }
+        else{
+            array_push($data,0);
+            array_push($models,'model2');
+        }
     }
 }
 
@@ -223,7 +235,7 @@ foreach($data as $key => $value) {
     $y2 = $gridBottom - 1;
 
     if ($x2 != $x1 and $y2 != $y1){
-        imagefilledrectangle($chart, $x1, $y1, $x2, $y2, $barColors[$model[$key]]);
+        imagefilledrectangle($chart, $x1, $y1, $x2, $y2, $barColors[$models[$key]]);
     }
 
     // special for this comparison: only label every second bar

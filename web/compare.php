@@ -203,7 +203,8 @@ echo("</ul>");
 // print a table with all scores and score differences
 
 function print_score_table($model1,$model2,$langpair='all',$benchmark='all', $metric='bleu'){
-
+    global $table_max_scores;
+    
     $parts = explode('/',$model1);
     $pkg1 = array_shift($parts);
     $name1 = implode('/',$parts);
@@ -265,10 +266,17 @@ function print_score_table($model1,$model2,$langpair='all',$benchmark='all', $me
 
     
     echo('<div id="scores"><div class="query"><table>');
+    if (count($scores1) > $table_max_scores){
+        echo "<p>There are ".count($scores1)." $metric scores for model 1. Show max $table_max_scores!</p>";
+    }
+
     echo("<tr><th>ID</th><th>Language</th><th>Benchmark ($metric)</th><th>Output</th><th>Model 1</th><th>Model 2</th><th>Diff</th></tr>");
     $id = 0;
 
     foreach($scores1 as $key => $score1) {
+        if ($id > $table_max_scores){
+            break;
+        }
         if (array_key_exists($key,$scores2)){
             $score2 = $scores2[$key];
 

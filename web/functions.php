@@ -25,6 +25,11 @@ $evaluation_metrics = array('bleu', 'spbleu', 'chrf', 'chrf++', 'comet');
 $diffstyles = array('wdiff','gitdiff');
 
 
+$show_max_scores = 50;
+$chart_max_scores = $show_max_scores;
+$table_max_scores = $show_max_scores;
+
+
 // print($scores_url);
 
 function test_input($data) {
@@ -150,7 +155,7 @@ function read_model_scores($langpair, $benchmark, $metric='bleu', $model='all', 
         }
     }
     else{
-        $lines = read_scores($langpair, $benchmark, $metric, $model, $pkg);
+        $lines = read_scores($langpair, $benchmark, $metric, $model, $pkg, $source);
     }
     return $lines;
 }

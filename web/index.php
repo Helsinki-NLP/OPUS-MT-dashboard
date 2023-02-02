@@ -280,12 +280,16 @@ echo('</div>');
 
 
 function print_model_scores($model,$langpair='all',$benchmark='all', $pkg='Tatoeba-MT-models',$metric='all'){
-    global $storage_url;
+    global $storage_url, $table_max_scores;
 
     // echo(get_score_filename($langpair, 'all', $metric, $model, $pkg));
     $lines = read_scores($langpair, 'all', $metric, $model, $pkg);
 
     echo("<h3>Model Scores ($pkg/$model)</h3>");
+    if (count($lines) > $table_max_scores){
+        echo "<p>There are ".count($lines)." $metric scores for this model. Show max $table_max_scores!</p>";
+    }
+
     echo('<table>');
     echo("<tr><th>ID</th><th>Language</th><th>Benchmark</th><th>Output</th><th>$metric</th></tr>");
     $id = 0;
@@ -294,8 +298,11 @@ function print_model_scores($model,$langpair='all',$benchmark='all', $pkg='Tatoe
     $additional_benchmarks = 0;
     $avg1 = 0;
     $avg2 = 0;
-    
+
     foreach ($lines as $line){
+        if ($id > $table_max_scores){
+            break;
+        }
         $parts = explode("\t",rtrim($line));
         if ($langpair != 'all'){
             if ($parts[0] != $langpair){
@@ -353,14 +360,20 @@ function print_model_scores($model,$langpair='all',$benchmark='all', $pkg='Tatoe
 }
 
 
-function print_scores($model='all', $langpair='all', $benchmark='all', $pkg='Tatoeba-MT-models', $metric='bleu'){
+function print_scores($model='all', $langpair='all', $benchmark='all', $pkg='Tatoeba-MT-models', $metric='bleu', $source='unchanged'){
     global $storage_url;
 
-    $lines = read_model_scores($langpair, $benchmark, $metric, $model, $pkg);
+    $lines = read_model_scores($langpair, $benchmark, $metric, $model, $pkg, $source);
     // $lines = read_scores($langpair, $benchmark, $metric);
     if ($lines == false){
         $lines = array();
     }
+
+    if (count($lines) == 0){
+        echo("<h3>No model scores found</h3>");
+        return;
+    }
+    
     if ($benchmark == 'avg'){
         $averaged_benchmarks = implode(', ',explode(' ',rtrim(array_shift($lines))));
         echo("<h3>Model Scores (averaged over $averaged_benchmarks testsets)</h3>");
@@ -494,6 +507,16 @@ function print_topscore_differences($langpair='deu-eng', $benchmark='all', $metr
             list($pkg2[$key],$model2[$key]) = modelurl_to_model($array[2]);
         }
     }
+
+    if (count($lines1) == 0){
+        print_scores('all', $langpair,$benchmark,'external',$metric, 'external-scores');
+        return;
+    }
+    if (count($lines2) == 0){
+        print_scores('all', $langpair,$benchmark,'internal',$metric, 'scores');
+        return;
+    }
+
     
     $avg_score1 = 0;
     $avg_score2 = 0;
@@ -532,6 +555,26 @@ function print_topscore_differences($langpair='deu-eng', $benchmark='all', $metr
                     
                 echo('<tr><td>');
                 echo(implode('</td><td>',[$id, $key, $translink, $model1link, $score1, $model2link, $score2, $diff_pretty]));
+                echo('</td></tr>');
+                $id++;
+            }
+        }
+        else{
+            $diff = $score1;
+            $diff_pretty = $metric == 'bleu' ? sprintf('%4.1f',$diff) : sprintf('%5.3f',$diff);
+
+            if ($benchmark == 'all' || $benchmark == $key){
+                $avg_score1 += $score1;
+                $count_scores1++;
+                $model1short = short_model_name($model1[$key]);
+                
+                $url_param = make_query(['model' => $model1[$key], 'pkg' => $pkg1[$key]]);
+                $model1link = "<a rel=\"nofollow\" href=\"index.php?$url_param\">$model1short</a>";
+                $query = make_query(['test' => $key, 'model' => "$pkg1[$key]/$model1[$key]", 'start' => 0, 'end' => 9]);
+                $translink = "<a rel=\"nofollow\" href=\"translations.php?".SID.'&'.$query."\">show</a>";
+                    
+                echo('<tr><td>');
+                echo(implode('</td><td>',[$id, $key, $translink, $model1link, $score1, '', '', $diff_pretty]));
                 echo('</td></tr>');
                 $id++;
             }

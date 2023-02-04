@@ -435,7 +435,7 @@ function print_scores($model='all', $langpair='all', $benchmark='all', $pkg='Tat
         }
 
         $model_download_link = "<a rel=\"nofollow\" href=\"$parts[1]\">model</a>";
-        $eval_file_url = $storage_url.'models/'.$modelpkg.'/'.$modelbase.'.eval.zip';
+        $eval_file_url = $storage_url.'/models/'.$modelpkg.'/'.$modelbase.'.eval.zip';
         $eval_download_link = "<a rel=\"nofollow\" href=\"$eval_file_url\">evaluations</a>";
         // $eval_download_link = "<a rel=\"nofollow\" href=\"$baselink.eval.zip\">evaluations</a>";
         
@@ -552,9 +552,13 @@ function print_topscore_differences($langpair='deu-eng', $benchmark='all', $metr
 
                 $query = make_query(['test' => $key, 'model1' => "$pkg1[$key]/$model1[$key]", 'model2' => "$pkg2[$key]/$model2[$key]", 'start' => 0, 'end' => 9]);
                 $translink = "<a rel=\"nofollow\" href=\"compare-translations.php?".SID.'&'.$query."\">compare</a>";
+                $url_param = make_query(['test' => $key]);
+                $testlink = "<a rel=\"nofollow\" href=\"index.php?$url_param\">$key</a>";
+
                     
                 echo('<tr><td>');
-                echo(implode('</td><td>',[$id, $key, $translink, $model1link, $score1, $model2link, $score2, $diff_pretty]));
+                echo(implode('</td><td>',[$id, $testlink, $translink, $model1link, $score1, $model2link, $score2, $diff_pretty]));
+                // echo(implode('</td><td>',[$id, $key, $translink, $model1link, $score1, $model2link, $score2, $diff_pretty]));
                 echo('</td></tr>');
                 $id++;
             }
@@ -572,9 +576,13 @@ function print_topscore_differences($langpair='deu-eng', $benchmark='all', $metr
                 $model1link = "<a rel=\"nofollow\" href=\"index.php?$url_param\">$model1short</a>";
                 $query = make_query(['test' => $key, 'model' => "$pkg1[$key]/$model1[$key]", 'start' => 0, 'end' => 9]);
                 $translink = "<a rel=\"nofollow\" href=\"translations.php?".SID.'&'.$query."\">show</a>";
-                    
+
+                $url_param = make_query(['test' => $key]);
+                $testlink = "<a rel=\"nofollow\" href=\"index.php?$url_param\">$key</a>";
+
                 echo('<tr><td>');
-                echo(implode('</td><td>',[$id, $key, $translink, $model1link, $score1, '', '', $diff_pretty]));
+                // echo(implode('</td><td>',[$id, $key, $translink, $model1link, $score1, '', '', $diff_pretty]));
+                echo(implode('</td><td>',[$id, $testlink, $translink, $model1link, $score1, '', '', $diff_pretty]));
                 echo('</td></tr>');
                 $id++;
             }

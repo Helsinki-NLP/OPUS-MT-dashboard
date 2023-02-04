@@ -33,6 +33,7 @@ elseif ($model1 != 'unknown' and $model2 != 'unknown'){
     $pkg2 = array_shift($parts);
     $name2 = implode('/',$parts);
     $lines2 = read_scores($langpair, 'all', $metric, $name2, $pkg2);
+    $topscores = false;
 }
 
 

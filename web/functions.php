@@ -221,6 +221,15 @@ function get_translation_file_with_cache($model, $pkg='Tatoeba-MT-models', $cach
     global $storage_url;
     $modelhome = $storage_url.'/models/'.$pkg;
     $file = implode('/',[$modelhome,$model]).'.eval.zip';
+
+    // permanently cached files
+    $tmpdir = sys_get_temp_dir();
+    $filename = implode('/',[$tmpdir,$pkg,$model.'.eval.zip']);
+    // echo("check for $filename");
+    if (file_exists($filename)){
+        // echo("found permanently cached file $filename");
+        return $filename;
+    }
     
     if (! array_key_exists('cached-files', $_SESSION)){
         $_SESSION['cached-files'] = array();
@@ -248,6 +257,17 @@ function get_translation_file_with_cache($model, $pkg='Tatoeba-MT-models', $cach
     
     $tmpfile = tempnam(sys_get_temp_dir(),'opusmteval');
     if (copy($file, $tmpfile)) {
+        if (filesize($tmpfile) > 104857600){
+            // echo("file size > 100MB -- put in permanent cache! ($filename)");
+            $dir = dirname($filename);
+            if (! file_exists($dir)){
+                mkdir($dir,0777,true);
+            }
+            if (rename($tmpfile,$filename)){
+                echo("successfully created $filename");
+                return $filename;
+            }
+        }
         $_SESSION['files'][$key] = $tmpfile;
         $_SESSION['next-filecache-key']++;
         return $_SESSION['files'][$key];

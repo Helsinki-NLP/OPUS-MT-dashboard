@@ -364,6 +364,20 @@ function print_file_diff($file1, $file2, $diffstyle = 'wdiff'){
     echo '</pre></div>';
 }
 
+function print_chart_type_options($selected_type="standard"){
+    $chart_types = array('standard', 'diff');    
+    foreach ($chart_types as $c){
+        if ($c == $selected_type){
+            echo("[$c]");
+        }
+        else{
+            $query = make_query(['chart' => $c]);
+            $link = $_SERVER['PHP_SELF'].'?'.$query;
+            echo("[<a rel=\"nofollow\" href=\"$link\">$c</a>]");
+        }
+    }
+}
+
 function print_metric_options($selected_metric='bleu'){
     global $evaluation_metrics;
     foreach ($evaluation_metrics as $m){

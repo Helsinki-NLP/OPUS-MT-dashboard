@@ -130,12 +130,17 @@ if ($model == 'all' or $model == 'avg'){
 }
 
 
+$url_param = make_query(['model1' => 'unknown', 'model2' => 'unknown']);
+$comparelink = "[<a rel=\"nofollow\" href=\"compare.php?". SID . '&'.$url_param."\">compare</a>]";
+
+
+
 if ($model != 'all' && $model != 'top'){
     $parts = explode('/',$model);
     $modelfile = array_pop($parts);
     $modellang = array_pop($parts);
 
-    $model1 = implode('/',[$package, $model]);
+    $modelbase = implode('/',[$package, $model]);
 
     if ($modellang == $langpair){
         echo("<li><b>Language pair:</b> $langpair</li>");
@@ -153,7 +158,7 @@ if ($model != 'all' && $model != 'top'){
         }
     }
 
-    $url_param = make_query(['model1' => $model1, 'model2' => 'unknown']);
+    $url_param = make_query(['model1' => $modelbase, 'model2' => 'unknown']);
     $comparelink = "[<a rel=\"nofollow\" href=\"compare.php?". SID . '&'.$url_param."\">compare</a>]";
     $modelhome = $storage_url.$package;
     $modelshort = short_model_name($model);
@@ -162,15 +167,19 @@ if ($model != 'all' && $model != 'top'){
     $downloadlink = "[<a rel=\"nofollow\" href=\"$modelhome/$model.zip\">download</a>]";
     // echo("<li><b>Model:</b> [$topmodels_link] [$allmodelsavg_link] $modelshort $downloadlink $comparelink</li>");
     // echo("<li><b>Models:</b> [$top_models_link] [$top_opusmt_link] [$top_external_link] [$avg_opusmt_link] [$avg_external_link] $model_source_links</li>");
-    echo("<li><b>Models:</b> $model_selection_links</li>");
+    echo("<li><b>Models:</b> $model_selection_links $comparelink</li>");
     // echo("<li><b>Selected:</b> $model $downloadlink $comparelink</li>");
-    echo("<li><b>Selected:</b> $package/$model $comparelink</li>");
+    // echo("<li><b>Selected:</b> $package/$model $comparelink</li>");
+    echo("<li><b>Selected:</b> $package/$model</li>");
+
+    $eval_file_url = $storage_url.'/models/'.$modelbase.'.eval.zip';
+    $downloadlink = "[<a rel=\"nofollow\" href=\"$eval_file_url\">download</a>]";
     
     if ($benchmark != 'all'){
-        echo("<li><b>Benchmark:</b> [$alltests_link] $benchmark</li>");
+        echo("<li><b>Benchmark:</b> [$alltests_link] $benchmark $downloadlink</li>");
     }
     else{
-        echo("<li><b>Benchmark:</b> all benchmarks</li>");
+        echo("<li><b>Benchmark:</b> all benchmarks $downloadlink</li>");
     }
 }
 
@@ -180,7 +189,7 @@ if ($model != 'all' && $model != 'top'){
 elseif ($benchmark != 'all'){
     // echo("<li><b>Language pair:</b> $langpair [$topmodels_link]</li>");
     echo("<li><b>Language pair:</b> $langpair</li>");
-    echo("<li><b>Models:</b> $model_selection_links</li>");
+    echo("<li><b>Models:</b> $model_selection_links $comparelink</li>");
     if ($benchmark != 'avg'){
         echo("<li><b>Benchmark:</b> [$alltests_link] [$avgscores_link] $benchmark</li>");
     }
@@ -193,21 +202,24 @@ elseif ($benchmark != 'all'){
 
 else{
     echo("<li><b>Language pair:</b> $langpair</li>");
-    echo("<li><b>Models:</b> $model_selection_links</li>");
+    echo("<li><b>Models:</b> $model_selection_links $comparelink</li>");
     echo("<li><b>Benchmark:</b> all benchmarks [$avgscores_link]</li>");
 }
 
 
-echo("<li><b>Metrics:</b> ");
+echo("<li><b>Evaluation metric:</b> ");
 print_metric_options($metric);
-echo("</li></ul>");
 
 if ($model == 'top' && $benchmark == 'all'){
+    echo('</li><li><b>Chart Type:</b> ');
+    print_chart_type_options($chart);
     $barchart_script = $chart == 'diff' ? 'diff-barchart.php' : 'compare-barchart.php';
 }
 else{
     $barchart_script = 'barchart.php';
 }
+
+echo("</li></ul>");
 
 
 if ( isset( $_COOKIE['PHPSESSID'] ) ) {
@@ -225,36 +237,13 @@ if ($model == 'top' && $benchmark == 'all'){
     // read_scores($langpair, 'all', $metric, 'all', 'external', 'external-scores');
     // echo('<li>'.get_score_filename($langpair, 'all', $metric, 'all', 'OPUS-MT-models', 'scores').'</li>');
     // echo('<li>'.get_score_filename($langpair, 'all', $metric, 'all', 'external', 'external-scores').'</li>');
-    echo('<ul><li>blue = OPUS-MT / Tatoeba-MT models, grey = external models</li>');
-    echo('<li>Chart Type: ');
-    foreach ($chart_types as $c){
-        if ($c == $chart){
-            echo("[$c]");
-        }
-        else{
-            $url_param = make_query(['chart' => $c]);
-            echo("[<a rel=\"nofollow\" href=\"index.php?".$url_param."\">$c</a>]");
-        }
-    }
-    echo('</li>');
-    /*
-    echo('<li>Evaluation Metric: ');
-    print_metric_options($metric);
-    echo('</li>');
-    */
-    echo('</ul>');
+    echo('<ul><li>blue = OPUS-MT / Tatoeba-MT models, grey = external models</li></ul>');
 }
 else{
-    echo('<ul><li>orange = OPUS-MT models, blue = Tatoeba-MT models, green = compact models</li>');
-    echo('<li>grey = external models</li>');
+    echo('<ul><li>orange = OPUS-MT, blue = Tatoeba-MT models, green = compact models, grey = external models</li>');
     if ($benchmark == 'all' || (strpos($benchmark,'tatoeba') !== false)){
         echo('<li>Note: Tatoeba test sets are not reliable for OPUS-MT models!</li>');
     }
-    /*
-    echo('<li>Evaluation Metric: ');
-    print_metric_options($metric);
-    echo('</li>');
-    */
     echo('</ul>');
 }
 
@@ -285,7 +274,8 @@ function print_model_scores($model,$langpair='all',$benchmark='all', $pkg='Tatoe
     // echo(get_score_filename($langpair, 'all', $metric, $model, $pkg));
     $lines = read_scores($langpair, 'all', $metric, $model, $pkg);
 
-    echo("<h3>Model Scores ($pkg/$model)</h3>");
+    echo("<h3>Model Scores (selected model)</h3>");
+    // echo("<h3>Model Scores ($pkg/$model)</h3>");
     if (count($lines) > $table_max_scores){
         echo "<p>There are ".count($lines)." $metric scores for this model. Show max $table_max_scores!</p>";
     }
@@ -379,7 +369,7 @@ function print_scores($model='all', $langpair='all', $benchmark='all', $pkg='Tat
         echo("<h3>Model Scores (averaged over $averaged_benchmarks testsets)</h3>");
     }
     elseif ($benchmark == 'all'){
-        echo("<h3>Model Scores (top scores on all available benchmarks)</h3>");
+        echo("<h3>Model Scores (top scoring model on all available benchmarks)</h3>");
     }
     else{
         echo("<h3>Model Scores ($metric scores on the \"$benchmark\" testset)</h3>");
@@ -393,10 +383,10 @@ function print_scores($model='all', $langpair='all', $benchmark='all', $pkg='Tat
         echo("<th>Benchmark</th>");
     }
     if ( $benchmark == 'avg'){
-        echo("<th>$metric</th><th>Downloads</th><th>Model</th></tr>");
+        echo("<th>$metric</th><th>Model</th><th>Link</th></tr>");
     }
     else{
-        echo("<th>$metric</th><th>Output</th><th>Downloads</th><th>Model</th></tr>");
+        echo("<th>$metric</th><th>Output</th><th>Model</th><th>Link</th></tr>");
     }
     
     $count=0;
@@ -428,13 +418,14 @@ function print_scores($model='all', $langpair='all', $benchmark='all', $pkg='Tat
         if (substr($modelzip, -4) == '.zip'){
             $modelbase = substr($modelzip, 0, -4);
             $baselink = substr($parts[1], 0, -4);
+            $model_download_link = "<a rel=\"nofollow\" href=\"$parts[1]\">zip-file</a>";
         }
         else{
             $modelbase = $modelzip;
             $baselink = $parts[1];
+            $model_download_link = "<a rel=\"nofollow\" href=\"$parts[1]\">URL</a>";
         }
 
-        $model_download_link = "<a rel=\"nofollow\" href=\"$parts[1]\">model</a>";
         $eval_file_url = $storage_url.'/models/'.$modelpkg.'/'.$modelbase.'.eval.zip';
         $eval_download_link = "<a rel=\"nofollow\" href=\"$eval_file_url\">evaluations</a>";
         // $eval_download_link = "<a rel=\"nofollow\" href=\"$baselink.eval.zip\">evaluations</a>";
@@ -464,7 +455,8 @@ function print_scores($model='all', $langpair='all', $benchmark='all', $pkg='Tat
             $show_translations_link = "<a rel=\"nofollow\" href=\"translations.php?".SID.'&'.$url_param."\">show</a>";
             echo("<td>$show_translations_link</td>");
         }
-        echo("<td>$model_download_link, $eval_download_link</td><td>$model_scores_link</td></tr>");
+        // echo("<td>$model_download_link, $eval_download_link</td><td>$model_scores_link</td></tr>");
+        echo("<td>$model_scores_link</td><td>$model_download_link</td></tr>");
         $count++;
     }
     echo('</table>');
@@ -523,8 +515,9 @@ function print_topscore_differences($langpair='deu-eng', $benchmark='all', $metr
     $count_scores1 = 0;
     $count_scores2 = 0;
     
-    echo('<div id="scores"><div class="query"><table>');
-    echo("<tr><th>ID</th><th>Benchmark ($metric)</th><th>Output</th><th>OPUS-MT</th><th>$metric</th><th>external</th><th>$metric</th><th>Diff</th></tr>");
+    echo('<div id="scores"><div class="query">');
+    echo("<h3>Model Scores (comparing between OPUS-MT and external models)</h3>");
+    echo("<table><tr><th>ID</th><th>Benchmark ($metric)</th><th>Output</th><th>OPUS-MT</th><th>$metric</th><th>external</th><th>$metric</th><th>Diff</th></tr>");
     $id = 0;
 
     foreach($scores1 as $key => $score1) {

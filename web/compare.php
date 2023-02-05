@@ -61,7 +61,11 @@ if ($model1 != 'unknown'){
         // $url_param = make_query(['model' => $m2_lang.'/'.$m2_name, 'pkg' => $m2_pkg]);    
         echo('<li><b>Model 2 (orange):</b> '.$m_link.$model2.'</a></li>');
     }
-    echo('</ul>');
+    echo("<li><b>Evaluation metric:</b> ");
+    print_metric_options($metric);
+    echo('</li><li><b>Chart Type:</b> ');
+    print_chart_type_options($chart);
+    echo('</li></ul>');
 }
 
 if (($model1 != 'unknown') && ($model2 != 'unknown')){
@@ -74,22 +78,8 @@ if (($model1 != 'unknown') && ($model2 != 'unknown')){
         echo('<img src="'.$chart_script.'?'. $url_param .'" alt="barchart" /><br/><ul>');
     }
 
-    $chart_types = array('standard', 'diff');
-    echo('<li>Chart Type: ');
-    foreach ($chart_types as $c){
-        if ($c == $chart){
-            echo("[$c]");
-        }
-        else{
-            $url_param = make_query(['chart' => $c]);
-            echo("[<a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$c</a>]");
-        }
-    }
-    echo('</li>');
-    
-    echo('<li>Evaluation Metric: ');
-    print_metric_options($metric);
-    echo('</li></ul></div><div id="scores">');    
+
+    echo('</div><div id="scores">');
     $langpairs = print_score_table($model1,$model2,$showlang,$benchmark, $metric);
     echo('</div>');
 }

@@ -469,6 +469,7 @@ function print_scores($model='all', $langpair='all', $benchmark='all', $pkg='Tat
 // print a table with all scores and score differences
 
 function print_topscore_differences($langpair='deu-eng', $benchmark='all', $metric='bleu'){
+    global $chart;
 
     $lines1 = read_scores($langpair, 'all', $metric, 'all', 'internal', 'scores');
     $lines2 = read_scores($langpair, 'all', $metric, 'all', 'external', 'external-scores');
@@ -521,6 +522,11 @@ function print_topscore_differences($langpair='deu-eng', $benchmark='all', $metr
     $id = 0;
 
     foreach($scores1 as $key => $score1) {
+        if ($chart == "diff"){
+            if (! array_key_exists($key,$scores2)){
+                continue;
+            }
+        }
         if (array_key_exists($key,$scores2)){
             $score2 = $scores2[$key];
 

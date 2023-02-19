@@ -39,4 +39,11 @@ echo '<pre>';
 system("ls -alh ".sys_get_temp_dir());
 echo '</pre>';
 
+echo('<br/>Temporary evaluation files:<br/>');
+
+echo '<pre>';
+system("find ".sys_get_temp_dir()." -name '*.eval.zip'");
+echo '</pre>';
+
+
 ?>

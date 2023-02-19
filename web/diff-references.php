@@ -22,9 +22,6 @@ else{
 <?php     
 
 
-// echo('<div class="diffheader">');
-echo("<h1>OPUS-MT Example Translations</h1>");
-
 // get query parameters
 $package   = get_param('pkg', 'Tatoeba-MT-models');
 $benchmark = get_param('test', 'all');
@@ -33,8 +30,11 @@ $diffstyle = get_param('diff', 'wdiff'); // can be diff, wdiff or gitdiff
 $start     = get_param('start', 0);
 $end       = get_param('end', 9);
 
-
 list($srclang, $trglang, $langpair) = get_langpair();
+
+include 'header.php';
+echo("<h1>OPUS-MT Example Translations</h1>");
+
 
 if ($model != 'all'){
     if ($benchmark != 'all'){

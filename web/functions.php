@@ -9,13 +9,28 @@ if (isset($_GET['session'])){
 
 $modelsource = get_param('modelsource', 'scores');
 
-// $scores_url  = 'https://raw.githubusercontent.com/Helsinki-NLP/OPUS-MT-leaderboard/master/scores';
+
+// online file locations
+
 $leaderboard_url      = 'https://raw.githubusercontent.com/Helsinki-NLP/OPUS-MT-leaderboard/master';
 $modelscores_url      = implode('/',[$leaderboard_url,'models']);
 $scores_url           = implode('/',[$leaderboard_url,$modelsource]);
 $internal_scores_url  = implode('/',[$leaderboard_url,'scores']);
 $external_scores_url  = implode('/',[$leaderboard_url,'external-scores']);
 $storage_url          = 'https://object.pouta.csc.fi/OPUS-MT-leaderboard';
+
+
+// local file locations
+
+// $leaderboard_dir      = '/media/OPUS/OPUS-MT-leaderboard';
+$leaderboard_dir      = '/var/lib/OPUS/OPUS-MT-leaderboard';
+$modelscores_dir      = implode('/',[$leaderboard_dir,'models']);
+$scores_dir           = implode('/',[$leaderboard_dir,$modelsource]);
+$internal_scores_dir  = implode('/',[$leaderboard_dir,'scores']);
+$external_scores_dir  = implode('/',[$leaderboard_dir,'external-scores']);
+$storage_dir          = $leaderboard_dir;
+
+
 
 // $evaluation_metrics = array('bleu', 'chrf');
 // $evaluation_metrics = array('bleu', 'chrf', 'comet');
@@ -105,36 +120,45 @@ function make_query($data){
 
 
 function get_score_filename($langpair, $benchmark, $metric='bleu', $model='all', $pkg='Tatoeba-MT-models', $source='unchanged'){
-    global $leaderboard_url, $modelscores_url, $scores_url, $storage_url;
-    $modelhome = implode('/',[$storage_url,$pkg]);
+    
+    global $leaderboard_url, $modelscores_url, $scores_url;
+    global $leaderboard_dir, $modelscores_dir, $scores_dir;
 
     if ($source != 'unchanged'){
         $scorefile_url = implode('/',[$leaderboard_url,$source]);
+        $scorefile_dir = implode('/',[$leaderboard_dir,$source]);
     }
     else{
         $scorefile_url = $scores_url;
+        $scorefile_dir = $scores_dir;
     }
 
     if ($model != 'all' && $model != 'avg'){
         if ($metric != 'all'){
-            // $file = implode('/',[$modelhome,$model]).'.'.$metric.'-scores.txt';
-            $file = implode('/',[$modelscores_url,$pkg,$model]).'.'.$metric.'-scores.txt';
+            $url  = implode('/',[$modelscores_url,$pkg,$model]).'.'.$metric.'-scores.txt';
+            $file = implode('/',[$modelscores_dir,$pkg,$model]).'.'.$metric.'-scores.txt';
         }
         else{
-            // $file = implode('/',[$modelhome,$model]).'.scores.txt';
-            $file = implode('/',[$modelscores_url,$pkg,$model]).'.scores.txt';
+            $url  = implode('/',[$modelscores_url,$pkg,$model]).'.scores.txt';
+            $file = implode('/',[$modelscores_dir,$pkg,$model]).'.scores.txt';
         }
     }
     elseif ($benchmark == 'avg'){
-        $file  = implode('/',[$scorefile_url,$langpair,'avg-'.$metric.'-scores.txt']);
+        $url  = implode('/',[$scorefile_url,$langpair,'avg-'.$metric.'-scores.txt']);
+        $file = implode('/',[$scorefile_dir,$langpair,'avg-'.$metric.'-scores.txt']);
     }
     elseif ($benchmark != 'all'){
-        $file  = implode('/',[$scorefile_url,$langpair,$benchmark,$metric.'-scores.txt']);
+        $url  = implode('/',[$scorefile_url,$langpair,$benchmark,$metric.'-scores.txt']);
+        $file = implode('/',[$scorefile_dir,$langpair,$benchmark,$metric.'-scores.txt']);
     }
     else{
-        $file  = implode('/',[$scorefile_url,$langpair,'top-'.$metric.'-scores.txt']);
+        $url  = implode('/',[$scorefile_url,$langpair,'top-'.$metric.'-scores.txt']);
+        $file = implode('/',[$scorefile_dir,$langpair,'top-'.$metric.'-scores.txt']);
     }
-    return $file;
+    if (file_exists($file)){
+        return $file;
+    }
+    return $url;
 }
 
 
@@ -203,12 +227,16 @@ function read_scores($langpair, $benchmark, $metric='bleu', $model='all', $pkg='
 // fetch the file with all benchmark translations for a specific model
 
 function get_translation_file($model, $pkg='Tatoeba-MT-models'){
-    global $storage_url;
-    $modelhome = $storage_url.'/models/'.$pkg;
-    $file = implode('/',[$modelhome,$model]).'.eval.zip';
+    global $storage_url, $storage_dir;
 
+    $url  = implode('/',[$storage_url,'models',$pkg,$model]).'.eval.zip';
+    $file = implode('/',[$storage_dir,'models',$pkg,$model]).'.eval.zip';
+
+    if (file_exists($file)){
+        return $file;
+    }
     $tmpfile = tempnam(sys_get_temp_dir(),'opusmteval');
-    if (copy($file, $tmpfile)) {
+    if (copy($url, $tmpfile)) {
         return $tmpfile;
     }
 }
@@ -218,10 +246,16 @@ function get_translation_file($model, $pkg='Tatoeba-MT-models'){
 // of them without reloading them
 
 function get_translation_file_with_cache($model, $pkg='Tatoeba-MT-models', $cache_size=10){
-    global $storage_url;
-    $modelhome = $storage_url.'/models/'.$pkg;
-    $file = implode('/',[$modelhome,$model]).'.eval.zip';
+    global $storage_url, $storage_dir;
+    
+    $url  = implode('/',[$storage_url,'models',$pkg,$model]).'.eval.zip';
+    $file = implode('/',[$storage_dir,'models',$pkg,$model]).'.eval.zip';
 
+    // local file
+    if (file_exists($file)){
+        return $file;
+    }
+    
     // permanently cached files
     $tmpdir = sys_get_temp_dir();
     $filename = implode('/',[$tmpdir,$pkg,$model.'.eval.zip']);
@@ -235,7 +269,7 @@ function get_translation_file_with_cache($model, $pkg='Tatoeba-MT-models', $cach
         $_SESSION['cached-files'] = array();
         $_SESSION['next-filecache-key'] = 0;
     }
-    $key = array_search($file, $_SESSION['cached-files']);
+    $key = array_search($url, $_SESSION['cached-files']);
     if ($key !== false){
         if (array_key_exists('files', $_SESSION)){
             if (array_key_exists($key, $_SESSION['files'])){
@@ -253,10 +287,10 @@ function get_translation_file_with_cache($model, $pkg='Tatoeba-MT-models', $cach
 
     $key = $_SESSION['next-filecache-key'];
     // echo "save scores for $file in cache with key $key";
-    $_SESSION['cached-files'][$key] = $file;
+    $_SESSION['cached-files'][$key] = $url;
     
     $tmpfile = tempnam(sys_get_temp_dir(),'opusmteval');
-    if (copy($file, $tmpfile)) {
+    if (copy($url, $tmpfile)) {
         if (filesize($tmpfile) > 104857600){
             // echo("file size > 100MB -- put in permanent cache! ($filename)");
             $dir = dirname($filename);
@@ -264,7 +298,7 @@ function get_translation_file_with_cache($model, $pkg='Tatoeba-MT-models', $cach
                 mkdir($dir,0777,true);
             }
             if (rename($tmpfile,$filename)){
-                echo("successfully created $filename");
+                // echo("successfully created $filename");
                 return $filename;
             }
         }

@@ -13,9 +13,7 @@
 
 $releases_url = 'https://raw.githubusercontent.com/Helsinki-NLP/OPUS-MT-leaderboard/master/release-history.txt';
 $releases = file($releases_url);
-
-$modelhome = 'https://object.pouta.csc.fi/Tatoeba-MT-models';
-$storage = 'https://object.pouta.csc.fi';
+$storage  = 'https://object.pouta.csc.fi';
 
 
 $lastdate = '';

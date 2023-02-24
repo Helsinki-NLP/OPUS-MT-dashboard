@@ -17,13 +17,7 @@ list($srclang, $trglang, $langpair) = get_langpair();
 $showlang  = get_param('scoreslang', $langpair);
 
 
-if ($model == 'top'){
-    list($srclang, $trglang, $langpair) = get_langpair();
-    $lines1 = read_scores($langpair, 'all', $metric, 'all', 'internal', 'scores');
-    $lines2 = read_scores($langpair, 'all', $metric, 'all', 'external', 'external-scores');
-    $topscores = true;
-}
-elseif ($model1 != 'unknown' and $model2 != 'unknown'){
+if ($model1 != 'unknown' and $model2 != 'unknown'){
     $parts = explode('/',$model1);
     $pkg1 = array_shift($parts);
     $name1 = implode('/',$parts);
@@ -34,6 +28,12 @@ elseif ($model1 != 'unknown' and $model2 != 'unknown'){
     $name2 = implode('/',$parts);
     $lines2 = read_scores($langpair, 'all', $metric, $name2, $pkg2);
     $topscores = false;
+}
+elseif ($model == 'top'){
+    list($srclang, $trglang, $langpair) = get_langpair();
+    $lines1 = read_scores($langpair, 'all', $metric, 'all', 'internal', 'scores');
+    $lines2 = read_scores($langpair, 'all', $metric, 'all', 'external', 'external-scores');
+    $topscores = true;
 }
 
 

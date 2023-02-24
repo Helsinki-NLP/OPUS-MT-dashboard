@@ -22,8 +22,8 @@ $storage_url          = 'https://object.pouta.csc.fi/OPUS-MT-leaderboard';
 
 // local file locations
 
-// $leaderboard_dir      = '/media/OPUS/OPUS-MT-leaderboard';
-$leaderboard_dir      = '/var/lib/OPUS/OPUS-MT-leaderboard';
+$leaderboard_dir      = '/media/OPUS/OPUS-MT-leaderboard';
+// $leaderboard_dir      = '/var/lib/OPUS/OPUS-MT-leaderboard';
 $modelscores_dir      = implode('/',[$leaderboard_dir,'models']);
 $scores_dir           = implode('/',[$leaderboard_dir,$modelsource]);
 $internal_scores_dir  = implode('/',[$leaderboard_dir,'scores']);
@@ -185,6 +185,13 @@ function read_model_scores($langpair, $benchmark, $metric='bleu', $model='all', 
 }
 
 
+function local_scorefile_exists($langpair, $benchmark, $metric='bleu', $model='all', $pkg='Tatoeba-MT-models', $source='unchanged'){
+    $file = get_score_filename($langpair, $benchmark, $metric, $model, $pkg, $source);
+    if (file_exists($file)){
+        return true;
+    }
+    return false;
+}
 
 // read scores from session cache or from file
 
@@ -476,7 +483,8 @@ function short_model_name($modelname){
     if ( strlen($modelname) > 24 ){
         $prefix = substr($modelname,0,12);
         $suffix = substr($modelname,-10,10);
-        return $prefix.' .. '.$suffix;
+        return $prefix.'..'.$suffix;
+        // return $prefix.' .. '.$suffix;
     }
     return $modelname;
 }

@@ -3,7 +3,7 @@
 
 <html>
 <head>
-  <title>OPUS-MT - Leaderboard</title>
+  <title>OPUS-MT - Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1"> 
   <link rel="stylesheet" href="index.css" type="text/css">
 </head>
@@ -58,7 +58,8 @@ if ($model1 != 'unknown'){
         $m2_name = implode('/',$parts);
         $url_param = make_query(['model' => $m2_name, 'pkg' => $m2_pkg]);
         // list($m2_pkg, $m2_lang, $m2_name) = explode('/',$model2);
-        // $url_param = make_query(['model' => $m2_lang.'/'.$m2_name, 'pkg' => $m2_pkg]);    
+        // $url_param = make_query(['model' => $m2_lang.'/'.$m2_name, 'pkg' => $m2_pkg]);
+        $m_link = "<a rel=\"nofollow\" href=\"index.php?".$url_param."\">";
         echo('<li><b>Model 2 (orange):</b> '.$m_link.$model2.'</a></li>');
     }
     echo("<li><b>Evaluation metric:</b> ");
@@ -172,16 +173,19 @@ foreach ($sorted_models as $model => $release){
 
     if (($model1 != 'unknown') && ($model2 == 'unknown')){
         if ($model1 == $new_model){
-            echo("<li>$modelbase</li>");
+            // echo("<li>$modelbase</li>");
+            echo("<li>$new_model</li>");
         }
         else{
             $url_param = make_query(['model1' => $model1, 'model2' => $new_model]);
-            echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$modelbase</a></li>");
+            // echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$modelbase</a></li>");
+            echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$new_model</a></li>");
         }
     }
     else{        
         $url_param = make_query(['model1' => $new_model, 'model2' => 'unknown']);
-        echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$modelbase</a></li>");
+        // echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$modelbase</a></li>");
+        echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$new_model</a></li>");
     }   
 }
 echo("</ul>");

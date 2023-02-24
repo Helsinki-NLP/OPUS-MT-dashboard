@@ -20,18 +20,21 @@ $langpairs = array_map('rtrim', file(implode('/',[$leaderboard_url,'scores','lan
 
 // extract source languages from language pairs
 $srclang_func = function(string $langpair): string {
-    return array_shift(explode('-',$langpair));
+    list($src,$trg) = explode('-',$langpair);
+    return $src;
 };
 
 // extract all target languages from language pairs
 $trglang_func = function(string $langpair): string {
-    return array_pop(explode('-',$langpair));
+    list($src,$trg) = explode('-',$langpair);
+    return $trg;
 };
 
 // filter out all language pairs that do not match the current source language
 $greplang_func = function(string $langpair): string {
     global $srclang;
-    return array_shift(explode('-',$langpair)) == $srclang;
+    list($src,$trg) = explode('-',$langpair);
+    return $src == $srclang;
 };
 
 
@@ -94,6 +97,7 @@ echo '  [<a href="index.php?'.SID.'&'.$query.'">compare scores</a>]';
 $query = make_query(['model1' => 'unknown', 'model2' => 'unknown', 'test' => 'all', 'scoreslang' => 'all']);
 echo '  [<a href="compare.php?'.SID.'&'.$query.'">compare models</a>]';
 echo '  [<a href="releases.php">show release history</a>]';
+echo '  [<a href="https://opus.nlpl.eu/NMT-map/Tatoeba-all/src2trg/index.html">NMT map</a>]';
 echo '</form>';
 echo '<hr/>';
 echo '</div>';

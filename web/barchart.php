@@ -11,6 +11,7 @@ $benchmark = get_param('test', 'all');
 $metric    = get_param('metric', 'bleu');
 $showlang  = get_param('scoreslang', 'all');
 $model     = get_param('model', 'top');
+$modeltype = get_param('modelsource', 'scores');
 
 list($srclang, $trglang, $langpair) = get_langpair();
 
@@ -23,7 +24,7 @@ if ($benchmark == 'avg'){
 }
 
 $data = array();
-$pkg = array();
+$type = array();
 $nrscores = 0;
 
 // get model-specific scores
@@ -48,7 +49,7 @@ if ($model != 'all' && $model != 'top'){
         // $score = $metric == 'bleu' ? $array[3] : $array[2];
         $score = (float) $array[2];
         array_push($data,$score);
-        array_push($pkg,$package);
+        array_push($type,$package);
         $nrscores++;
         if ( $maxscore < $score ){
             $maxscore = $score;
@@ -64,18 +65,21 @@ elseif ($benchmark != 'all'){
         $nrscores++;
         /*
         if (strpos($array[1],'transformer-big') !== false){
-            array_unshift($pkg,'transformer-big');
+            array_unshift($type,'transformer-big');
         }
         */
-        if (strpos($array[1],'transformer-small') !== false){
-            array_unshift($pkg,'transformer-small');
+        if ($modelsource != 'scores'){
+            array_unshift($type,$modelsource);
+        }
+        elseif (strpos($array[1],'transformer-small') !== false){
+            array_unshift($type,'transformer-small');
         }
         elseif (strpos($array[1],'transformer-tiny') !== false){
-            array_unshift($pkg,'transformer-tiny');
+            array_unshift($type,'transformer-tiny');
         }
         else{
             $modelparts = explode('/',$array[1]);
-            array_unshift($pkg,$modelparts[count($modelparts)-3]);
+            array_unshift($type,$modelparts[count($modelparts)-3]);
         }
     }
     $maxscore = end($data);
@@ -88,15 +92,18 @@ else{
         $array = explode("\t", $line);
         array_push($data,$array[1]);
         $nrscores++;
-        if (strpos($array[2],'transformer-small') !== false){
-            array_push($pkg,'transformer-small');
+        if ($modelsource != 'scores'){
+            array_unshift($type,$modelsource);
+        }
+        elseif (strpos($array[2],'transformer-small') !== false){
+            array_push($type,'transformer-small');
         }
         elseif (strpos($array[2],'transformer-tiny') !== false){
-            array_push($pkg,'transformer-tiny');
+            array_push($type,'transformer-tiny');
         }
         else{
             $modelparts = explode('/',$array[2]);
-            array_push($pkg,$modelparts[count($modelparts)-3]);
+            array_push($type,$modelparts[count($modelparts)-3]);
         }
         if ( $maxscore < $array[1] ){
             $maxscore = $array[1];
@@ -167,6 +174,7 @@ $barColors = array('Tatoeba-MT-models' => imagecolorallocate($chart, 47, 133, 21
                    'OPUS-MT-models' => imagecolorallocate($chart, 217, 133, 47),
                    // 'other' => imagecolorallocate($chart, 212, 212, 0),
                    'other' => imagecolorallocate($chart, 164, 164, 164),
+                   'user-scores' => imagecolorallocate($chart, 133, 133, 164),
                    // 'transformer-small' => imagecolorallocate($chart, 133, 217, 47),
                    'transformer-small' => imagecolorallocate($chart, 47, 196, 47),
                    'transformer-tiny' => imagecolorallocate($chart, 47, 196, 47),
@@ -227,7 +235,7 @@ foreach($data as $key => $value) {
     $y2 = floor($gridBottom - 1);
 
     if ($x2 != $x1 and $y2 != $y1){
-        $modelPkg = array_key_exists($key, $pkg) ? $pkg[$key] : 'Tatoeba-MT-models';
+        $modelPkg = array_key_exists($key, $type) ? $type[$key] : 'Tatoeba-MT-models';
         // $modelColor = array_key_exists($modelPkg, $barColors) ? $barColors[$modelPkg] : $barColors['Tatoeba-MT-models'];
         $modelColor = array_key_exists($modelPkg, $barColors) ? $barColors[$modelPkg] : $barColors['other'];
         imagefilledrectangle($chart, $x1, $y1, $x2, $y2, $modelColor);

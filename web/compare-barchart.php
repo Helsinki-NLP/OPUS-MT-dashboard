@@ -2,10 +2,16 @@
 session_start();
 
 // adapted from https://www.infscripts.com/how-to-create-a-bar-chart-in-php
+//
+
+// TODO: combine with barchart.php to have only one script
+//       for generating barcharts
+
 
 include 'functions.php';
 
 // get query parameters
+$package   = get_param('pkg', 'Tatoeba-MT-models');
 $benchmark = get_param('test', 'all');
 $metric    = get_param('metric', 'bleu');
 $model     = get_param('model', 'top');
@@ -17,94 +23,112 @@ list($srclang, $trglang, $langpair) = get_langpair();
 $showlang  = get_param('scoreslang', $langpair);
 
 
-if ($model == 'top'){
-    list($srclang, $trglang, $langpair) = get_langpair();
-    $lines1 = read_scores($langpair, 'all', $metric, 'all', 'internal', 'scores');
-    $lines2 = read_scores($langpair, 'all', $metric, 'all', 'external', 'external-scores');
-    $topscores = true;
-}
-elseif ($model1 != 'unknown' and $model2 != 'unknown'){
+//-----------------------------------------
+// read scores from file or cache
+//-----------------------------------------
+
+$lines = array();
+if ($model1 != 'unknown' and $model2 != 'unknown'){
     $parts = explode('/',$model1);
     $pkg1 = array_shift($parts);
     $name1 = implode('/',$parts);
-    $lines1 = read_scores($langpair, 'all', $metric, $name1, $pkg1);
+    $lines[1] = read_scores($langpair, 'all', $metric, $name1, $pkg1);
 
     $parts = explode('/',$model2);
     $pkg2 = array_shift($parts);
     $name2 = implode('/',$parts);
-    $lines2 = read_scores($langpair, 'all', $metric, $name2, $pkg2);
+    $lines[2] = read_scores($langpair, 'all', $metric, $name2, $pkg2);
+    $topscores = false;
+}
+elseif ($model == 'verified'){
+    $lines[1] = read_scores($langpair, 'all', $metric, 'all', 'internal', 'scores');
+    $lines[2] = read_scores($langpair, 'all', $metric, 'all', 'external', 'external-scores');
+    $topscores = true;
+}
+elseif ($model == 'unverified'){
+    $lines[1] = read_scores($langpair, 'all', $metric, 'all', 'internal', 'scores');
+    $lines[3] = read_scores($langpair, 'all', $metric, 'all', 'external', 'user-scores');
+    $topscores = true;
+}
+elseif ($model == 'top'){
+    $lines[1] = read_scores($langpair, 'all', $metric, 'all', 'internal', 'scores');
+    $lines[2] = read_scores($langpair, 'all', $metric, 'all', 'external', 'external-scores');
+    $lines[3] = read_scores($langpair, 'all', $metric, 'all', 'external', 'user-scores');
+    $topscores = true;
+}
+else{
+    $lines = read_model_scores($langpair, $benchmark, $metric, $model, $package);
 }
 
+
+//-----------------------------------------
+// extract scores from score file lines
+//-----------------------------------------
 
 $data = array();
 $models = array();
 
-
 $maxscore = 0;
+$scores = array();
 
-// read model-specific scores
-$scores1 = array();
-foreach($lines1 as $line1) {
-    $array = explode("\t", $line1);
-    if ($topscores){
-        $score = (float) $array[1];
-        $key = $array[0];
-        $scores1[$key] = $score;
-        if ( $maxscore < $score ){
-            $maxscore = $score;
-        }
-    }
-    elseif ($showlang == 'all' || $showlang == $array[0]){
-        if ($benchmark == 'all' || $benchmark == $array[1]){
-            $score = (float) $array[2];
-            $key = $array[0].'/'.$array[1];
-            $scores1[$key] = $score;
-            if ( $maxscore < $score ){
-                $maxscore = $score;
+$nr_score_files = 0;
+foreach (array(1, 2, 3) as $v) {
+    if (count($lines[$v])){
+        $scores[$v] = array();
+        $nr_score_files++;
+        $scores_exist[$v] = true;
+        foreach($lines[$v] as $line) {
+            $array = explode("\t", $line);
+            if ($topscores){
+                $score = (float) $array[1];
+                $key = $array[0];
+                $scores[$v][$key] = $score;
+                if ( $maxscore < $score ){
+                    $maxscore = $score;
+                }
+            }
+            elseif ($showlang == 'all' || $showlang == $array[0]){
+                if ($benchmark == 'all' || $benchmark == $array[1]){
+                    $score = (float) $array[2];
+                    $key = $array[0].'/'.$array[1];
+                    $scores[$v][$key] = $score;
+                    if ( $maxscore < $score ){
+                        $maxscore = $score;
+                    }
+                }
             }
         }
     }
 }
 
-$scores2 = array();
-foreach($lines2 as $line2) {
-    $array = explode("\t", $line2);
-    if ($topscores){
-        $score = (float) $array[1];
-        $key = $array[0];
-        $scores2[$key] = $score;
-        if ( $maxscore < $score ){
-            $maxscore = $score;
-        }
-    }
-    elseif ($showlang == 'all' || $showlang == $array[0]){
-        if ($benchmark == 'all' || $benchmark == $array[1]){
-            $score = (float) $array[2];
-            $key = $array[0].'/'.$array[1];
-            $scores2[$key] = $score;
-            if ( $maxscore < $score ){
-                $maxscore = $score;
-            }
-        }
-    }
-}
+
+
+//-----------------------------------------
+// prepare data array for the chart
+//-----------------------------------------
 
 $nrscores=0;
-foreach($scores1 as $key => $value) {
+foreach($scores[1] as $key => $value) {
     if ($nrscores > $chart_max_scores){
         break;
     }
-    if ((array_key_exists($key,$scores2)) or ($model == 'top')){
+
+    if ((array_key_exists($key,$scores[2])) or ($topscores)){
+        $nrscores++;
         array_push($data,$value);
         array_push($models,'model1');
-        $nrscores++;
-        if (array_key_exists($key,$scores2)){
-            array_push($data,$scores2[$key]);
-            array_push($models,'model2');
-        }
-        else{
-            array_push($data,0);
-            array_push($models,'model2');
+    
+        foreach (array(2, 3) as $v) {
+            if ($scores_exist[$v]){
+                if (array_key_exists($key,$scores[$v])){
+                    array_push($data,$scores[$v][$key]);
+                    array_push($models,'model'.$v);
+                }
+                else{
+                    array_push($data,0);
+                    array_push($models,'model'.$v);
+                }
+            }
         }
     }
 }
@@ -115,9 +139,12 @@ if (sizeof($data) == 0){
 $nrscores = sizeof($data);
 
 
+
+//-----------------------------------------
 /*
  * Chart settings and create image
  */
+//-----------------------------------------
 
 // Image dimensions
 $imageWidth = 680;
@@ -170,15 +197,23 @@ $gridColor = imagecolorallocate($chart, 212, 212, 212);
 $barColor = imagecolorallocate($chart, 47, 133, 217);
 
 
+/*
+$barColors = array('model1' => imagecolorallocate($chart, 47, 133, 217),
+                   'model2' => imagecolorallocate($chart, 217, 133, 47),
+                   'model3' => imagecolorallocate($chart, 133, 217, 47));
+*/
+
 if ($topscores){
     $barColors = array('model1' => imagecolorallocate($chart, 47, 133, 217),
+                       'model3' => imagecolorallocate($chart, 133, 133, 164),
                        'model2' => imagecolorallocate($chart, 164, 164, 164));
 }
 else{
     $barColors = array('model1' => imagecolorallocate($chart, 47, 133, 217),
                        'model2' => imagecolorallocate($chart, 217, 133, 47));
-
 }
+
+
 
 imagefill($chart, 0, 0, $backgroundColor);
 
@@ -240,8 +275,8 @@ foreach($data as $key => $value) {
 
     // special for this comparison: only label every second bar
     // and adjust the ID to increment every second bar
-    $label = floor($key/2);
-    if ($label == ceil($key/2)){
+    $label = floor(($key+$nr_score_files-1)/$nr_score_files);
+    if ($label == ceil(($key+$nr_score_files-1)/$nr_score_files)){
         // Draw the label
         $labelBox = imagettfbbox($fontSize, 0, $font, $key);
         $labelWidth = $labelBox[4] - $labelBox[0];

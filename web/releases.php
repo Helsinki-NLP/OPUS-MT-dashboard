@@ -10,6 +10,9 @@
 <h1>OPUS-MT - Release History</h1>
 
 <?php
+                          
+                          // include 'header.php';
+                          // echo('<h1>OPUS-MT - Release History</h1>');
 
 $releases_url = 'https://raw.githubusercontent.com/Helsinki-NLP/OPUS-MT-leaderboard/master/release-history.txt';
 $releases = file($releases_url);

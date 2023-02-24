@@ -53,7 +53,9 @@ elseif ($model == 'unverified'){
 elseif ($model == 'top'){
     $lines[1] = read_scores($langpair, 'all', $metric, 'all', 'internal', 'scores');
     $lines[2] = read_scores($langpair, 'all', $metric, 'all', 'external', 'external-scores');
-    $lines[3] = read_scores($langpair, 'all', $metric, 'all', 'external', 'user-scores');
+    if (local_scorefile_exists($langpair, 'all', $metric, 'all', 'external', 'user-scores')){
+        $lines[3] = read_scores($langpair, 'all', $metric, 'all', 'external', 'user-scores');
+    }
     $topscores = true;
 }
 else{

@@ -32,10 +32,6 @@ if ($showlang != 'all'){
 
 
 
-
-
-
-
 // DEBUGGING: show parameters in session variable
 /*
 foreach ($_SESSION['params'] as $key => $value){
@@ -44,16 +40,13 @@ foreach ($_SESSION['params'] as $key => $value){
 */
 
 
-
 include 'header.php';
 
 echo("<h1>OPUS-MT Dashboard</h1>");
 echo('<div id="chart">');
 
 
-
 echo("<ul>");
-
 
 $test = $benchmark;
 if ($benchmark == 'all' || $benchmark == 'avg'){
@@ -450,7 +443,7 @@ function print_scores($model='all', $langpair='all', $benchmark='all', $pkg='Tat
 
 
 
-function print_langpair_heatmap($model, $metric='bleu', $benchmark='flores200-devtest', $pkg='Tatoeba-MT-models', $source='unchanged'){
+function print_langpair_heatmap($model, $metric='bleu', $benchmark='all', $pkg='Tatoeba-MT-models', $source='unchanged'){
     $file = get_score_filename('all', $benchmark, $metric, $model, $pkg, $source);
     $lines = read_model_scores('all', $benchmark, $metric, $model, $pkg, $source);
 
@@ -463,6 +456,7 @@ function print_langpair_heatmap($model, $metric='bleu', $benchmark='flores200-de
         list($p,$b,$score) = explode("\t",rtrim(array_shift($lines)));
         $benchmarks[$b]++;
         if (($benchmark == 'all') or ($b == $benchmark)){
+        // if (($benchmark == 'all') or (strpos($b,$benchmark) === 0)){
             list($s,$t) = explode('-',$p);
             if ($metric == 'bleu' or $metric == 'spbleu'){
                 $scores[$s][$t] += $score;
@@ -481,6 +475,19 @@ function print_langpair_heatmap($model, $metric='bleu', $benchmark='flores200-de
     }
     if (count($trglangs) < 3){
         return false;
+    }
+    */
+
+    // shortnames that combine several test sets into one category
+    // (newstest of several years, different versions of tatoeba, flores, ...)
+    // --> a bit too ad-hoc and also problematic as test-parameter
+    /*
+    $shortnames = array();
+    foreach ($benchmarks as $b => $count){
+        list($b) = explode('-',$b);
+        list($b) = explode('_',$b);
+        $b = preg_replace('/[0-9]*$/', '', $b);
+        $shortnames[$b]++;
     }
     */
 
@@ -508,6 +515,12 @@ function print_langpair_heatmap($model, $metric='bleu', $benchmark='flores200-de
             }
         }
     }
+    /*
+    foreach ($shortnames as $b => $count){
+        $url_param = make_query(['test' => $b]);
+        echo("[<a rel=\"nofollow\" href=\"index.php?$url_param\">$b</a>] ");
+    }
+    */
     echo('</li>');
 
     
@@ -543,7 +556,6 @@ function print_langpair_heatmap($model, $metric='bleu', $benchmark='flores200-de
 function score_color($nr){
     $avg = 50;
     $good = 100;
-    // $good = 2*$avg;
 
     $diff = $nr-$avg;
 

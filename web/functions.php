@@ -45,8 +45,6 @@ $chart_max_scores = $show_max_scores;
 $table_max_scores = $show_max_scores;
 
 
-// print($scores_url);
-
 function test_input($data) {
   $data = trim($data);
   $data = stripslashes($data);

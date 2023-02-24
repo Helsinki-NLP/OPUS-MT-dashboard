@@ -92,7 +92,7 @@ echo '</select>';
 
 
 echo '  [<a href="index.php?session=clear">restart</a>]';
-$query = make_query(['model' => 'all', 'test' => 'all', 'scoreslang' => 'all']);
+$query = make_query(['model' => 'top', 'test' => 'all', 'scoreslang' => 'all']);
 echo '  [<a href="index.php?'.SID.'&'.$query.'">compare scores</a>]';
 $query = make_query(['model1' => 'unknown', 'model2' => 'unknown', 'test' => 'all', 'scoreslang' => 'all']);
 echo '  [<a href="compare.php?'.SID.'&'.$query.'">compare models</a>]';

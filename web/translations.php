@@ -28,6 +28,7 @@ else{
 $package   = get_param('pkg', 'Tatoeba-MT-models');
 $benchmark = get_param('test', 'all');
 $model     = get_param('model', 'all');
+$chart     = get_param('chart', 'standard');
 $start     = get_param('start', 0);
 $end       = get_param('end', 9);
 
@@ -42,7 +43,12 @@ if ($model != 'all'){
 
         $trans = get_selected_translations($benchmark, $langpair, $model, $package, $start, $end);
 
-        $query = make_query(['test' => 'all']);
+        if ($chart == 'heatmap'){
+            $query = make_query([]);
+        }
+        else{
+            $query = make_query(['test' => 'all']);
+        }
         echo '<ul><li>Model: <a rel="nofollow" href="index.php?'.$query.'">'.$model.'</a></li>';
         echo '<li>Test Set: '.$benchmark.'</li>';
         echo '<li>Language Pair: '.$langpair.'</li>';

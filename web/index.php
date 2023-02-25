@@ -538,7 +538,16 @@ function print_langpair_heatmap($model, $metric='bleu', $benchmark='all', $pkg='
         foreach ($trglangs as $t => $count){
             if (array_key_exists($t,$tab)){
                 $score = sprintf('%4.1f',$tab[$t] / $counts[$s][$t]);
-                echo('<td bgcolor="'.score_color($score).'">'.$score.'</td>');
+                if ($benchmark != 'all'){
+                    $query = make_query(['test' => $benchmark,
+                                         'langpair' => "$s-$t",
+                                         'start' => 0, 'end' => 9]);
+                    $translink = "<a rel=\"nofollow\" href=\"translations.php?".SID.'&'.$query."\">";
+                    echo('<td bgcolor="'.score_color($score).'">'.$translink.$score.'</a></td>');
+                }
+                else{
+                    echo('<td bgcolor="'.score_color($score).'">'.$score.'</td>');
+                }
             }
             else{
                 echo('<td></td>');
@@ -554,7 +563,7 @@ function print_langpair_heatmap($model, $metric='bleu', $benchmark='all', $pkg='
 }
 
 function score_color($nr){
-    $avg = 50;
+    $avg = 30;
     $good = 100;
 
     $diff = $nr-$avg;
@@ -564,13 +573,13 @@ function score_color($nr){
     $blue=255;
 
     if ($diff<0){
-        $change1 = abs(pow((0-$diff/$avg),6)*48);
+        $change1 = abs(pow((0-$diff/$avg),2)*64);
         $change2 = abs(($diff/$avg+1)*32);
         $green-=$change1;
         $blue-=$change1+$change2;
     }
     else{
-        $change1 = abs(pow(($diff/$good),0.25)*48);
+        $change1 = abs(pow(($diff/$good),1)*96);
         $change2 = 0;
         if ($diff<$good){
             $change2 = abs((1-$diff/$good)*32);
@@ -585,6 +594,7 @@ function score_color($nr){
 }
 
 
+
 function print_legend(){
     echo '<br/><div class="heatmap">';
     echo '<br/>';
@@ -596,6 +606,12 @@ function print_legend(){
     for ($x = 0; $x <= 100; $x+=10) {
         echo '<td>'.$x.'</td>';
     }
+    /*
+    echo '</tr><tr><td>code: </td>';
+    for ($x = 0; $x <= 100; $x+=10) {
+        echo '<td>'.score_color($x).'</td>';
+    }
+    */
     echo '</tr></table>';
     echo '</div>';
 }

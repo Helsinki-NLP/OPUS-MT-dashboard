@@ -6,7 +6,7 @@ $style = get_param('style', 'light');
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
-  <title>OPUS-MT - Example Translations</title>
+<title>OPUS-MT Dashboard - Benchmark Translations</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="index.css" type="text/css">
 <?php
@@ -36,7 +36,7 @@ $end       = get_param('end', 9);
 list($srclang, $trglang, $langpair) = get_langpair();
 
 include 'header.php';
-echo("<h1>OPUS-MT Example Translations</h1>");
+echo("<h1>OPUS-MT Dashboard: Benchmark Translations</h1>");
 
 
 // $diffstyles = array('diff','wdiff','gitdiff');
@@ -128,4 +128,8 @@ if ($model1 != 'all' && $model2 != 'all'){
     }
 }
 
+include('footer.php');
+
 ?>
+</body>
+</html>

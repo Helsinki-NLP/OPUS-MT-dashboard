@@ -1,18 +1,22 @@
+<?php session_start(); ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 
 <html>
 <head>
-  <title>OPUS-MT - Release History</title>
+  <title>OPUS-MT Dashboard - Release History</title>
   <meta name="viewport" content="width=device-width, initial-scale=1"> 
   <link rel="stylesheet" href="index.css" type="text/css">
 </head>
 <body>
-<h1>OPUS-MT - Release History</h1>
 
 <?php
-                          
-                          // include 'header.php';
-                          // echo('<h1>OPUS-MT - Release History</h1>');
+                               
+include 'functions.php';
+
+list($srclang, $trglang, $langpair) = get_langpair();
+
+include 'header.php';
+echo('<h1>OPUS-MT Dashboard: Release History</h1>');
 
 $releases_url = 'https://raw.githubusercontent.com/Helsinki-NLP/OPUS-MT-leaderboard/master/release-history.txt';
 $releases = file($releases_url);
@@ -35,6 +39,8 @@ foreach ($releases as $release){
         echo "<li><a rel=\"nofollow\" href='$storage/$pkg/$langpair/$model.zip'>$langpair/$model</a> (<a href='index.php?pkg=$pkg&model=$model_url&test=all&scoreslang=all'>benchmark results</a>)</li>";
     }
 }
+
+include('footer.php');
 
 ?>
 </body>

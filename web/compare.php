@@ -3,7 +3,7 @@
 
 <html>
 <head>
-  <title>OPUS-MT - Dashboard</title>
+  <title>OPUS-MT Dashboard - Compare Models</title>
   <meta name="viewport" content="width=device-width, initial-scale=1"> 
   <link rel="stylesheet" href="index.css" type="text/css">
 </head>
@@ -37,7 +37,7 @@ foreach ($_SESSION['params'] as $key => $value){
 
 
 include 'header.php';
-echo('<h1>Compare OPUS-MT models</h1>');
+echo('<h1>OPUS-MT Dashboard: Compare Models</h1>');
 
 
 if ($model1 != 'unknown'){
@@ -350,6 +350,9 @@ function print_score_table($model1,$model2,$langpair='all',$benchmark='all', $me
     echo('</table></div></div>');
     return $common_langs;
 }
+
+
+include('footer.php');
 
 ?>
 </body>

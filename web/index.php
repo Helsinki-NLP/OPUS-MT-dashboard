@@ -3,7 +3,7 @@
 
 <html>
 <head>
-  <title>OPUS-MT - Dashboard</title>
+  <title>OPUS-MT Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1"> 
   <link rel="stylesheet" href="index.css" type="text/css">
 </head>
@@ -587,11 +587,12 @@ function score_color($nr){
 
 function print_legend(){
     echo '<br/><div class="heatmap">';
-    echo '<table><tr><th>color: </th>';
+    echo '<br/>';
+    echo '<table><tr><td>color: </td>';
     for ($x = 0; $x <= 100; $x+=10) {
         echo '<td bgcolor="'.score_color($x).'">&nbsp;&nbsp;&nbsp;</td>';
     }
-    echo '</tr><tr><th>score: </th>';
+    echo '</tr><tr><td>score: </td>';
     for ($x = 0; $x <= 100; $x+=10) {
         echo '<td>'.$x.'</td>';
     }
@@ -761,6 +762,7 @@ function print_topscore_differences($langpair='deu-eng', $benchmark='all', $metr
 
 
 
+include('footer.php');
 
 ?>
 </body>

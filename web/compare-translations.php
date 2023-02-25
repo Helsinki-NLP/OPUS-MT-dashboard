@@ -6,7 +6,7 @@ $style = get_param('style', 'light');
 
 <html>
 <head>
-  <title>OPUS-MT - Example Translations</title>
+  <title>OPUS-MT Dashboard - Benchmark Translations</title>
   <meta name="viewport" content="width=device-width, initial-scale=1"> 
   <link rel="stylesheet" href="index.css" type="text/css">
 <?php
@@ -37,7 +37,7 @@ list($srclang, $trglang, $langpair) = get_langpair();
 
 
 include 'header.php';
-echo("<h1>OPUS-MT Example Translations</h1>");
+echo("<h1>OPUS-MT Dashboard: Benchmark Translations</h1>");
 
 
 
@@ -95,4 +95,9 @@ if ($model1 != 'all' && $model2 != 'all'){
     }
 }
 
+
+include('footer.php');
+
 ?>
+</body>
+</html>

@@ -3,4 +3,4 @@
 
 ![example barchart](img/barchart_medium.png)
 
-The [live dashboard](https://opus.nlpl.eu/leaderboard/) is available at https://opus.nlpl.eu/leaderboard/
+The [live dashboard](https://opus.nlpl.eu/dashboard/) is available at https://opus.nlpl.eu/dashboard/

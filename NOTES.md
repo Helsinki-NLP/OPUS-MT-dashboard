@@ -27,3 +27,11 @@ git diff --color-words --no-index orig.txt edited.txt | \
 /tmp/ansi2html.sh > 2beshared.html
 ```
 
+* chart.js for graphs
+
+https://www.chartjs.org/
+https://phppot.com/php/creating-dynamic-data-graph-using-php-and-chart-js/
+https://write.corbpie.com/using-chart-js-with-php-and-mysql/
+
+
+* phpChart: https://phpchart.com/

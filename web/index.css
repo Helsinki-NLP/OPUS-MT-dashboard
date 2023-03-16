@@ -3,14 +3,8 @@ body {
   background-color: #FFFFFF;
   color: #000000;
 }
-/* a:link { color: #FF0000; text-decoration: none;} */
-a:link { color: #900000; text-decoration: none;}
-a:visited { color: #900000; text-decoration: none;}
-a:active {color: #FF3333; text-decoration: none;}
-a:hover {background-color: #d8d8d8 ;color: #000000; text-decoration: none;}
 
-
-.footer { font-size:10pt; }
+.footer { text-align:center;font-size:10pt; float: top; clear: left; }
 .header { text-align:center;font-size:10pt; }
 
 .header th { font-size:10pt;text-align:center; }
@@ -54,3 +48,27 @@ img {	-ms-interpolation-mode: bicubic; border: 0; height: auto; max-width: 100%;
 .query th { text-align:left;background-color:#EEEEEE; }
 .query td { text-align:left;vertical-align:bottom; }
 
+
+.heatmap { font-size:small;}
+.heatmap table
+{
+    padding: 0px;
+    border-spacing:0;
+    border-width: 1px 1px 1px 1px;
+    border-style: solid;
+    font-size:small;
+}
+
+.heatmap th { text-align:left;background-color:#EEEEEE; }
+.heatmap td { text-align:left;vertical-align:bottom; }
+
+.heatmap a:link { color: #000000; text-decoration: none;}
+.heamap a:visited { color: #000000; text-decoration: none;}
+.heamap a:hover {color: #eeeeee; text-decoration: none;}
+.heamap a:active {color: #000000; text-decoration: none;}
+
+/* a:link { color: #FF0000; text-decoration: none;} */
+a:link { color: #900000; text-decoration: none;}
+a:visited { color: #900000; text-decoration: none;}
+a:hover {background-color: #d8d8d8 ;color: #000000; text-decoration: none;}
+a:active {color: #FF3333; text-decoration: none;}

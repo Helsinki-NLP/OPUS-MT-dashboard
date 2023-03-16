@@ -5,7 +5,14 @@ $leaderboard_url = 'https://raw.githubusercontent.com/Helsinki-NLP/OPUS-MT-leade
 // form for selecting benchmarks and language pairs
 
 echo '<div class="header">';
+
+
+
 echo '<form action="index.php" method="get">';
+echo '  [<a href="index.php?session=clear">restart</a>]';
+$query = make_share_link();
+echo '  [<a href="'.$_SERVER['PHP_SELF'].'?'.$query.'">share</a>]';
+
 // echo '<form action="'.$_SERVER['PHP_SELF'].'" method="get">';
 // echo '<input type="hidden" id="session" name="session" value="clear">';
 echo '<input type="hidden" id="model" name="model" value="top">';
@@ -91,7 +98,12 @@ echo '</select>';
 */
 
 
+
+/*
 echo '  [<a href="index.php?session=clear">restart</a>]';
+$query = make_share_link();
+echo '  [<a href="'.$_SERVER['PHP_SELF'].'?'.$query.'">share</a>]';
+*/
 $query = make_query(['model' => 'top', 'test' => 'all', 'scoreslang' => 'all']);
 echo '  [<a href="index.php?'.SID.'&'.$query.'">compare scores</a>]';
 $query = make_query(['model1' => 'unknown', 'model2' => 'unknown', 'test' => 'all', 'scoreslang' => 'all']);

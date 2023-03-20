@@ -11,7 +11,7 @@ echo '<div class="header">';
 echo '<form action="index.php" method="get">';
 echo '  [<a href="index.php?session=clear">restart</a>]';
 $query = make_share_link();
-echo '  [<a href="'.$_SERVER['PHP_SELF'].'?'.$query.'">share</a>]';
+echo '  [<a href="'.$_SERVER['PHP_SELF'].'?'.$query.'">share link</a>]';
 
 // echo '<form action="'.$_SERVER['PHP_SELF'].'" method="get">';
 // echo '<input type="hidden" id="session" name="session" value="clear">';
@@ -97,13 +97,11 @@ foreach ($langpairs as $l){
 echo '</select>';
 */
 
+$query = make_query(['src' => $trglang, 'trg' => $srclang,
+                     'langpair' => implode('-',[$trglang,$srclang]),
+                     'scoreslang' => implode('-',array_reverse(explode('-',$showlang)))  ]);
+echo '  [<a href="'.$_SERVER['PHP_SELF'].'?'.SID.'&'.$query.'">swap</a>]';
 
-
-/*
-echo '  [<a href="index.php?session=clear">restart</a>]';
-$query = make_share_link();
-echo '  [<a href="'.$_SERVER['PHP_SELF'].'?'.$query.'">share</a>]';
-*/
 $query = make_query(['model' => 'top', 'test' => 'all', 'scoreslang' => 'all']);
 echo '  [<a href="index.php?'.SID.'&'.$query.'">compare scores</a>]';
 $query = make_query(['model1' => 'unknown', 'model2' => 'unknown', 'test' => 'all', 'scoreslang' => 'all']);

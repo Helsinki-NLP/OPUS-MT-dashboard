@@ -14,12 +14,14 @@
 include 'functions.php';
 
 // get query parameters
-$package   = get_param('pkg', 'Tatoeba-MT-models');
-$benchmark = get_param('test', 'all');
-$metric    = get_param('metric', 'bleu');
-$showlang  = get_param('scoreslang', 'all');
-$model     = get_param('model', 'top');
-$chart     = get_param('chart', 'standard');
+$package    = get_param('pkg', 'Tatoeba-MT-models');
+$benchmark  = get_param('test', 'all');
+$metric     = get_param('metric', 'bleu');
+$showlang   = get_param('scoreslang', 'all');
+$model      = get_param('model', 'top');
+$chart      = get_param('chart', 'standard');
+$userscores = get_param('userscores', 'no');
+
 
 list($srclang, $trglang, $langpair) = get_langpair();
 
@@ -59,12 +61,16 @@ $opusmt_link = "[<a rel=\"nofollow\" href=\"index.php?$url_param\">OPUS-MT</a>]"
 $url_param = make_query(['model' => 'all', 'test' => $test, 'modelsource' => 'external-scores']);
 $external_link = "[<a rel=\"nofollow\" href=\"index.php?$url_param\">external</a>]";
 
+
+$contributed_link = "";
+$userscores_exists = false;
+
 if (local_scorefile_exists($langpair, 'all', $metric, 'all', 'external', 'user-scores')){
-    $url_param = make_query(['model' => 'all', 'test' => $test, 'modelsource' => 'user-scores']);
-    $contributed_link = "[<a rel=\"nofollow\" href=\"index.php?$url_param\">contributed</a>]";
-}
-else{
-    $contributed_link = "";
+    $userscores_exists = true;
+    if ($userscores == "yes"){
+        $url_param = make_query(['model' => 'all', 'test' => $test, 'modelsource' => 'user-scores']);
+        $contributed_link = "[<a rel=\"nofollow\" href=\"index.php?$url_param\">contributed</a>]";
+    }
 }
 
 
@@ -212,17 +218,54 @@ if ( ! $heatmap_shown ){
         echo("<img src=\"$barchart_script?$url_param\" alt=\"barchart\" />");
     }
 
+    // TODO: make this less complicated to show additional info and links
+    
+    echo('<ul>');
     if ($model == 'top' && $benchmark == 'all'){
         $chart_types = array('standard', 'diff');
-        echo('<ul><li>blue = OPUS-MT / Tatoeba-MT models, grey = external models</li></ul>');
+        if ($userscores_exists  and $chart == "standard"){
+            if ($userscores == "yes"){
+                $url_param = make_query(['userscores' => 'no']);
+                echo('<li>blue = OPUS-MT / Tatoeba-MT models, grey = external models, purple = user-contributed</li>');
+                echo('<li><a rel="nofollow" href="index.php?'. SID . '&'.$url_param.'">exclude scores of user-contributed translations</a></li>');
+            }
+            else{
+                $url_param = make_query(['userscores' => 'yes']);
+                echo('<li>blue = OPUS-MT / Tatoeba-MT models, grey = external models</li>');
+                echo('<li><a rel="nofollow" href="index.php?'. SID . '&'.$url_param.'">include scores of user-contributed translations</a></li>');
+            }
+        }
+        else{
+            echo('<li>blue = OPUS-MT / Tatoeba-MT models, grey = external models</li>');
+        }
     }
-    else{
-        echo('<ul><li>orange = OPUS-MT, blue = Tatoeba-MT models, green = compact models, grey = external models</li>');
+    elseif ($model == 'top' || $model == 'avg'){
+        if ($userscores_exists  and $chart == "standard"){
+            if ($userscores == "yes"){
+                $url_param = make_query(['userscores' => 'no']);
+                echo('<li>orange = OPUS-MT, blue = Tatoeba-MT models, green = compact models</li>');
+                echo('<li>grey = external models, purple = user-contributed</li>');
+                echo('<li><a rel="nofollow" href="index.php?'. SID . '&'.$url_param.'">exclude scores of user-contributed translations</a></li>');
+            }
+            else{
+                $url_param = make_query(['userscores' => 'yes']);
+                echo('<li>orange = OPUS-MT, blue = Tatoeba-MT models, green = compact models</li>');
+                echo('<li>grey = external models, purple = user-contributed</li>');
+                echo('<li><a rel="nofollow" href="index.php?'. SID . '&'.$url_param.'">include scores of user-contributed translations</a></li>');
+            }
+        }
         if ($benchmark == 'all' || (strpos($benchmark,'tatoeba') !== false)){
             echo('<li>Note: Tatoeba test sets are not reliable for OPUS-MT models!</li>');
         }
-        echo('</ul>');
     }
+    /*
+    else{
+        echo('<li>orange = OPUS-MT, blue = Tatoeba-MT models, green = compact models</li>');
+        echo('<li>grey = external models, purple = user-contributed</li>');
+    }
+    */
+
+    echo('</ul>');
 }
 
 

@@ -11,12 +11,13 @@ session_start();
 include 'functions.php';
 
 // get query parameters
-$package   = get_param('pkg', 'Tatoeba-MT-models');
-$benchmark = get_param('test', 'all');
-$metric    = get_param('metric', 'bleu');
-$model     = get_param('model', 'top');
-$model1    = get_param('model1', 'unknown');
-$model2    = get_param('model2', 'unknown');
+$package    = get_param('pkg', 'Tatoeba-MT-models');
+$benchmark  = get_param('test', 'all');
+$metric     = get_param('metric', 'bleu');
+$model      = get_param('model', 'top');
+$model1     = get_param('model1', 'unknown');
+$model2     = get_param('model2', 'unknown');
+$userscores = get_param('userscores', 'no');
 
 list($srclang, $trglang, $langpair) = get_langpair();
 
@@ -53,8 +54,10 @@ elseif ($model == 'unverified'){
 elseif ($model == 'top'){
     $lines[1] = read_scores($langpair, 'all', $metric, 'all', 'internal', 'scores');
     $lines[2] = read_scores($langpair, 'all', $metric, 'all', 'external', 'external-scores');
-    if (local_scorefile_exists($langpair, 'all', $metric, 'all', 'external', 'user-scores')){
-        $lines[3] = read_scores($langpair, 'all', $metric, 'all', 'external', 'user-scores');
+    if ($userscores == "yes"){
+        if (local_scorefile_exists($langpair, 'all', $metric, 'all', 'external', 'user-scores')){
+            $lines[3] = read_scores($langpair, 'all', $metric, 'all', 'external', 'user-scores');
+        }
     }
     $topscores = true;
 }
@@ -277,14 +280,14 @@ foreach($data as $key => $value) {
 
     // special for this comparison: only label every second bar
     // and adjust the ID to increment every second bar
-    $label = floor(($key+$nr_score_files-1)/$nr_score_files);
-    if ($label == ceil(($key+$nr_score_files-1)/$nr_score_files)){
+    $label = floor(($key+$nr_score_files-1)/$nr_score_files)-1;
+    if ($label == ceil(($key+$nr_score_files-1)/$nr_score_files)-1){
         // Draw the label
         $labelBox = imagettfbbox($fontSize, 0, $font, $key);
         $labelWidth = $labelBox[4] - $labelBox[0];
 
-        $labelX = floor($itemX - $labelWidth / 2);
-        $labelX = $itemX;
+        $labelX = floor($itemX - $labelWidth / $nr_score_files);
+        // $labelX = $itemX;
         $labelY = $gridBottom + $labelMargin + $fontSize;
 
         imagettftext($chart, $fontSize, 0, $labelX, $labelY, $labelColor, $font, $label);

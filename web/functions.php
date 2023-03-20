@@ -22,8 +22,8 @@ $storage_url          = 'https://object.pouta.csc.fi/OPUS-MT-leaderboard';
 
 // local file locations
 
-// $leaderboard_dir      = '/media/OPUS/dev/OPUS-MT-leaderboard';
-$leaderboard_dir      = '/var/lib/OPUS-MT-leaderboard';
+$leaderboard_dir      = '/media/OPUS/dev/OPUS-MT-leaderboard';
+// $leaderboard_dir      = '/var/lib/OPUS-MT-leaderboard';
 $modelscores_dir      = implode('/',[$leaderboard_dir,'models']);
 $scores_dir           = implode('/',[$leaderboard_dir,$modelsource]);
 $internal_scores_dir  = implode('/',[$leaderboard_dir,'scores']);
@@ -124,6 +124,16 @@ function make_share_link(){
 }
 
 
+function read_logfile_list($model, $pkg='Tatoeba-MT-models'){
+    
+    global $modelscores_dir, $modelscores_url;
+    $file = implode('/',[$modelscores_dir,$pkg,$model]).'.logfiles';
+    if (! file_exists($file)){
+        $file  = implode('/',[$modelscores_url,$pkg,$model]).'.logfiles';
+    }
+    return array_map('rtrim', read_file_with_cache($file));
+}
+
 function get_score_filename($langpair, $benchmark, $metric='bleu', $model='all', $pkg='Tatoeba-MT-models', $source='unchanged'){
     
     global $leaderboard_url, $modelscores_url, $scores_url;
@@ -169,15 +179,25 @@ function get_score_filename($langpair, $benchmark, $metric='bleu', $model='all',
 
 
 function read_model_scores($langpair, $benchmark, $metric='bleu', $model='all', $pkg='Tatoeba-MT-models', $source='unchanged', $cache_size=10){
+    global $userscores;
     
     if ($model == 'top' && $benchmark != 'all'){
         $lines1 = read_scores($langpair, $benchmark, $metric, 'all', $pkg, 'scores');
         $lines2 = read_scores($langpair, $benchmark, $metric, 'all', $pkg, 'external-scores');
+        $lines3 = array();
         if ($benchmark == 'avg'){
             $head1 = array_shift($lines1);
             $head2 = array_shift($lines2);
         }
-        $lines = array_merge($lines1, $lines2);
+        if ($userscores == "yes"){
+            $lines3 = read_scores($langpair, $benchmark, $metric, 'all', $pkg, 'user-scores');
+            if ($benchmark == 'avg'){
+                $head3 = array_shift($lines3);
+            }
+        }
+
+        $lines = array_merge($lines1, $lines2, $lines3);
+        // $lines = array_merge($lines1, $lines2);
         arsort($lines, SORT_NUMERIC);
         if ($benchmark == 'avg'){
             array_unshift($lines, $head1);
@@ -594,6 +614,7 @@ function print_model_scores($model,$langpair='all',$benchmark='all', $pkg='Tatoe
 
     // echo(get_score_filename($langpair, 'all', $metric, $model, $pkg));
     $lines = read_scores($langpair, 'all', $metric, $model, $pkg);
+    $logfiles = read_logfile_list($model, $pkg);
 
     echo("<h3>Model Scores (selected model)</h3>");
     // echo("<h3>Model Scores ($pkg/$model)</h3>");
@@ -642,7 +663,13 @@ function print_model_scores($model,$langpair='all',$benchmark='all', $pkg='Tatoe
         $url_param = make_query(['test' => $parts[1]]);
         $testlink = "<a rel=\"nofollow\" href=\"index.php?$url_param\">$parts[1]</a>";
 
-        echo("<tr><td>$id</td><td>$langlink</td><td>$testlink</td><td>$translink</td><td>$parts[2]</td></td></tr>");
+        $logfile = implode('.',[$parts[1],$parts[0],'log']);
+        if (in_array($logfile, $logfiles)){
+            $url_param = make_query(['test' => $parts[1],'langpair' => $parts[0]]);
+            $loglink = "(<a rel=\"nofollow\" href=\"logfile.php?".SID.'&'.$url_param."\">logfile</a>)";
+        }
+
+        echo("<tr><td>$id</td><td>$langlink</td><td>$testlink</td><td>$translink $loglink</td><td>$parts[2]</td></td></tr>");
         $avg1 += $parts[2];
         $id++;
     }
@@ -668,7 +695,7 @@ function print_model_scores($model,$langpair='all',$benchmark='all', $pkg='Tatoe
 
 
 function print_scores($model='all', $langpair='all', $benchmark='all', $pkg='Tatoeba-MT-models', $metric='bleu', $source='unchanged'){
-    global $storage_url;
+    global $storage_url, $modelsource;
 
     $lines = read_model_scores($langpair, $benchmark, $metric, $model, $pkg, $source);
     // $lines = read_scores($langpair, $benchmark, $metric);
@@ -722,7 +749,12 @@ function print_scores($model='all', $langpair='all', $benchmark='all', $pkg='Tat
         //    use one as the language pair and another one as the model package name
         //    (e.g. Tatoeba-MT-models/deu-eng, OPUS-MT-models/fin-spa, ...)
         // if not: assume that we at least have one for the package name
-        if (count($model) > 4){
+        // echo("...$modelsource...");
+        if ($model[0] == "unverified"){
+            $modelpkg = array_shift($model);
+            $modelzip = implode('/',$model).'/'.$modelzip;
+        }
+        elseif (count($model) > 4){
             $modellang = array_pop($model);
             $modelpkg = array_pop($model);
             $modelzip = implode('/',[$modellang,$modelzip]);

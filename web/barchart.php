@@ -12,6 +12,8 @@ $metric    = get_param('metric', 'bleu');
 $showlang  = get_param('scoreslang', 'all');
 $model     = get_param('model', 'top');
 $modeltype = get_param('modelsource', 'scores');
+$userscores = get_param('userscores', 'no');
+
 
 list($srclang, $trglang, $langpair) = get_langpair();
 
@@ -175,6 +177,7 @@ $barColors = array('Tatoeba-MT-models' => imagecolorallocate($chart, 47, 133, 21
                    // 'other' => imagecolorallocate($chart, 212, 212, 0),
                    'other' => imagecolorallocate($chart, 164, 164, 164),
                    'user-scores' => imagecolorallocate($chart, 133, 133, 164),
+                   'unverified' => imagecolorallocate($chart, 133, 133, 164),
                    // 'transformer-small' => imagecolorallocate($chart, 133, 217, 47),
                    'transformer-small' => imagecolorallocate($chart, 47, 196, 47),
                    'transformer-tiny' => imagecolorallocate($chart, 47, 196, 47),

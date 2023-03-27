@@ -247,13 +247,35 @@ function read_scores($langpair, $benchmark, $metric='bleu', $model='all', $pkg='
     $key = $_SESSION['next-cache-key'];
     // echo "save scores for $file in cache with key $key";
     $_SESSION['cached-scores'][$key] = $file;
-    $_SESSION['scores'][$key] = @file($file);
+    $_SESSION['scores'][$key] = filter_testsets(@file($file));
     $_SESSION['next-cache-key']++;
     if (is_array($_SESSION['scores'][$key])){
         return $_SESSION['scores'][$key];
     }
     return array();
 }
+
+
+
+// remove some test sets that we do not want to display
+// - all newsdev sets
+// - flores dev sets
+// - other dev sets
+
+function is_testset_line(string $line): bool {
+    if (strpos($line, 'newsdev') !== false){ return false; }
+    $arr = explode("\t",$line);
+    if (in_array('flores101-dev',$arr)){ return false; }
+    if (in_array('flores200-dev',$arr)){ return false; }
+    if (in_array('wikipedia.dev',$arr)){ return false; }
+    if (in_array('newsdiscussdev2015',$arr)){ return false; }
+    return true;
+};
+
+function filter_testsets($array){
+    return array_filter($array,"is_testset_line");
+}
+
 
 
 
@@ -918,6 +940,9 @@ function print_langpair_heatmap($model, $metric='bleu', $benchmark='all', $pkg='
                 else{
                     echo('<td bgcolor="'.score_color($score).'">'.$score.'</td>');
                 }
+            }
+            elseif ($s == $t){
+                echo('<th>'.$s.'</th>');
             }
             else{
                 echo('<td></td>');

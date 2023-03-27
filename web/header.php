@@ -38,7 +38,7 @@ $trglang_func = function(string $langpair): string {
 };
 
 // filter out all language pairs that do not match the current source language
-$greplang_func = function(string $langpair): string {
+$greplang_func = function(string $langpair): bool {
     global $srclang;
     list($src,$trg) = explode('-',$langpair);
     return $src == $srclang;

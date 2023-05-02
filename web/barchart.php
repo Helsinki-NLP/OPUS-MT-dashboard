@@ -6,12 +6,11 @@ session_start();
 include 'functions.php';
 
 // get query parameters
-$package   = get_param('pkg', 'Tatoeba-MT-models');
+$package   = get_param('pkg', 'opusmt');
 $benchmark = get_param('test', 'all');
 $metric    = get_param('metric', 'bleu');
 $showlang  = get_param('scoreslang', 'all');
 $model     = get_param('model', 'top');
-$modeltype = get_param('modelsource', 'scores');
 $userscores = get_param('userscores', 'no');
 
 
@@ -52,6 +51,21 @@ if ($model != 'all' && $model != 'top'){
         $score = (float) $array[2];
         array_push($data,$score);
         array_push($type,$package);
+        
+        if ($package != 'opusmt'){
+            array_unshift($type,$package);
+        }
+        elseif (strpos($array[1],'transformer-small') !== false){
+            array_unshift($type,'transformer-small');
+        }
+        elseif (strpos($array[1],'transformer-tiny') !== false){
+            array_unshift($type,'transformer-tiny');
+        }
+        else{
+            $modelparts = explode('/',$model);
+            array_unshift($type,$modelparts[count($modelparts)-3]);
+        }
+
         $nrscores++;
         if ( $maxscore < $score ){
             $maxscore = $score;
@@ -70,8 +84,9 @@ elseif ($benchmark != 'all'){
             array_unshift($type,'transformer-big');
         }
         */
-        if ($modelsource != 'scores'){
-            array_unshift($type,$modelsource);
+
+        if ($package != 'opusmt'){
+            array_unshift($type,$package);
         }
         elseif (strpos($array[1],'transformer-small') !== false){
             array_unshift($type,'transformer-small');
@@ -94,8 +109,8 @@ else{
         $array = explode("\t", $line);
         array_push($data,$array[1]);
         $nrscores++;
-        if ($modelsource != 'scores'){
-            array_unshift($type,$modelsource);
+        if ($package != 'opusmt'){
+            array_unshift($type,$package);
         }
         elseif (strpos($array[2],'transformer-small') !== false){
             array_push($type,'transformer-small');
@@ -175,8 +190,10 @@ $barColor = imagecolorallocate($chart, 47, 133, 217);
 $barColors = array('Tatoeba-MT-models' => imagecolorallocate($chart, 47, 133, 217),
                    'OPUS-MT-models' => imagecolorallocate($chart, 217, 133, 47),
                    // 'other' => imagecolorallocate($chart, 212, 212, 0),
+                   'external' => imagecolorallocate($chart, 164, 164, 164),
                    'other' => imagecolorallocate($chart, 164, 164, 164),
                    'user-scores' => imagecolorallocate($chart, 133, 133, 164),
+                   'contributed' => imagecolorallocate($chart, 133, 133, 164),
                    'unverified' => imagecolorallocate($chart, 133, 133, 164),
                    // 'transformer-small' => imagecolorallocate($chart, 133, 217, 47),
                    'transformer-small' => imagecolorallocate($chart, 47, 196, 47),

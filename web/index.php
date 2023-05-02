@@ -14,7 +14,7 @@
 include 'functions.php';
 
 // get query parameters
-$package    = get_param('pkg', 'Tatoeba-MT-models');
+$package    = get_param('pkg', 'opusmt');
 $benchmark  = get_param('test', 'all');
 $metric     = get_param('metric', 'bleu');
 $showlang   = get_param('scoreslang', 'all');
@@ -55,20 +55,20 @@ if ($benchmark == 'all' || $benchmark == 'avg'){
     $test = 'all';
 }
 
-$url_param = make_query(['model' => 'all', 'test' => $test, 'modelsource' => 'scores']);
+$url_param = make_query(['model' => 'all', 'test' => $test, 'pkg' => 'opusmt']);
 $opusmt_link = "[<a rel=\"nofollow\" href=\"index.php?$url_param\">OPUS-MT</a>]";
 
-$url_param = make_query(['model' => 'all', 'test' => $test, 'modelsource' => 'external-scores']);
+$url_param = make_query(['model' => 'all', 'test' => $test, 'pkg' => 'external']);
 $external_link = "[<a rel=\"nofollow\" href=\"index.php?$url_param\">external</a>]";
 
 
 $contributed_link = "";
 $userscores_exists = false;
 
-if (local_scorefile_exists($langpair, 'all', $metric, 'all', 'external', 'user-scores')){
+if (local_scorefile_exists($langpair, 'all', $metric, 'all', 'contributed', 'user-scores')){
     $userscores_exists = true;
     if ($userscores == "yes"){
-        $url_param = make_query(['model' => 'all', 'test' => $test, 'modelsource' => 'user-scores']);
+        $url_param = make_query(['model' => 'all', 'test' => $test, 'pkg' => 'contributed']);
         $contributed_link = "[<a rel=\"nofollow\" href=\"index.php?$url_param\">contributed</a>]";
     }
 }
@@ -82,10 +82,10 @@ else{
     $url_param = make_query(['model' => 'top', 'test' => $test]);
     $top_models_link = "[<a rel=\"nofollow\" href=\"index.php?$url_param\">all models</a>]";
     if ($model == 'all'){
-        if ($modelsource == 'external-scores'){
+        if ($package == 'external'){
             $model_selection_links = "$top_models_link $opusmt_link [external] $contributed_link";
         }
-        elseif ($modelsource == 'user-scores'){
+        elseif ($package == 'contributed'){
             $model_selection_links = "$top_models_link $opusmt_link $external_link [contributed]";
         }
         else{
@@ -115,8 +115,6 @@ if ($model != 'all' && $model != 'top'){
     $modelfile = array_pop($parts);
     $modellang = array_pop($parts);
 
-    $modelbase = implode('/',[$package, $model]);
-
     if ($modellang == $langpair){
         echo("<li><b>Language pair:</b> $langpair</li>");
     }
@@ -134,15 +132,16 @@ if ($model != 'all' && $model != 'top'){
         }
     }
 
-    $url_param = make_query(['model1' => $modelbase, 'model2' => 'unknown', 'model' => 'unknown']);
+    $url_param = make_query(['model1' => implode('/',[$package, $model]),
+                             'model2' => 'unknown', 'model' => 'unknown']);
     $comparelink = "[<a rel=\"nofollow\" href=\"compare.php?". SID . '&'.$url_param."\">compare</a>]";
     $modelhome = $storage_url.$package;
     $modelshort = short_model_name($model);
     $downloadlink = "[<a rel=\"nofollow\" href=\"$modelhome/$model.zip\">download</a>]";
     echo("<li><b>Models:</b> $model_selection_links $comparelink</li>");
-    echo("<li><b>Selected:</b> $package/$model</li>");
+    echo("<li><b>Selected:</b> $model</li>");
 
-    $eval_file_url = $storage_url.'/models/'.$modelbase.'.eval.zip';
+    $eval_file_url = $storage_urls[$package].'/models/'.$model.'.eval.zip';
     $downloadlink = "[<a rel=\"nofollow\" href=\"$eval_file_url\">download</a>]";
     
     if ($benchmark != 'all'){

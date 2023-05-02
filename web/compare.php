@@ -120,9 +120,9 @@ else{
 }
 
 echo('<table><tr><th>OPUS-MT models</th><th>External models</th><tr><tr><td>');
-print_model_list($internal_scores_url, $langpair, $model1, $model2);
+print_model_list($leaderboard_urls['opusmt'].'/scores', $langpair, $model1, $model2);
 echo('</td><td>');
-print_model_list($external_scores_url, $langpair, $model1, $model2);
+print_model_list($leaderboard_urls['external'].'/scores', $langpair, $model1, $model2);
 echo('</td></tr></table>');
 
 echo("</div>");

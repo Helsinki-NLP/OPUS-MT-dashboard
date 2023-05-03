@@ -25,7 +25,7 @@ else{
 
 
 // get query parameters
-$package   = get_param('pkg', 'Tatoeba-MT-models');
+$package   = get_param('pkg', 'opusmt');
 $benchmark = get_param('test', 'all');
 $model     = get_param('model', 'all');
 $chart     = get_param('chart', 'standard');

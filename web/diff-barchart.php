@@ -31,7 +31,7 @@ if ($model1 != 'unknown' and $model2 != 'unknown'){
 }
 elseif ($model == 'top'){
     list($srclang, $trglang, $langpair) = get_langpair();
-    $lines1 = read_scores($langpair, 'all', $metric, 'all', 'internal', 'scores');
+    $lines1 = read_scores($langpair, 'all', $metric, 'all', 'opusmt', 'scores');
     $lines2 = read_scores($langpair, 'all', $metric, 'all', 'external', 'external-scores');
     $topscores = true;
 }

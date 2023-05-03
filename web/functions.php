@@ -174,15 +174,9 @@ function get_score_filename($langpair, $benchmark, $metric='bleu', $model='all',
     
     global $leaderboard_urls, $leaderboard_url;
     global $leaderboard_dirs, $leaderboard_dir;
-    
-    if ($source != 'unchanged'){
-        $base_url = $leaderboard_urls[$source];
-        $base_dir = $leaderboard_dirs[$source];
-    }
-    else{
-        $base_url = $leaderboard_url;
-        $base_dir = $leaderboard_dir;
-    }
+
+    $base_url = $leaderboard_urls[$pkg];
+    $base_dir = $leaderboard_dirs[$pkg];
 
     if ($model != 'all' && $model != 'avg'){
         if ($metric != 'all'){
@@ -365,7 +359,7 @@ function get_translation_file($model, $pkg='opusmt'){
     global $storage_urls, $storage_dirs;
 
     $url  = implode('/',[$storage_urls[$pkg],'models',$model]).'.eval.zip';
-    $file = implode('/',[$storage_dir[$pkg],'models',$model]).'.eval.zip';
+    $file = implode('/',[$storage_dirs[$pkg],'models',$model]).'.eval.zip';
 
     if (file_exists($file)){
         return $file;
@@ -384,8 +378,8 @@ function get_translation_file($model, $pkg='opusmt'){
 function get_translation_file_with_cache($model, $pkg='opusmt', $cache_size=10){
     global $storage_urls, $storage_dirs;
     
-    $url  = implode('/',[$storage_url[$pkg],'models',$model]).'.eval.zip';
-    $file = implode('/',[$storage_dir[$pkg],'models',$model]).'.eval.zip';
+    $url  = implode('/',[$storage_urls[$pkg],'models',$model]).'.eval.zip';
+    $file = implode('/',[$storage_dirs[$pkg],'models',$model]).'.eval.zip';
 
     // local file
     if (file_exists($file)){

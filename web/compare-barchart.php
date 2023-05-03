@@ -11,7 +11,7 @@ session_start();
 include 'functions.php';
 
 // get query parameters
-$package    = get_param('pkg', 'Tatoeba-MT-models');
+$package    = get_param('pkg', 'opusmt');
 $benchmark  = get_param('test', 'all');
 $metric     = get_param('metric', 'bleu');
 $model      = get_param('model', 'top');
@@ -42,21 +42,21 @@ if ($model1 != 'unknown' and $model2 != 'unknown'){
     $topscores = false;
 }
 elseif ($model == 'verified'){
-    $lines[1] = read_scores($langpair, 'all', $metric, 'all', 'internal', 'scores');
+    $lines[1] = read_scores($langpair, 'all', $metric, 'all', 'opusmt', 'scores');
     $lines[2] = read_scores($langpair, 'all', $metric, 'all', 'external', 'external-scores');
     $topscores = true;
 }
 elseif ($model == 'unverified'){
-    $lines[1] = read_scores($langpair, 'all', $metric, 'all', 'internal', 'scores');
-    $lines[3] = read_scores($langpair, 'all', $metric, 'all', 'external', 'user-scores');
+    $lines[1] = read_scores($langpair, 'all', $metric, 'all', 'opusmt', 'scores');
+    $lines[3] = read_scores($langpair, 'all', $metric, 'all', 'contributed', 'user-scores');
     $topscores = true;
 }
 elseif ($model == 'top'){
-    $lines[1] = read_scores($langpair, 'all', $metric, 'all', 'internal', 'scores');
+    $lines[1] = read_scores($langpair, 'all', $metric, 'all', 'opusmt', 'scores');
     $lines[2] = read_scores($langpair, 'all', $metric, 'all', 'external', 'external-scores');
     if ($userscores == "yes"){
-        if (local_scorefile_exists($langpair, 'all', $metric, 'all', 'external', 'user-scores')){
-            $lines[3] = read_scores($langpair, 'all', $metric, 'all', 'external', 'user-scores');
+        if (local_scorefile_exists($langpair, 'all', $metric, 'all', 'contributed', 'user-scores')){
+            $lines[3] = read_scores($langpair, 'all', $metric, 'all', 'contributed', 'user-scores');
         }
     }
     $topscores = true;

@@ -50,7 +50,8 @@ if ($model1 != 'unknown'){
     // list($m1_pkg, $m1_lang, $m1_name) = explode('/',$model1);
     // $url_param = make_query(['model' => $m1_lang.'/'.$m1_name, 'pkg' => $m1_pkg]);
     $m_link = "<a rel=\"nofollow\" href=\"index.php?".$url_param."\">";
-    echo('<li><b>Model 1 (blue):</b> '.$m_link.$model1.'</a></li>');
+    // echo('<li><b>Model 1 (blue):</b> '.$m_link.$model1.'</a></li>');
+    echo('<li><b>Model 1 (blue):</b> '.$m_link.$m1_name.'</a></li>');
 
     if ($model2 != 'unknown'){
         $parts = explode('/',$model2);
@@ -60,7 +61,8 @@ if ($model1 != 'unknown'){
         // list($m2_pkg, $m2_lang, $m2_name) = explode('/',$model2);
         // $url_param = make_query(['model' => $m2_lang.'/'.$m2_name, 'pkg' => $m2_pkg]);
         $m_link = "<a rel=\"nofollow\" href=\"index.php?".$url_param."\">";
-        echo('<li><b>Model 2 (orange):</b> '.$m_link.$model2.'</a></li>');
+        // echo('<li><b>Model 2 (orange):</b> '.$m_link.$model2.'</a></li>');
+        echo('<li><b>Model 2 (orange):</b> '.$m_link.$m2_name.'</a></li>');
     }
     echo("<li><b>Evaluation metric:</b> ");
     print_metric_options($metric);
@@ -120,9 +122,9 @@ else{
 }
 
 echo('<table><tr><th>OPUS-MT models</th><th>External models</th><tr><tr><td>');
-print_model_list($leaderboard_urls['opusmt'].'/scores', $langpair, $model1, $model2);
+print_model_list('opusmt', $langpair, $model1, $model2);
 echo('</td><td>');
-print_model_list($leaderboard_urls['external'].'/scores', $langpair, $model1, $model2);
+print_model_list('external', $langpair, $model1, $model2);
 echo('</td></tr></table>');
 
 echo("</div>");
@@ -131,7 +133,10 @@ echo("</div>");
 
 
 
-function print_model_list($scores_url, $langpair, $model1, $model2){
+function print_model_list($pkg, $langpair, $model1, $model2){
+    global $leaderboard_urls;
+
+    $scores_url = $leaderboard_urls[$pkg].'/scores';
 
 // TODO: do we also want to cache model lists in the SESSION variable?
 $models = file(implode('/',[$scores_url,$langpair,'model-list.txt']));
@@ -152,42 +157,24 @@ foreach ($sorted_models as $model => $release){
     $parts = explode('/',rtrim($model));
     $modelzip = array_pop($parts);
 
-    // echo $model;
-    if (count($parts) > 4){
-        $modellang = array_pop($parts);
-        $modelpkg = array_pop($parts);
-        $modelzip = implode('/',[$modellang,$modelzip]);
-    }
-    else{
-        $modelpkg = array_pop($parts);
-    }
-    if (substr($modelzip, -4) == '.zip'){
-        $modelbase = substr($modelzip, 0, -4);
-    }
-    else{
-        $modelbase = $modelzip;
-    }
-
-    // $modellang = array_pop($parts);
-    // $modelpkg = array_pop($parts);
-    // $modelbase = substr($modelzip, 0, -4);
-    $new_model = implode('/',[$modelpkg, $modelbase]);
+    $modelbase = modelurl_to_model(rtrim($model));
+    $new_model = implode('/',[$pkg, $modelbase]);
 
     if (($model1 != 'unknown') && ($model2 == 'unknown')){
         if ($model1 == $new_model){
-            // echo("<li>$modelbase</li>");
-            echo("<li>$new_model</li>");
+            echo("<li>$modelbase</li>");
+            // echo("<li>$new_model</li>");
         }
         else{
             $url_param = make_query(['model1' => $model1, 'model2' => $new_model]);
-            // echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$modelbase</a></li>");
-            echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$new_model</a></li>");
+            echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$modelbase</a></li>");
+            // echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$new_model</a></li>");
         }
     }
     else{        
         $url_param = make_query(['model1' => $new_model, 'model2' => 'unknown']);
-        // echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$modelbase</a></li>");
-        echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$new_model</a></li>");
+        echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$modelbase</a></li>");
+        // echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$new_model</a></li>");
     }   
 }
 echo("</ul>");

@@ -14,6 +14,7 @@ if (array_key_exists('action', $_GET)){
         echo '<pre>';
         system("find ".sys_get_temp_dir()." -maxdepth 1 -mtime +1 -type f -name 'opusmteval*'");
         system("find ".sys_get_temp_dir()." -maxdepth 1 -mtime +1 -type f -name 'opusmteval*' -delete");
+        system("find ".sys_get_temp_dir()." -maxdepth 1 -type f -name 'opusmteval*' -empty -delete");
         echo '</pre>';
     }
 
@@ -64,7 +65,7 @@ echo '</pre>';
 echo('<br/>Temporary evaluation files:<br/>');
 
 echo '<pre>';
-system("find ".sys_get_temp_dir()." -name '*.eval.zip'");
+system("find ".sys_get_temp_dir()." -type f -name '*.eval.zip'");
 echo '</pre>';
 
 

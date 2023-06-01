@@ -798,7 +798,18 @@ function print_scores($model='all', $langpair='all', $benchmark='all', $pkg='opu
         // remove extension .zip if it exists
         if (substr($modelurl, -4) == '.zip'){
             $model_download_link = "<a rel=\"nofollow\" href=\"$modelurl\">zip-file</a>";
-        }        
+        }
+        else{
+            // TODO: we need a better solution to link to model data cards
+            //       this is just a hack to link to huggingface models
+            //   --> need to store model info and links somewhere!
+            $array = explode('/', $modelurl);
+            if ($array[0] == 'huggingface'){
+                $array[0] = 'https://huggingface.co';
+                $url = implode('/',$array);
+                $model_download_link = "<a rel=\"nofollow\" href=\"$url\">URL</a>";
+            }
+        }
 
         $eval_file_url = $storage_urls[$pkg].'/models/'.$model.'.eval.zip';
         $eval_download_link = "<a rel=\"nofollow\" href=\"$eval_file_url\">evaluations</a>";
@@ -1016,7 +1027,7 @@ function print_legend(){
 
 // print a table with all scores and score differences
 
-function print_topscore_differences($langpair='deu-eng', $benchmark='all', $metric='bleu'){
+function print_topscore_differences($langpair='deu-eng', $benchmark='all', $metric='bleu', $contributed='no'){
     global $chart;
 
     $lines1 = read_scores($langpair, 'all', $metric, 'all', 'opusmt', 'opusmt');
@@ -1049,6 +1060,23 @@ function print_topscore_differences($langpair='deu-eng', $benchmark='all', $metr
         }
     }
 
+    if ($contributed == 'yes'){
+        $lines3 = read_scores($langpair, 'all', $metric, 'all', 'contributed', 'contributed');
+        $scores3 = array();
+        $model3 = array();
+        $pkg3 = array();
+        foreach($lines3 as $line3) {
+            $array = explode("\t", rtrim($line3));
+            if ($benchmark == 'all' || $benchmark == $array[0]){
+                $key = $array[0];
+                $score = (float) $array[1];
+                $scores3[$key] = $score;
+                $pkg3[$key] = 'external';
+                $model3[$key] = $array[2];
+            }
+        }
+    }
+
     if (count($lines1) == 0){
         print_scores('all', $langpair,$benchmark,'external',$metric, 'external-scores');
         return;
@@ -1056,6 +1084,9 @@ function print_topscore_differences($langpair='deu-eng', $benchmark='all', $metr
     if (count($lines2) == 0){
         print_scores('all', $langpair,$benchmark,'internal',$metric, 'scores');
         return;
+    }
+    if (count($lines3) == 0){
+        $contributed == 'no';
     }
 
     
@@ -1066,7 +1097,11 @@ function print_topscore_differences($langpair='deu-eng', $benchmark='all', $metr
     
     echo('<div id="scores"><div class="query">');
     echo("<h3>Model Scores (comparing between OPUS-MT and external models)</h3>");
-    echo("<table><tr><th>ID</th><th>Benchmark ($metric)</th><th>Output</th><th>OPUS-MT</th><th>$metric</th><th>external</th><th>$metric</th><th>Diff</th></tr>");
+    echo("<table><tr><th>ID</th><th>Benchmark ($metric)</th><th>Output</th><th>OPUS-MT</th><th>$metric</th><th>external</th><th>$metric</th><th>Diff</th>");
+    if ($contributed == 'yes'){
+        echo("<th>contributed</th><th>$metric</th><th>Diff</th>");
+    }
+    echo('</tr>');
     $id = 0;
 
     foreach($scores1 as $key => $score1) {
@@ -1075,6 +1110,26 @@ function print_topscore_differences($langpair='deu-eng', $benchmark='all', $metr
                 continue;
             }
         }
+        if ($contributed == 'yes'){
+            if (array_key_exists($key,$scores3)){
+                $score3 = $scores3[$key];
+                $diff3 = $score1 - $score3;
+                $diff3_pretty = $metric == 'bleu' ? sprintf('%4.1f',$diff3) : sprintf('%5.3f',$diff3);
+                $avg_score3 += $score3;
+                $count_scores3++;
+                $model3short = short_model_name($model3[$key]);
+                $url_param = make_query(['model' => $model2[$key], 'pkg' => $pkg3[$key]]);
+                $model3link = "<a rel=\"nofollow\" href=\"index.php?$url_param\">$model3short</a>";
+            }
+            else{
+                $score3 = '';
+                $diff3 = 0;
+                $diff3_pretty = '';
+                $model3short = '';
+                $model3link = '';
+            }
+        }
+            
         if (array_key_exists($key,$scores2)){
             $score2 = $scores2[$key];
 
@@ -1105,7 +1160,10 @@ function print_topscore_differences($langpair='deu-eng', $benchmark='all', $metr
                     
                 echo('<tr><td>');
                 echo(implode('</td><td>',[$id, $testlink, $translink, $model1link, $score1, $model2link, $score2, $diff_pretty]));
-                // echo(implode('</td><td>',[$id, $key, $translink, $model1link, $score1, $model2link, $score2, $diff_pretty]));
+                if ($contributed == 'yes'){
+                    echo('</td><td>');
+                    echo(implode('</td><td>',[$model3link, $score3, $diff3_pretty]));
+                }
                 echo('</td></tr>');
                 $id++;
             }
@@ -1129,6 +1187,10 @@ function print_topscore_differences($langpair='deu-eng', $benchmark='all', $metr
 
                 echo('<tr><td>');
                 echo(implode('</td><td>',[$id, $testlink, $translink, $model1link, $score1, '', '', $diff_pretty]));
+                if ($contributed == 'yes'){
+                    echo('</td><td>');
+                    echo(implode('</td><td>',[$model3link, $score3, $diff3_pretty]));
+                }
                 echo('</td></tr>');
                 $id++;
             }
@@ -1153,9 +1215,28 @@ function print_topscore_differences($langpair='deu-eng', $benchmark='all', $metr
         $avg2 = sprintf('%5.3f',$avg_score2);
         $diff = sprintf('%5.3f',$diff);
     }
+    
+    if ($contributed == 'yes'){
+        if ($count_scores3 > 1){
+            $avg_score3 /= $count_scores3;
+        }
+        $diff3 = $avg_score1 - $avg_score3;
+        if ($metric == 'bleu'){
+            $avg3 = sprintf('%4.1f',$avg_score3);
+            $diff3 = sprintf('%4.1f',$diff3);
+        }
+        else{
+            $avg3 = sprintf('%5.3f',$avg_score3);
+            $diff3 = sprintf('%5.3f',$diff3);
+        }
+    }
 
-    echo("<tr><th></th><th></th><th>average</th><th></th><th>$avg1</th><th></th><th>$avg2</th><th>$diff</th></tr>");
-    echo('</table></div></div>');
+
+    echo("<tr><th></th><th></th><th>average</th><th></th><th>$avg1</th><th></th><th>$avg2</th><th>$diff</th>");
+    if ($contributed == 'yes'){
+        echo("<th></th><th>$avg3</th><th>$diff3</th>");
+    }
+    echo('</tr></table></div></div>');
 }
 
 

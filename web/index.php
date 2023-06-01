@@ -276,7 +276,12 @@ if ( ! $heatmap_shown ){
 if ( ! $heatmap_shown ){
     echo '</div><div id="scores" class="query">';
     if ($model == 'top' && $benchmark == 'all'){
-        print_topscore_differences($langpair, $benchmark, $metric);
+        if ($chart == "diff"){
+            print_topscore_differences($langpair, $benchmark, $metric, 'no');
+        }
+        else{
+            print_topscore_differences($langpair, $benchmark, $metric, $userscores);
+        }
     }
     elseif ($model != 'all' && $model != 'top'){
         print_model_scores($model,$showlang,$benchmark,$package,$metric);

@@ -50,7 +50,7 @@ if ($model != 'all' && $model != 'top'){
         // $score = $metric == 'bleu' ? $array[3] : $array[2];
         $score = (float) $array[2];
         array_push($data,$score);
-        array_push($type,model_color($array[count($array)-1], $array[1]));
+        array_push($type,model_color($array[count($array)-1], $model));
 
         $nrscores++;
         if ( $maxscore < $score ){

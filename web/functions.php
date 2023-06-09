@@ -21,6 +21,7 @@ $storage_urls['opusmt']          = 'https://object.pouta.csc.fi/OPUS-MT-leaderbo
 $storage_urls['external']        = 'https://object.pouta.csc.fi/External-MT-leaderboard';
 $storage_urls['contributed']     = 'https://object.pouta.csc.fi/Contributed-MT-leaderboard';
 
+$testset_url                     = 'https://raw.githubusercontent.com/Helsinki-NLP/OPUS-MT-testsets/master';
 
 
 // for backwards compatibility
@@ -303,6 +304,8 @@ function is_testset_line(string $line): bool {
     if (in_array('flores101-dev',$arr)){ return false; }
     if (in_array('flores200-dev',$arr)){ return false; }
     if (in_array('wikipedia.dev',$arr)){ return false; }
+    if (in_array('news2008',$arr)){ return false; }
+    if (in_array('news-test2008',$arr)){ return false; }
     if (in_array('newsdiscussdev2015',$arr)){ return false; }
     return true;
 };
@@ -311,7 +314,26 @@ function filter_testsets($array){
     return array_filter($array,"is_testset_line");
 }
 
-
+function get_testset_filename($testset, $langpair, $lang){
+    global $testset_url;
+    if (array_key_exists('testset-files', $_SESSION)){
+        if (array_key_exists($testset, $_SESSION['testset-files'])){
+            if (array_key_exists($langpair, $_SESSION['testset-files'][$testset])){
+                if (array_key_exists($lang, $_SESSION['testset-files'][$testset][$langpair])){
+                    return $_SESSION['testset-files'][$testset][$langpair][$lang];
+                }
+            }
+        }
+    }
+    $lines = read_file_with_cache(implode('/',[$testset_url,'testsets.tsv']));
+    foreach ($lines as $line){
+        $fields = explode("\t",$line);
+        $langpair=implode('-',[$fields[0],$fields[1]]);
+        $_SESSION['testset-files'][$fields[2]][$langpair][$fields[0]] = $fields[6];
+    }
+    // echo "..[$testset][$langpair][$lang].. ".$_SESSION['testset-files'][$testset][$langpair][$lang];
+    return $_SESSION['testset-files'][$testset][$langpair][$lang];
+}
 
 
 // generic function to read file with session cache

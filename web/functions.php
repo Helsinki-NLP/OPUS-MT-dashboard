@@ -1093,7 +1093,7 @@ function print_topscore_differences($langpair='deu-eng', $benchmark='all', $metr
                 $key = $array[0];
                 $score = (float) $array[1];
                 $scores3[$key] = $score;
-                $pkg3[$key] = 'external';
+                $pkg3[$key] = 'contributed';
                 $model3[$key] = $array[2];
             }
         }
@@ -1140,7 +1140,7 @@ function print_topscore_differences($langpair='deu-eng', $benchmark='all', $metr
                 $avg_score3 += $score3;
                 $count_scores3++;
                 $model3short = short_model_name($model3[$key]);
-                $url_param = make_query(['model' => $model2[$key], 'pkg' => $pkg3[$key]]);
+                $url_param = make_query(['model' => $model3[$key], 'pkg' => $pkg3[$key]]);
                 $model3link = "<a rel=\"nofollow\" href=\"index.php?$url_param\">$model3short</a>";
             }
             else{

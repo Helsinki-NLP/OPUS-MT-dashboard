@@ -165,18 +165,16 @@ if (isset($_POST['submit']) && isset($_POST['benchmark']) && isset($_POST['langp
         echo "No valid system name given! Please specify a non-empty ASCII name using characters in the range of [a-zA-Z0-9_]";
         $uploadOk = 0;
     }
-    /*
-    elseif (array_key_exists("translations",$_FILES)){
-        echo "No file selected!";
+    elseif (! filter_var($_POST['website'], FILTER_VALIDATE_URL)) {
+        echo "Specify a valid website URL!";
         $uploadOk = 0;
     }
-    elseif (array_key_exists("name",$_FILES["translations"])){
-        echo "No file selected!";
+    elseif (! filter_var($_POST['email'], FILTER_VALIDATE_EMAIL)) {
+        echo "Specify a valid e-mail address for the contact person!";
         $uploadOk = 0;
     }
-    */
     elseif ($_FILES["translations"]['size'] == 0){
-        echo "No file selected of the file is empty!";
+        echo "No file selected or the file is empty!";
         $uploadOk = 0;
     }
     elseif ($_FILES["translations"]["type"] != 'text/plain') {
@@ -197,10 +195,6 @@ if (isset($_POST['submit']) && isset($_POST['benchmark']) && isset($_POST['langp
         $uploadOk = 0;
     }
     */
-    if (file_exists($target_file)) {
-        echo "The file already exists. The new upload will overwrite the old one!<br/>";
-    }
-
 
     else{
         // count lines and compare to benchmark
@@ -216,6 +210,11 @@ if (isset($_POST['submit']) && isset($_POST['benchmark']) && isset($_POST['langp
             $uploadOk = 0;
         }
     }
+
+    if (file_exists($target_file)) {
+        echo "The file already exists. The new upload will overwrite the old one!<br/>";
+    }
+
     
 
     // Check if $uploadOk is set to 0 by an error
@@ -232,6 +231,8 @@ if (isset($_POST['submit']) && isset($_POST['benchmark']) && isset($_POST['langp
             if (move_uploaded_file($_FILES["translations"]["tmp_name"], $target_file)) {
                 $jobfile = create_eval_job($_SESSION['user'],
                                            $_POST['system'],
+                                           $_POST['website'],
+                                           $_POST['email'],
                                            $_POST['benchmark'],
                                            $_POST['langpair'],
                                            $target_file);
@@ -254,7 +255,7 @@ echo '</pre>';
 
 
 
-function create_eval_job($user, $system, $benchmark, $langpair, $file){
+function create_eval_job($user, $system, $website, $email, $benchmark, $langpair, $file){
 
     global $leaderboard_dirs;
     
@@ -270,6 +271,8 @@ function create_eval_job($user, $system, $benchmark, $langpair, $file){
     fwrite($fp, "make -C ".$leaderboard_dirs['contributed']);
     fwrite($fp, " USER=".$user);
     fwrite($fp, " MODELNAME=".$system);
+    fwrite($fp, " WEBSITE='".$website."'");
+    fwrite($fp, " CONTACT='".$email."'");
     fwrite($fp, " BENCHMARK=".$benchmark);
     fwrite($fp, " LANGPAIR=".$langpair);
     fwrite($fp, " FILE=".$file);

@@ -37,8 +37,8 @@ $storage_urls['user-scores']         = $storage_urls['contributed'];
 
 // local file locations
 
-// $local_datahome       = '/media/OPUS/';
-$local_datahome       = '/media/OPUS/dev/';
+// $local_datahome       = '/media/OPUS';
+$local_datahome       = '/media/OPUS/dev';
 
 $leaderboard_dirs['opusmt']      = $local_datahome.'/OPUS-MT-leaderboard';
 $leaderboard_dirs['external']    = $local_datahome.'/External-MT-leaderboard';

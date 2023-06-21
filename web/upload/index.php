@@ -17,6 +17,10 @@ include('../functions.php');
 include('users.php');
 
 
+// echo('<h1>OPUS-MT leaderboard - Translation File Upload (User: '.$_SESSION['user'].')</h1>');
+echo('<h1>OPUS-MT leaderboard - Translation File Upload</h1>');
+
+check_setup();
 
 $ALLOW_NEW_USERS = 1;
 $USER_NAME_FILE = $local_datahome.'/Contributed-MT-leaderboard-data/users.php';
@@ -27,11 +31,13 @@ if (!logged_in()){
 	exit;
 }
 
+// home dir for uploaded data for the current user
+$user_dir = implode('/',[$local_datahome,'Contributed-MT-leaderboard-data',$_SESSION['user']]);
+
+
 $benchmark = isset($_POST["benchmark"]) ? $_POST["benchmark"] : '--select--';
 $langpair = isset($_POST["langpair"]) ? $_POST["langpair"] : '--select--';
 
-
-echo('<h1>OPUS-MT leaderboard - Translation File Upload (User: '.$_SESSION['user'].')</h1>');
 
 
 // $lines = file(implode('/',[$BENCHMARK_DIR,'benchmark2langpair.tsv']));
@@ -57,7 +63,7 @@ if ($benchmark != ''){
 
 if ($benchmark != '--select--'){
     echo('<tr><td>benchmark: </td><td>'.$benchmark);
-    echo('</td><td><a href="'.$_SERVER['PHP_SELF'].'"?session=clear>change</a>');
+    echo('&nbsp;&nbsp;<a href="'.$_SERVER['PHP_SELF'].'"?session=clear>change</a>');
     echo('<input type="hidden" id="benchmark" name="benchmark" value="'.$benchmark.'"></td></tr>');
     $langpairs = explode(' ',$benchmarks[$benchmark]);
     if (count($langpairs) == 1){
@@ -148,10 +154,33 @@ echo('</table></form>');
 
 
 
-if (isset($_POST['submit']) && isset($_POST['benchmark']) && isset($_POST['langpair'])){
+if (isset($_POST['remove'])){
+    remove_user_file($_SESSION['user'],$_POST['system'],$_POST['testset'],$_POST['langpair']);
+}
 
+if (isset($_POST['confirm_removal'])){
+    // echo("... confirm removal ...");
+    $file = implode('/',[$user_dir,$_POST['system'],$_POST['testset']]);
+    $file .= '.'.$_POST['langpair'];
+    $jobfile .= $file.'.remove.slurm';
+    if (system("sbatch ".$jobfile)){
+        echo "<br/>Remove job for ". htmlspecialchars(basename( $file )). " is in the queue (see below).";
+        if (file_exists($file)){
+            rename($file, $file.'.backup');
+        }
+    }
+}
+elseif (isset($_POST['cancel_removal'])){
+    // echo("... cancel removal ...");
+    $slurm_file = implode('/',[$user_dir,$_POST['system'],$_POST['testset']]);
+    $slurm_file .= '.'.$_POST['langpair'].'.remove.slurm';
+    unlink($slurm_file);
+}
+
+
+elseif (isset($_POST['submit']) && isset($_POST['benchmark']) && isset($_POST['langpair'])){
     
-    $target_dir = implode('/',[$local_datahome,'Contributed-MT-leaderboard-data',$_SESSION['user'],$_POST['system']]);
+    $target_dir = implode('/',[$user_dir,$_POST['system']]);
     $target_file = implode('/',[$target_dir,$_POST['benchmark']]).'.'.$_POST['langpair'];
 
     echo('<br/><hr/><br/>');
@@ -215,8 +244,6 @@ if (isset($_POST['submit']) && isset($_POST['benchmark']) && isset($_POST['langp
         echo "The file already exists. The new upload will overwrite the old one!<br/>";
     }
 
-    
-
     // Check if $uploadOk is set to 0 by an error
     if ($uploadOk == 1) {
         if  (!file_exists($target_dir)){
@@ -237,7 +264,7 @@ if (isset($_POST['submit']) && isset($_POST['benchmark']) && isset($_POST['langp
                                            $_POST['langpair'],
                                            $target_file);
                 if (system("sbatch ".$jobfile)){
-                    echo "\nEvaluation job for ". htmlspecialchars(basename( $target_file )). " is in the queue (see below).";
+                    echo "<br/>Evaluation job for ". htmlspecialchars(basename( $target_file )). " is in the queue (see below).";
                 }
             } else {
                 echo "Sorry, there was an error uploading your file.";
@@ -245,6 +272,9 @@ if (isset($_POST['submit']) && isset($_POST['benchmark']) && isset($_POST['langp
         }
     }
 }
+
+echo("<h2>Existing user files</h2>");
+show_userfiles($user_dir);
 
 
 echo("<h2>Current Job Queue</h2>");
@@ -281,8 +311,116 @@ function create_eval_job($user, $system, $website, $email, $benchmark, $langpair
     return $slurmfile;
 }
 
+function create_remove_job($user, $system, $benchmark, $langpair, $file){
+
+    global $leaderboard_dirs;
+    
+    $slurmfile = $file.'.remove.slurm';
+    if (!$fp = fopen($slurmfile, 'w')) {
+        echo "Cannot open file ($slurmfile)";
+        return '';
+    }
+    fwrite($fp, "#!/bin/bash\n\n");
+    fwrite($fp, "#SBATCH -J '$user/$system/$benchmark.$langpair'\n");
+    fwrite($fp, "#SBATCH -o '$file.remove.out'\n");
+    fwrite($fp, "#SBATCH -e '$file.remove.err'\n\n");
+    fwrite($fp, "make -C ".$leaderboard_dirs['contributed'].'/admin');
+    fwrite($fp, " USER=".$user);
+    fwrite($fp, " MODELNAME=".$system);
+    fwrite($fp, " BENCHMARK=".$benchmark);
+    fwrite($fp, " LANGPAIR=".$langpair);
+    fwrite($fp, " remove\n\n");
+    fclose($fp);
+    return $slurmfile;
+}
+
+
 
 include('../footer.php');
+
+
+function get_user_systems($homedir){
+    $systems = array();
+    if ($handle = opendir($homedir)) {
+        while (false !== ($entry = readdir($handle))) {
+            if ($entry != "." && $entry != "..") {
+                $sysdir = implode('/',[$homedir,$entry]);
+                if (is_dir($sysdir)){
+                    array_push($systems, $entry);
+                }
+            }
+        }
+    }
+    return $systems;
+}
+
+function show_userfiles($homedir){
+    $systems = get_user_systems($homedir);
+    echo '<table>';
+    foreach ($systems as $system){
+        $sysdir = implode('/',[$homedir,$system]);
+        if ($sysdh = opendir($sysdir)) {
+            while (false !== ($file = readdir($sysdh))) {
+                $localfile = implode('/',[$sysdir,$file]);
+                if (is_file($localfile)){
+                    $ext = pathinfo($file, PATHINFO_EXTENSION);
+                    if ($ext != 'out' && $ext != 'err' && $ext != 'slurm' && $ext != 'backup'){
+                        echo('<tr><td>');
+                        list($testset, $langpair) = explode('.', $file);
+                        // echo "$system / $testset . $langpair<br/>";
+                        $system_param = make_query(['model' => implode('/',[$_SESSION['user'],$system]),
+                                                    'test' => 'all',
+                                                    'pkg' => 'contributed']);
+                        $file_param = make_query(['model' => implode('/',[$_SESSION['user'],$system]),
+                                                  'test' => $testset,
+                                                  'langpair' => $langpair,
+                                                  'pkg' => 'contributed']);
+                        echo "<a href='../index.php?$system_param'>$system</a> / <a href='../index.php?$file_param'>$file</a><br/>";
+                        $sysfile = implode('/',[$system,$file]);
+                        echo('<td><form action="index.php" method="post">');
+                        echo('<input type="hidden" name="system" value="'.$system.'">');
+                        echo('<input type="hidden" name="testset" value="'.$testset.'">');
+                        echo('<input type="hidden" name="langpair" value="'.$langpair.'">');
+                        if (file_exists($localfile.'.remove.slurm')){
+                            echo('<input type="submit" value="cancel" name="cancel_removal">');
+                            echo('<input type="submit" value="confirm removal" name="confirm_removal">');
+                        }
+                        else{
+                            echo('<input type="submit" value="remove" name="remove">');
+                        }
+                        echo('</td></tr>');
+                    }
+                }
+            }
+        }
+        closedir($sysdh);
+    }
+    echo('</table>');
+}
+
+
+function remove_user_file($user, $system, $testset, $langpair){
+    global $user_dir;
+
+    $user_file = implode('/',[$user_dir, $system, $testset]).'.'.$langpair;
+    create_remove_job($user, $system, $testset, $langpair, $user_file);
+    // echo("... remove ".implode('/',[$user, $system, $testset, $langpair]));
+    echo('<br/>');
+}
+
+
+function check_setup(){
+    global $leaderboard_dirs;
+    if (!exec('which squeue')){
+        echo("SLURM is not available! Upload is disabled!<br/>");
+        exit;
+    }
+    if (!file_exists($leaderboard_dirs['contributed'])){
+        echo("Local leaderboard repository does not exist! Upload is disabled!<br/>");
+        exit;
+    }
+}
+
 
 
 ?>

@@ -12,9 +12,20 @@
 
 <?php
 
+
 include('../functions.php');
 // include('../header.php');
 include('users.php');
+
+echo '<div class="header">';
+if (isset($_SESSION["user"])){
+    echo '  [logged in as: '.$_SESSION["user"].']';
+    echo '  [<a href="index.php?session=clear">logout</a>]';
+}
+echo '  [<a href="../index.php">return to dashboard</a>]';
+echo '<hr/>';
+echo '</div>';
+
 
 
 // echo('<h1>OPUS-MT leaderboard - Translation File Upload (User: '.$_SESSION['user'].')</h1>');
@@ -37,6 +48,7 @@ $user_dir = implode('/',[$local_datahome,'Contributed-MT-leaderboard-data',$_SES
 
 $benchmark = isset($_POST["benchmark"]) ? $_POST["benchmark"] : '--select--';
 $langpair = isset($_POST["langpair"]) ? $_POST["langpair"] : '--select--';
+$system = isset($_POST["system"]) ? $_POST["system"] : '--select--';
 
 
 
@@ -124,16 +136,28 @@ if ($benchmark != '--select--'){
         }
     }
     if ($langpair != '--select--'){
-    echo('<tr><td>system name:</td><td><input type="text" name="system"></td></tr>');
-    echo('<tr><td>website:</td><td><input type="text" name="website"></td></tr>');
-    echo('<tr><td>contact e-mail:</td><td><input type="email" name="email"></td></tr>');
-    echo('<tr><td>translation file:</td>');
-    echo('<td><input type="file" name="translations" id="translations"></td></tr>');
-    // echo('<tr><td><button onclick="submitFunction()">submit</button></td></tr>');
-    // echo('<tr><td><input type="button" onclick="this.form.submit()" value="submit" name="submit" id="submit"></td></tr>');
-    // echo('<tr><td><input type="button" onclick="submitFunction()" value="submit" name="submit" id="submit"></td></tr>');
-    echo('<tr><td><input type="submit" value="submit" name="submit"></td>');
-    // echo('<td><input type="reset"></td></tr>');
+        $systems = get_user_systems($user_dir);
+        asort($systems);
+        array_unshift($systems,'--select--');
+        if (count($systems) > 0){
+            echo '<tr><td>system name: </td><td><select name="system" id="system" onchange="this.form.submit()">';
+            foreach ($systems as $s){
+                if ($s == $system){
+                    echo "<option value=\"$s\" selected>$s</option>";
+                }
+                else{
+                    echo "<option value=\"$s\">$s</option>";
+                }
+            }
+            echo '</select>';
+        }
+        echo('<tr><td>new system:</td><td><input type="text" name="newsystem"></td></tr>');
+        echo('<tr><td>website:</td><td><input type="text" name="website"></td></tr>');
+        echo('<tr><td>contact e-mail:</td><td><input type="email" name="email"></td></tr>');
+        echo('<tr><td>translation file:</td>');
+        echo('<td><input type="file" name="translations" id="translations"></td></tr>');
+        echo('<tr><td><input type="submit" value="submit" name="submit"></td>');
+        // echo('<td><input type="reset"></td></tr>');
     }
 }
 else{
@@ -154,33 +178,43 @@ echo('</table></form>');
 
 
 
+
 if (isset($_POST['remove'])){
+    $file = implode('/',[$user_dir,$_POST['system'],$_POST['testset']]);
+    $file .= '.'.$_POST['langpair'];
+    // echo("... remove $file ...");
     remove_user_file($_SESSION['user'],$_POST['system'],$_POST['testset'],$_POST['langpair']);
 }
 
 if (isset($_POST['confirm_removal'])){
-    // echo("... confirm removal ...");
     $file = implode('/',[$user_dir,$_POST['system'],$_POST['testset']]);
     $file .= '.'.$_POST['langpair'];
+    // echo("... confirm removal of $file ...");
     $jobfile .= $file.'.remove.slurm';
     if (system("sbatch ".$jobfile)){
         echo "<br/>Remove job for ". htmlspecialchars(basename( $file )). " is in the queue (see below).";
         if (file_exists($file)){
             rename($file, $file.'.backup');
         }
+        unlink($jobfile);
     }
 }
 elseif (isset($_POST['cancel_removal'])){
     // echo("... cancel removal ...");
     $slurm_file = implode('/',[$user_dir,$_POST['system'],$_POST['testset']]);
     $slurm_file .= '.'.$_POST['langpair'].'.remove.slurm';
+    // echo("... cancel removal of $slurm_file ...");
     unlink($slurm_file);
 }
 
 
 elseif (isset($_POST['submit']) && isset($_POST['benchmark']) && isset($_POST['langpair'])){
-    
-    $target_dir = implode('/',[$user_dir,$_POST['system']]);
+
+    if ($_POST['newsystem'] != ''){
+        $system = $_POST['newsystem'];
+    }
+    // $target_dir = implode('/',[$user_dir,$_POST['system']]);
+    $target_dir = implode('/',[$user_dir,$system]);
     $target_file = implode('/',[$target_dir,$_POST['benchmark']]).'.'.$_POST['langpair'];
 
     echo('<br/><hr/><br/>');
@@ -190,7 +224,8 @@ elseif (isset($_POST['submit']) && isset($_POST['benchmark']) && isset($_POST['l
         echo "No language pair selected!";
         $uploadOk = 0;
     }
-    elseif (!preg_match('/^[a-zA-Z0-9_]+$/',$_POST['system'])){
+    // elseif (!preg_match('/^[a-zA-Z0-9_]+$/',$_POST['system'])){
+    elseif (!preg_match('/^[a-zA-Z0-9_]+$/',$system)){
         echo "No valid system name given! Please specify a non-empty ASCII name using characters in the range of [a-zA-Z0-9_]";
         $uploadOk = 0;
     }
@@ -231,6 +266,9 @@ elseif (isset($_POST['submit']) && isset($_POST['benchmark']) && isset($_POST['l
         $testset_file = get_testset_filename($_POST['benchmark'], $_POST['langpair'], $srclang);
         // echo("retrieve $testset_file<br/>");
         $testset = read_file_with_cache(implode('/',[$testset_url,$testset_file]));
+        if (count($testset) == 0){
+            echo("problems retrieving $testset_url/$testset_file<br/>");
+        }
         $output = file($_FILES["translations"]["tmp_name"]);
         if (count($output) !== count($testset)){
             echo("different number of lines for the selected benchmark and your translation file!<br/>");
@@ -257,7 +295,8 @@ elseif (isset($_POST['submit']) && isset($_POST['benchmark']) && isset($_POST['l
         if  (file_exists($target_dir)){            
             if (move_uploaded_file($_FILES["translations"]["tmp_name"], $target_file)) {
                 $jobfile = create_eval_job($_SESSION['user'],
-                                           $_POST['system'],
+                                           // $_POST['system'],
+                                           $system,
                                            $_POST['website'],
                                            $_POST['email'],
                                            $_POST['benchmark'],
@@ -370,14 +409,17 @@ function show_userfiles($homedir){
                         // echo "$system / $testset . $langpair<br/>";
                         $system_param = make_query(['model' => implode('/',[$_SESSION['user'],$system]),
                                                     'test' => 'all',
+                                                    'session' => 'clear',
                                                     'pkg' => 'contributed']);
                         $file_param = make_query(['model' => implode('/',[$_SESSION['user'],$system]),
                                                   'test' => $testset,
                                                   'langpair' => $langpair,
+                                                  'scoreslang' => $langpair,
+                                                  'session' => 'clear',
                                                   'pkg' => 'contributed']);
                         echo "<a href='../index.php?$system_param'>$system</a> / <a href='../index.php?$file_param'>$file</a><br/>";
                         $sysfile = implode('/',[$system,$file]);
-                        echo('<td><form action="index.php" method="post">');
+                        echo('<td><form style="margin: 0px 0px 0px 0px;;" action="index.php" method="post">');
                         echo('<input type="hidden" name="system" value="'.$system.'">');
                         echo('<input type="hidden" name="testset" value="'.$testset.'">');
                         echo('<input type="hidden" name="langpair" value="'.$langpair.'">');
@@ -388,7 +430,7 @@ function show_userfiles($homedir){
                         else{
                             echo('<input type="submit" value="remove" name="remove">');
                         }
-                        echo('</td></tr>');
+                        echo('</form></td></tr>');
                     }
                 }
             }

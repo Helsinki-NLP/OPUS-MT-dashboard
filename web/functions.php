@@ -39,6 +39,7 @@ $storage_urls['user-scores']         = $storage_urls['contributed'];
 
 // $local_datahome       = '/media/OPUS';
 $local_datahome       = '/media/OPUS/dev';
+$local_datahome       = '/media/OPUS-MT';
 
 $leaderboard_dirs['opusmt']      = $local_datahome.'/OPUS-MT-leaderboard';
 $leaderboard_dirs['external']    = $local_datahome.'/External-MT-leaderboard';
@@ -328,8 +329,8 @@ function get_testset_filename($testset, $langpair, $lang){
     $lines = read_file_with_cache(implode('/',[$testset_url,'testsets.tsv']));
     foreach ($lines as $line){
         $fields = explode("\t",$line);
-        $langpair=implode('-',[$fields[0],$fields[1]]);
-        $_SESSION['testset-files'][$fields[2]][$langpair][$fields[0]] = $fields[6];
+        $lp=implode('-',[$fields[0],$fields[1]]);
+        $_SESSION['testset-files'][$fields[2]][$lp][$fields[0]] = $fields[6];
     }
     // echo "..[$testset][$langpair][$lang].. ".$_SESSION['testset-files'][$testset][$langpair][$lang];
     return $_SESSION['testset-files'][$testset][$langpair][$lang];

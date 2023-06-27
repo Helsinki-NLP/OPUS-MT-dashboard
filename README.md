@@ -26,8 +26,7 @@ You need to use local files to enable user-contributed translations. The files a
 
 ```
 mkdir Contributed-MT-leaderboard-data
-sudo chgrp www-data Contributed-MT-leaderboard-data
-sudo chmod g+ws Contributed-MT-leaderboard-data
+sudo chown www-data Contributed-MT-leaderboard-data
 ```
 
 Note that you need to adjust the permissions so that the web server can access and write to that directory.
@@ -36,11 +35,9 @@ In the same directory, clone the repository of the leaderboard with contributed 
 
 ```
 git clone https://github.com/Helsinki-NLP/Contributed-MT-leaderboard.git
-sudo chgrp -R www-data Contributed-MT-leaderboard
+sudo chown -R www-data Contributed-MT-leaderboard
 cd Contributed-MT-leaderboard
 git submodule update --init --recursive --remote
-sudo chmod -R g+wX models scores
-sudo find models scores -type d -exec chmod g+s {} \;
 ```
 
 Again, adjust the commands according to the permissions you need to set to enable your web-server to access and write to the leaderboard directories.
@@ -52,6 +49,8 @@ Install pre-requisites for evaluating translations:
 sudo pip install sacrebleu[ja,ko]
 sudo pip install unbabel-comet
 sudo apt-get install zip
+sudo mkdir /var/www/.sacrebleu
+sudo chown www-data /var/www/.sacrebleu
 ```
 
 

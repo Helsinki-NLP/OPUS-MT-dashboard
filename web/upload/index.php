@@ -46,9 +46,9 @@ if (!logged_in()){
 $user_dir = implode('/',[$local_datahome,'Contributed-MT-leaderboard-data',$_SESSION['user']]);
 
 
-$benchmark = isset($_POST["benchmark"]) ? $_POST["benchmark"] : '--select--';
-$langpair = isset($_POST["langpair"]) ? $_POST["langpair"] : '--select--';
-$system = isset($_POST["system"]) ? $_POST["system"] : '--select--';
+$benchmark = isset($_POST["benchmark"]) ? $_POST["benchmark"] : '-- select --';
+$langpair = isset($_POST["langpair"]) ? $_POST["langpair"] : '-- select --';
+$system = isset($_POST["system"]) ? $_POST["system"] : '-- select --';
 
 
 
@@ -73,7 +73,7 @@ if ($benchmark != ''){
 }
 
 
-if ($benchmark != '--select--'){
+if ($benchmark != '-- select --'){
     echo('<tr><td>benchmark: </td><td>'.$benchmark);
     echo('&nbsp;&nbsp;<a href="'.$_SERVER['PHP_SELF'].'"?session=clear>change</a>');
     echo('<input type="hidden" id="benchmark" name="benchmark" value="'.$benchmark.'"></td></tr>');
@@ -84,10 +84,10 @@ if ($benchmark != '--select--'){
         echo('<input type="hidden" id="langpair" name="langpair" value="'.$langpair.'"></td></tr>');
     }
     else{
-        array_unshift($langpairs,'--select--');
+        array_unshift($langpairs,'-- select --');
         if (count($langpairs) > 100){
-            $srclang = isset($_POST["srclang"]) ? $_POST["srclang"] : '--select--';
-            $trglang = isset($_POST["trglang"]) ? $_POST["trglang"] : '--select--';
+            $srclang = isset($_POST["srclang"]) ? $_POST["srclang"] : '-- select --';
+            $trglang = isset($_POST["trglang"]) ? $_POST["trglang"] : '-- select --';
             echo '<tr><td>language pair: </td><td><select name="srclang" id="srclang" onchange="this.form.submit()">';
             $srclangs = array();
             $trglangs = array();
@@ -96,8 +96,8 @@ if ($benchmark != '--select--'){
                 $srclangs[$s][$t]++;
                 $trglangs[$t]++;
             }
-            $trglangs['--select--']=1;
-            $srclangs['--select--'] = $trglangs;
+            $trglangs['-- select --']=1;
+            $srclangs['-- select --'] = $trglangs;
             foreach ($srclangs as $s => $t){
                 if ($s == $srclang){
                     echo "<option value=\"$s\" selected>$s</option>";
@@ -117,7 +117,7 @@ if ($benchmark != '--select--'){
                 }
             }
             echo '</select></td></tr>';
-            if ($srclang != '--select--' && $trglang != '--select--'){
+            if ($srclang != '-- select --' && $trglang != '-- select --'){
                 $langpair = implode('-',[$srclang,$trglang]);
                 echo('<input type="hidden" id="langpair" name="langpair" value="'.$langpair.'"></td></tr>');
             }
@@ -135,10 +135,10 @@ if ($benchmark != '--select--'){
             echo '</select></td></tr>';
         }
     }
-    if ($langpair != '--select--'){
+    if ($langpair != '-- select --'){
         $systems = get_user_systems($user_dir);
         asort($systems);
-        array_unshift($systems,'--select--');
+        array_unshift($systems,'-- select --');
         if (count($systems) > 0){
             echo '<tr><td>system name: </td><td><select name="system" id="system" onchange="this.form.submit()">';
             foreach ($systems as $s){
@@ -151,9 +151,9 @@ if ($benchmark != '--select--'){
             }
             echo '</select>';
         }
-        echo('<tr><td>new system:</td><td><input type="text" name="newsystem"></td></tr>');
-        echo('<tr><td>website:</td><td><input type="text" name="website"></td></tr>');
-        echo('<tr><td>contact e-mail:</td><td><input type="email" name="email"></td></tr>');
+        echo('<tr><td>create new system:</td><td><input type="text" name="newsystem"></td></tr>');
+        echo('<tr><td>website:</td><td><input type="text" value="'.$_POST['website'].'" name="website"></td></tr>');
+        echo('<tr><td>contact e-mail:</td><td><input type="email" value="'.$_POST['email'].'" name="email"></td></tr>');
         echo('<tr><td>translation file:</td>');
         echo('<td><input type="file" name="translations" id="translations"></td></tr>');
         echo('<tr><td><input type="submit" value="submit" name="submit"></td>');
@@ -162,7 +162,7 @@ if ($benchmark != '--select--'){
 }
 else{
     echo '<tr><td>benchmark: </td><td><select name="benchmark" id="benchmark" onchange="this.form.submit()">';
-    $benchmarks['--select--'] = '';
+    $benchmarks['-- select --'] = '';
     foreach ($benchmarks as $b => $l){
         if ($b == $benchmark){
             echo "<option value=\"$b\" selected>$b</option>";
@@ -210,7 +210,7 @@ elseif (isset($_POST['cancel_removal'])){
 
 elseif (isset($_POST['submit']) && isset($_POST['benchmark']) && isset($_POST['langpair'])){
 
-    if ($_POST['newsystem'] != ''){
+    if ($_POST['newsystem'] != '' and $_POST['newsystem'] != 'create new system'){
         $system = $_POST['newsystem'];
     }
     // $target_dir = implode('/',[$user_dir,$_POST['system']]);
@@ -220,13 +220,13 @@ elseif (isset($_POST['submit']) && isset($_POST['benchmark']) && isset($_POST['l
     echo('<br/><hr/><br/>');
     $uploadOk = 1;
 
-    if ($langpair == '--select--'){
+    if ($langpair == '-- select --'){
         echo "No language pair selected!";
         $uploadOk = 0;
     }
     // elseif (!preg_match('/^[a-zA-Z0-9_]+$/',$_POST['system'])){
-    elseif (!preg_match('/^[a-zA-Z0-9_]+$/',$system)){
-        echo "No valid system name given! Please specify a non-empty ASCII name using characters in the range of [a-zA-Z0-9_]";
+    elseif (!preg_match('/^[a-zA-Z0-9_\.\-]+$/',$system)){
+        echo "No valid system name given! Please specify a non-empty ASCII name using characters in the range of [a-zA-Z0-9_\-\.]";
         $uploadOk = 0;
     }
     elseif (! filter_var($_POST['website'], FILTER_VALIDATE_URL)) {
@@ -262,8 +262,9 @@ elseif (isset($_POST['submit']) && isset($_POST['benchmark']) && isset($_POST['l
 
     else{
         // count lines and compare to benchmark
-        list($srclang,$trglang) = explode('-',$_POST['langpair']);
-        $testset_file = get_testset_filename($_POST['benchmark'], $_POST['langpair'], $srclang);
+        $testset_file = get_testset_filename($_POST['benchmark'], $_POST['langpair']);
+        // list($srclang,$trglang) = explode('-',$_POST['langpair']);
+        // $testset_file = get_testset_filename($_POST['benchmark'], $_POST['langpair'], $srclang);
         // echo("retrieve $testset_file<br/>");
         $testset = read_file_with_cache(implode('/',[$testset_url,$testset_file]));
         if (count($testset) == 0){
@@ -409,13 +410,13 @@ function show_userfiles($homedir){
                         // echo "$system / $testset . $langpair<br/>";
                         $system_param = make_query(['model' => implode('/',[$_SESSION['user'],$system]),
                                                     'test' => 'all',
-                                                    'session' => 'clear',
+                                                    'session' => 'refresh',
                                                     'pkg' => 'contributed']);
                         $file_param = make_query(['model' => implode('/',[$_SESSION['user'],$system]),
                                                   'test' => $testset,
                                                   'langpair' => $langpair,
                                                   'scoreslang' => $langpair,
-                                                  'session' => 'clear',
+                                                  'session' => 'refresh',
                                                   'pkg' => 'contributed']);
                         echo "<a href='../index.php?$system_param'>$system</a> / <a href='../index.php?$file_param'>$file</a><br/>";
                         $sysfile = implode('/',[$system,$file]);

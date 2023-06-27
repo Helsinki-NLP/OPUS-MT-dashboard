@@ -4,6 +4,9 @@ if (isset($_GET['session'])){
     if ($_GET['session'] == 'clear'){
         clear_session();
     }
+    elseif ($_GET['session'] == 'refresh'){
+        cleanup_cache();
+    }
 }
 
 
@@ -51,7 +54,7 @@ $leaderboard_dirs['scores']          = $leaderboard_dirs['opusmt'];
 $leaderboard_dirs['external-scores'] = $leaderboard_dirs['external'];
 $leaderboard_dirs['user-scores']     = $leaderboard_dirs['contributed'];
 
-
+$testset_dir  = implode('/',[$leaderboard_dirs['contributed'],'OPUS-MT-testsets']);
 $storage_dirs = $leaderboard_dirs;
 
 
@@ -171,6 +174,26 @@ function read_logfile_list($model, $pkg='opusmt'){
     }
     return array_map('rtrim', read_file_with_cache($file));
 }
+
+
+// return file location (either local or online)
+
+function get_file_location($file, $pkg='opusmt'){
+    global $leaderboard_urls, $leaderboard_url;
+    global $leaderboard_dirs, $leaderboard_dir;
+
+    $base_dir = $leaderboard_dirs[$pkg];
+    $localfile = implode('/',[$base_dir,$file]);
+    if (file_exists($localfile)){
+        return $localfile;
+    }
+
+    $base_url = $leaderboard_urls[$pkg];
+    $url  = implode('/',[$base_url,$file]);
+    return $url;
+}
+
+
 
 function get_score_filename($langpair, $benchmark, $metric='bleu', $model='all', $pkg='opusmt', $source='unchanged'){
     
@@ -312,30 +335,46 @@ function is_testset_line(string $line): bool {
 };
 
 function filter_testsets($array){
-    return array_filter($array,"is_testset_line");
+    if (is_array($array)){
+        return array_filter($array,"is_testset_line");
+    }
+    return $array;
 }
 
-function get_testset_filename($testset, $langpair, $lang){
-    global $testset_url;
+function get_testset_filename($testset, $langpair){
     if (array_key_exists('testset-files', $_SESSION)){
         if (array_key_exists($testset, $_SESSION['testset-files'])){
             if (array_key_exists($langpair, $_SESSION['testset-files'][$testset])){
-                if (array_key_exists($lang, $_SESSION['testset-files'][$testset][$langpair])){
-                    return $_SESSION['testset-files'][$testset][$langpair][$lang];
-                }
+                return $_SESSION['testset-files'][$testset][$langpair];
             }
         }
     }
-    $lines = read_file_with_cache(implode('/',[$testset_url,'testsets.tsv']));
-    foreach ($lines as $line){
-        $fields = explode("\t",$line);
-        $lp=implode('-',[$fields[0],$fields[1]]);
-        $_SESSION['testset-files'][$fields[2]][$lp][$fields[0]] = $fields[6];
-    }
-    // echo "..[$testset][$langpair][$lang].. ".$_SESSION['testset-files'][$testset][$langpair][$lang];
-    return $_SESSION['testset-files'][$testset][$langpair][$lang];
+    cache_testset_filenames($testset, $langpair);
+    return $_SESSION['testset-files'][$testset][$langpair];
 }
 
+function get_reference_filenames($testset, $langpair){
+    if (array_key_exists('reference-files', $_SESSION)){
+        if (array_key_exists($testset, $_SESSION['reference-files'])){
+            if (array_key_exists($langpair, $_SESSION['reference-files'][$testset])){
+                return $_SESSION['reference-files'][$testset][$langpair];
+            }
+        }
+    }
+    cache_testset_filenames($testset, $langpair);
+    return $_SESSION['reference-files'][$testset][$langpair];
+}
+
+function cache_testset_filenames($testset, $langpair){
+    global $testset_url;
+    $lines = read_file_with_cache(implode('/',[$testset_url,'testsets.tsv']));
+    foreach ($lines as $line){
+        $fields = explode("\t",rtrim($line));
+        $lp=implode('-',[$fields[0],$fields[1]]);
+        $_SESSION['testset-files'][$fields[2]][$lp] = $fields[6];
+        $_SESSION['reference-files'][$fields[2]][$lp] = array_slice($fields, 7);
+    }
+}
 
 // generic function to read file with session cache
 
@@ -398,11 +437,11 @@ function get_translation_file($model, $pkg='opusmt'){
 // fetch benchmark translation file and use a cache to keep a certain number
 // of them without reloading them
 
-function get_translation_file_with_cache($model, $pkg='opusmt', $cache_size=10){
+function get_logfile_with_cache($model, $pkg='opusmt', $ext='.eval.zip', $cache_size=10){
     global $storage_urls, $storage_dirs;
     
-    $url  = implode('/',[$storage_urls[$pkg],'models',$model]).'.eval.zip';
-    $file = implode('/',[$storage_dirs[$pkg],'models',$model]).'.eval.zip';
+    $url  = implode('/',[$storage_urls[$pkg],'models',$model]).$ext;
+    $file = implode('/',[$storage_dirs[$pkg],'models',$model]).$ext;
 
     // local file
     if (file_exists($file)){
@@ -463,18 +502,19 @@ function get_translation_file_with_cache($model, $pkg='opusmt', $cache_size=10){
 }
 
 function clear_session(){
+    cleanup_cache();
+    $_SESSION = array();
+}
+
+function cleanup_cache(){
     if (isset($_SESSION['files'])){
         foreach ($_SESSION['files'] as $key => $file){
             if (file_exists($file)) {
                 unlink($file);
             }
         }
+        $_SESSION['files'] = array();
     }
-    cleanup_cache();
-    $_SESSION = array();
-}
-
-function cleanup_cache(){
     system("find ".sys_get_temp_dir()." -maxdepth 1 -mtime +1 -type f -name 'opusmteval*' -delete");
 }
 
@@ -483,7 +523,8 @@ function print_translation_logfile($benchmark, $langpair, $model, $pkg='opusmt')
     
     $logfile = implode('.',[$benchmark, $langpair, 'log']);
     echo($logfile."\n");
-    $tmpfile = get_translation_file_with_cache($model, $pkg);
+    // $tmpfile = get_logfile_with_cache($model, $pkg);
+    $tmpfile = get_logfile_with_cache($model, $pkg, '.log.zip');
 
     $zip = new ZipArchive;
     if ($zip->open($tmpfile) === TRUE) {
@@ -501,11 +542,61 @@ function print_translation_logfile($benchmark, $langpair, $model, $pkg='opusmt')
 }
 
 
+function get_system_translations($benchmark, $langpair, $model, $pkg='opusmt', $start=0, $end=-1){
+    $filename = implode('.',[$benchmark, $langpair, 'output']);
+    $file     = implode('/',['models',$model,$filename]);
+    $filepath = get_file_location($file, $pkg);
+    $output   = read_file_with_cache($filepath);
+    if ($end > $start){
+        $end = $end <= count($output) ? $end : count($output);
+        return array_slice($output, $start, $end-$start+1);
+    }
+    return $output;
+}
+
+function get_testset_input($benchmark, $langpair, $start=0, $end=-1){
+    global $testset_url, $testset_dir;
+    $file = get_testset_filename($benchmark, $langpair);
+    $localfile = implode('/',[$testset_dir,$file]);
+    if (file_exists($localfile)){
+        $testset = read_file_with_cache($localfile);
+    }
+    else{
+        $testset = read_file_with_cache(implode('/',[$testset_url,$file]));
+    }
+    if ($end > $start){
+        $end = $end <= count($testset) ? $end : count($testset);
+        return array_slice($testset, $start, $end-$start+1);
+    }
+    return $testset;
+}
+
+// returns only the first reference (in case multiple files exist)
+function get_testset_reference($benchmark, $langpair, $start=0, $end=-1){
+    global $testset_url, $testset_dir;
+    $files = get_reference_filenames($benchmark, $langpair);
+    if (count($files) > 0){
+        $localfile = implode('/',[$testset_dir,$files[0]]);
+        if (file_exists($localfile)){
+            $reference = read_file_with_cache($localfile);
+        }
+        else{
+            $reference = read_file_with_cache(implode('/',[$testset_url,$files[0]]));
+        }
+        if ($end > $start){
+            $end = $end <= count($reference) ? $end : count($reference);
+            return array_slice($reference, $start, $end-$start+1);
+        }
+        return $reference;
+    }
+    return array();
+}
+
 
 function get_translations ($benchmark, $langpair, $model, $pkg='opusmt'){
     
     $evalfile = implode('.',[$benchmark, $langpair, 'compare']);
-    $tmpfile = get_translation_file_with_cache($model, $pkg);
+    $tmpfile = get_logfile_with_cache($model, $pkg);
 
     $zip = new ZipArchive;
     if ($zip->open($tmpfile) === TRUE) {
@@ -519,14 +610,32 @@ function get_translations ($benchmark, $langpair, $model, $pkg='opusmt'){
     return $content;
 }
 
+function get_selected_translations ($benchmark, $langpair, $model, $pkg='opusmt', $start=0, $end=99){
+
+    // return get_selected_compare_examples($benchmark, $langpair, $model, $pkg, $start, $end);
+    
+    $system    = get_system_translations($benchmark, $langpair, $model, $pkg, $start, $end);
+    if (count($system) == 0){
+        return get_selected_compare_examples($benchmark, $langpair, $model, $pkg, $start, $end);
+    }
+    $input     = get_testset_input($benchmark, $langpair, $start, $end);
+    $reference = get_testset_reference($benchmark, $langpair, $start, $end);
+
+    // make it compatible with content in compare files
+    $examples = array();
+    for ($i = 1; $i < count($input); $i++) {
+        array_push($examples, rtrim($input[$i]), rtrim($reference[$i]), rtrim($system[$i]), '');        
+    }
+    return $examples;
+}
 
 // read only a certain slice of examples
 // (assumes that the data is 4 lines per example)
 
-function get_selected_translations ($benchmark, $langpair, $model, $pkg='opusmt', $start=0, $end=99){
+function get_selected_compare_examples($benchmark, $langpair, $model, $pkg='opusmt', $start=0, $end=99){
     
     $evalfile = implode('.',[$benchmark, $langpair, 'compare']);
-    $tmpfile = get_translation_file_with_cache($model, $pkg);
+    $tmpfile = get_logfile_with_cache($model, $pkg);
 
     $examples = array();
     $count = 0;
@@ -831,6 +940,9 @@ function print_scores($model='all', $langpair='all', $benchmark='all', $pkg='opu
                 $array[0] = 'https://huggingface.co';
                 $url = implode('/',$array);
                 $model_download_link = "<a rel=\"nofollow\" href=\"$url\">URL</a>";
+            }
+            else{
+                $model_download_link = '';
             }
         }
 

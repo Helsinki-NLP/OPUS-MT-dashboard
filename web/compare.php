@@ -142,15 +142,16 @@ function print_model_list($pkg, $langpair, $model1, $model2){
 $models = file(implode('/',[$scores_url,$langpair,'model-list.txt']));
 
 $sorted_models = array();
-foreach ($models as $model){
-    $parts = explode('-',rtrim($model));
-    $day = array_pop($parts);
-    $month = array_pop($parts);
-    $year = array_pop($parts);
-    $sorted_models[$model] = "$year$month$day";
+if (is_array($models)){
+    foreach ($models as $model){
+        $parts = explode('-',rtrim($model));
+        $day = array_pop($parts);
+        $month = array_pop($parts);
+        $year = array_pop($parts);
+        $sorted_models[$model] = "$year$month$day";
+    }
+    arsort($sorted_models);
 }
-arsort($sorted_models);
-
 
 echo("<ul>");
 foreach ($sorted_models as $model => $release){

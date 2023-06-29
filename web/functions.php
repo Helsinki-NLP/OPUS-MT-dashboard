@@ -849,6 +849,7 @@ function print_model_scores($model,$langpair='all',$benchmark='all', $pkg='opusm
         $testlink = "<a rel=\"nofollow\" href=\"index.php?$url_param\">$parts[1]</a>";
 
         $logfile = implode('.',[$parts[1],$parts[0],'log']);
+        $loglink = '';
         if (in_array($logfile, $logfiles)){
             $url_param = make_query(['test' => $parts[1],'langpair' => $parts[0]]);
             $loglink = "(<a rel=\"nofollow\" href=\"logfile.php?".SID.'&'.$url_param."\">logfile</a>)";
@@ -993,10 +994,17 @@ function print_langpair_heatmap($model, $metric='bleu', $benchmark='all', $pkg='
     
     foreach ($lines as $line){
         list($p,$b,$score) = explode("\t",rtrim(array_shift($lines)));
+        if (! isset($benchmarks[$b])) $benchmarks[$b] = 0;
         $benchmarks[$b]++;
         if (($benchmark == 'all') or ($b == $benchmark)){
-        // if (($benchmark == 'all') or (strpos($b,$benchmark) === 0)){
             list($s,$t) = explode('-',$p);
+            
+            if (! array_key_exists($s,$scores)) $scores[$s] = array( $t => 0 );
+            if (! array_key_exists($s,$counts)) $counts[$s] = array( $t => 0 );
+            if (! isset($scores[$s][$t])) $scores[$s][$t] = 0;
+            if (! isset($counts[$s][$t])) $counts[$s][$t] = 0;
+            if (! isset($trglangs[$t])) $trglangs[$t] = 0;
+                        
             if ($metric == 'bleu' or $metric == 'spbleu'){
                 $scores[$s][$t] += $score;
             }
@@ -1167,6 +1175,7 @@ function print_topscore_differences($langpair='deu-eng', $benchmark='all', $metr
 
     $lines1 = read_scores($langpair, 'all', $metric, 'all', 'opusmt', 'opusmt');
     $lines2 = read_scores($langpair, 'all', $metric, 'all', 'external', 'external');
+    $lines3 = array();
 
     $scores1 = array();
     $model1 = array();

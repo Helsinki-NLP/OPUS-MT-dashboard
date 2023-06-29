@@ -29,6 +29,8 @@ $showlang  = get_param('scoreslang', $langpair);
 //-----------------------------------------
 
 $lines = array();
+$lines[3] = array();
+
 if ($model1 != 'unknown' and $model2 != 'unknown'){
     $parts = explode('/',$model1);
     $pkg1 = array_shift($parts);
@@ -78,6 +80,7 @@ $scores = array();
 
 $nr_score_files = 0;
 foreach (array(1, 2, 3) as $v) {
+    $scores_exist[$v] = false;
     if (count($lines[$v])){
         $scores[$v] = array();
         $nr_score_files++;

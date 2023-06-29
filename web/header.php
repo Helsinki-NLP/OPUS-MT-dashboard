@@ -97,9 +97,15 @@ foreach ($langpairs as $l){
 echo '</select>';
 */
 
-$query = make_query(['src' => $trglang, 'trg' => $srclang,
-                     'langpair' => implode('-',[$trglang,$srclang]),
-                     'scoreslang' => implode('-',array_reverse(explode('-',$showlang)))  ]);
+if (isset($showlang)){
+    $query = make_query(['src' => $trglang, 'trg' => $srclang,
+                         'langpair' => implode('-',[$trglang,$srclang]),
+                         'scoreslang' => implode('-',array_reverse(explode('-',$showlang)))  ]);
+}
+else{
+    $query = make_query(['src' => $trglang, 'trg' => $srclang,
+                         'langpair' => implode('-',[$trglang,$srclang]) ]);
+}
 echo '  [<a href="'.$_SERVER['PHP_SELF'].'?'.SID.'&'.$query.'">swap</a>]';
 
 $query = make_query(['model' => 'top', 'test' => 'all', 'scoreslang' => 'all']);

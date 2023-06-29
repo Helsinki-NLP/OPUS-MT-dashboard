@@ -27,7 +27,7 @@ function model_color($package, $model){
 }
 
 
-function barchart(&$data, $metric, $maxscore, &$colors){
+function barchart(&$data, $metric, $maxscore, &$colors, $index_label){
 
     if (sizeof($data) == 0){
         $data[0] = 0;

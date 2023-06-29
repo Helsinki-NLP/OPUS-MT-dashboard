@@ -86,6 +86,6 @@ else{
 
 
 
-$chart = barchart($data, $metric, $maxscore, $type);
+$chart = barchart($data, $metric, $maxscore, $type, $index_label);
 header('Content-Type: image/png');
 imagepng($chart);

@@ -202,6 +202,10 @@ function print_score_table($model1,$model2,$langpair='all',$benchmark='all', $me
     foreach($lines1 as $line1) {
         // echo $line1;
         $array = explode("\t", $line1);
+        
+        if (! isset($langpairs[$array[0]])) $langpairs[$array[0]] = 0;
+        if (! isset($testsets[$array[1]]))  $testsets[$array[1]] = 0;
+
         $langpairs[$array[0]]++;
         $testsets[$array[1]]++;
         if ($langpair == 'all' || $langpair == $array[0]){
@@ -228,9 +232,11 @@ function print_score_table($model1,$model2,$langpair='all',$benchmark='all', $me
     foreach($lines2 as $line2) {
         $array = explode("\t", $line2);
         if (array_key_exists($array[0],$langpairs)){
+            if (! isset($common_langs[$array[0]])) $common_langs[$array[0]] = 0;
             $common_langs[$array[0]]++;
         }
         if (array_key_exists($array[1],$testsets)){
+            if (! isset($common_tests[$array[1]])) $common_tests[$array[1]] = 0;
             $common_tests[$array[1]]++;
         }
         if ($langpair == 'all' || $langpair == $array[0]){
@@ -272,7 +278,7 @@ function print_score_table($model1,$model2,$langpair='all',$benchmark='all', $me
             $common_langs[$lang]++;
 
             $lang_query = array();
-            $testset_query = array();
+            $test_query = array();
             
             if ($langpair == 'all' || $langpair == $lang){
                 if ($benchmark == 'all' || $benchmark == $test){

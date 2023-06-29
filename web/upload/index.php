@@ -151,9 +151,10 @@ if ($benchmark != '-- select --'){
             }
             echo '</select>';
         }
+        $email = isset($_POST['email']) ? $_POST['email'] : $_SESSION['email'];
         echo('<tr><td>create new system:</td><td><input type="text" name="newsystem"></td></tr>');
         echo('<tr><td>website:</td><td><input type="text" value="'.$_POST['website'].'" name="website"></td></tr>');
-        echo('<tr><td>contact e-mail:</td><td><input type="email" value="'.$_POST['email'].'" name="email"></td></tr>');
+        echo('<tr><td>contact e-mail:</td><td><input type="email" value="'.$email.'" name="email"></td></tr>');
         echo('<tr><td>translation file:</td>');
         echo('<td><input type="file" name="translations" id="translations"></td></tr>');
         echo('<tr><td><input type="submit" value="submit" name="submit"></td>');

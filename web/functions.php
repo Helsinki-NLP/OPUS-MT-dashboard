@@ -612,8 +612,22 @@ function get_translations ($benchmark, $langpair, $model, $pkg='opusmt'){
 
 function get_selected_translations ($benchmark, $langpair, $model, $pkg='opusmt', $start=0, $end=99){
 
-    // return get_selected_compare_examples($benchmark, $langpair, $model, $pkg, $start, $end);
-    
+    // read from compare-files in large zip archives
+    // --> this is surprisingly fast and does not require a lot of memory as we don't cache anything
+    return get_examples_from_zip($benchmark, $langpair, $model, $pkg, $start, $end);
+
+    // below would be the alternative of putting input, reference and system output together on the fly
+    // --> this would use files from the repo and does not need to unpack from zip files
+    // --> but it seems to be slower and requires much more memory at the moment
+    //     because of all kinds of caching of files in session variables (we need to improve this!)
+    return get_examples_from_cached_files($benchmark, $langpair, $model, $pkg, $start, $end);
+}
+
+
+// combine testsets and system output and return selected examples
+// (range from start to end)
+
+function get_examples_from_cached_files($benchmark, $langpair, $model, $pkg='opusmt', $start=0, $end=99){
     $system    = get_system_translations($benchmark, $langpair, $model, $pkg, $start, $end);
     if (count($system) == 0){
         return get_selected_compare_examples($benchmark, $langpair, $model, $pkg, $start, $end);
@@ -629,10 +643,11 @@ function get_selected_translations ($benchmark, $langpair, $model, $pkg='opusmt'
     return $examples;
 }
 
-// read only a certain slice of examples
+
+// read only a certain slice of examples from compare-files in zip archives
 // (assumes that the data is 4 lines per example)
 
-function get_selected_compare_examples($benchmark, $langpair, $model, $pkg='opusmt', $start=0, $end=99){
+function get_examples_from_zip($benchmark, $langpair, $model, $pkg='opusmt', $start=0, $end=99){
     
     $evalfile = implode('.',[$benchmark, $langpair, 'compare']);
     $tmpfile = get_logfile_with_cache($model, $pkg);
@@ -1236,8 +1251,11 @@ function print_topscore_differences($langpair='deu-eng', $benchmark='all', $metr
     
     $avg_score1 = 0;
     $avg_score2 = 0;
+    $avg_score3 = 0;
+    
     $count_scores1 = 0;
     $count_scores2 = 0;
+    $count_scores3 = 0;
     
     echo('<div id="scores"><div class="query">');
     echo("<h3>Model Scores (comparing between OPUS-MT and external models)</h3>");

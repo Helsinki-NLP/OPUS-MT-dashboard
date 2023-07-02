@@ -108,9 +108,10 @@ else{
 }
 echo '  [<a href="'.$_SERVER['PHP_SELF'].'?'.SID.'&'.$query.'">swap</a>]';
 
-$query = make_query(['model' => 'top', 'test' => 'all', 'scoreslang' => 'all']);
+$query = make_query(['model' => 'top', 'test' => 'all', 'chart' => 'standard', 'scoreslang' => 'all']);
 echo '  [<a href="index.php?'.SID.'&'.$query.'">compare scores</a>]';
-$query = make_query(['model1' => 'unknown', 'model2' => 'unknown', 'test' => 'all', 'scoreslang' => 'all']);
+$query = make_query(['model1' => 'unknown', 'model2' => 'unknown',
+                     'test' => 'all', 'chart' => 'standard', 'scoreslang' => 'all']);
 echo '  [<a href="compare.php?'.SID.'&'.$query.'">compare models</a>]';
 echo '  [<a href="https://opus.nlpl.eu/NMT-map/Tatoeba-all/src2trg/index.html">map</a>]';
 echo '  [<a href="releases.php">release history</a>]';

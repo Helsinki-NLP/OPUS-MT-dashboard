@@ -278,7 +278,9 @@ foreach($data as $key => $value) {
     $y2 = $gridBottom - 1;
 
     if ($x2 != $x1 and $y2 != $y1){
-        imagefilledrectangle($chart, $x1, $y1, $x2, $y2, $barColors[$models[$key]]);
+        if (isset($barColors[$models[$key]])){
+                imagefilledrectangle($chart, $x1, $y1, $x2, $y2, $barColors[$models[$key]]);
+        }
     }
 
     // special for this comparison: only label every second bar

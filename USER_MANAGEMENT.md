@@ -92,11 +92,20 @@ else
 ?>
 ```
 
+### Trouble shooting
+
+* You may want to set non-standard locations for the MSMTP configuration used by PHP and maybe also some non-standard location for MSMTP logfiles. However, this can result in permission denied errors, which may be due to some settings in AppAmor. Check, e.g. `/etc/apparmor.d/usr.bin.msmtp` and adjust if necessary. 
 
 
-Further links:
+### Further links
 
 * https://www.digitalocean.com/community/tutorials/how-to-use-gmail-or-yahoo-with-php-mail-function
 * https://stackoverflow.com/questions/14456673/sending-email-with-php-from-an-smtp-server
 * using a Google business workspace / admin account: https://support.google.com/a/answer/60751?sjid=8381232116319456289-EU
 
+
+
+## TODO
+
+* tools for user administration
+* possibility to remove an account

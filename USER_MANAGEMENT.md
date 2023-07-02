@@ -99,6 +99,7 @@ else
 
 ### Further links
 
+* https://wiki.archlinux.org/title/Msmtp
 * https://www.digitalocean.com/community/tutorials/how-to-use-gmail-or-yahoo-with-php-mail-function
 * https://stackoverflow.com/questions/14456673/sending-email-with-php-from-an-smtp-server
 * using a Google business workspace / admin account: https://support.google.com/a/answer/60751?sjid=8381232116319456289-EU

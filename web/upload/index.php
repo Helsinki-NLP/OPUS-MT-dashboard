@@ -31,10 +31,13 @@ echo '</div>';
 // echo('<h1>OPUS-MT leaderboard - Translation File Upload (User: '.$_SESSION['user'].')</h1>');
 echo('<h1>OPUS-MT leaderboard - Translation File Upload</h1>');
 
+$USER_DATADIR   = $local_datahome.'/Contributed-MT-leaderboard-data';
+$USER_NAME_FILE = $USER_DATADIR.'/users.php';
+$USER_DB        = $USER_DATADIR.'/users.db';
+
 check_setup();
 
 $ALLOW_NEW_USERS = 1;
-$USER_NAME_FILE = $local_datahome.'/Contributed-MT-leaderboard-data/users.php';
 $LEADERBOARD_DIR = $leaderboard_dirs['contributed'];
 $BENCHMARK_DIR = implode('/',[$LEADERBOARD_DIR,'OPUS-MT-testsets']);
 
@@ -455,6 +458,7 @@ function remove_user_file($user, $system, $testset, $langpair){
 
 function check_setup(){
     global $leaderboard_dirs;
+    global $USER_DATADIR,$USER_DB;
     if (!exec('which squeue')){
         echo("SLURM is not available! Upload is disabled!<br/>");
         exit;
@@ -462,6 +466,16 @@ function check_setup(){
     if (!file_exists($leaderboard_dirs['contributed'])){
         echo("Local leaderboard repository does not exist! Upload is disabled!<br/>");
         exit;
+    }
+    if (!file_exists($USER_DATADIR)){
+        echo("User data dir does not exist! Upload is disabled!<br/>");
+        exit;
+    }
+    if (!file_exists($USER_DB)){
+        if (! create_user_db($USER_DB)){            
+            echo("Cannot create user database!<br/>");
+            exit;
+        }
     }
 }
 

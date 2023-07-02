@@ -43,15 +43,17 @@ git submodule update --init --recursive --remote
 Again, adjust the commands according to the permissions you need to set to enable your web-server to access and write to the leaderboard directories.
 
 
-Install pre-requisites for evaluating translations:
+Install pre-requisites for evaluating translations and user management:
 
 ```
 sudo pip install sacrebleu[ja,ko]
 sudo pip install unbabel-comet
-sudo apt-get install zip
+sudo apt-get install zip sqlite php-sqlite3
 sudo mkdir /var/www/.sacrebleu
 sudo chown www-data /var/www/.sacrebleu
 ```
+
+SQLite is used for user management. This also requires to setup some kind of e-mail service for sending verification and password-reset messages to users. Here are some additional notes about setting up an external SMTP server for this service: [USER_MANAGEMENT.md](USER_MANAGEMENT.md)
 
 
 Setup a SLURM server to handle batch jobs:

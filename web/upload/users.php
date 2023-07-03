@@ -118,14 +118,17 @@ function prepare_password_reset($user_db, $email){
         if (! $sth->execute(array('reset', $secret, $email))) return false;
     }
 
-    $from = 'opus-project@helsinki.com';
+
     $to = $email;
     $subject = 'OPUS-MT leaderboard - Reset Password';
     $headers  = 'MIME-Version: 1.0' . "\n";
     $headers .= 'Content-type: text/html; charset=iso-8859-1' . "\n";
+    /*
+    $from = 'opus-project@helsinki.com';
     $headers .= 'From: '.$from."\n".
              'Reply-To: '.$from."\n" .
              'X-Mailer: PHP/' . phpversion();
+    */
 
     $param = make_query(['user' => $user, 'email' => $email, 'reset' => $secret]);
     $url = url().'?'.$param;
@@ -198,6 +201,21 @@ function add_user($user_db,$user,$password, $email){
 
     if ($dbh = new PDO('sqlite:'.$user_db)){
 
+        $sth = $dbh->prepare('SELECT * FROM users WHERE email = ?');
+        $sth->execute(array($email));
+        if ($result = $sth->fetch(PDO::FETCH_ASSOC)){
+            echo "E-mail ".$email." is already in use! ";
+            echo "Login with the associated user name or try another address!<br/>";
+            return false;
+        }
+        $sth = $dbh->prepare('SELECT * FROM users WHERE name = ?');
+        $sth->execute(array($user));
+        if ($result = $sth->fetch(PDO::FETCH_ASSOC)){
+            echo "User name ".$user." is already in use! ";
+            echo "Please, try another name!<br/>";
+            return false;
+        }
+
         $passkey = password_hash($password, PASSWORD_DEFAULT);
         $userkey = password_hash($user, PASSWORD_DEFAULT);
 
@@ -218,14 +236,16 @@ function add_user($user_db,$user,$password, $email){
 
 
 function send_verification_message($user, $email, $secret){
-    $from = 'opus-project@helsinki.com';
     $to = $email;
     $subject = 'OPUS-MT leaderboard - Verify user account';
     $headers  = 'MIME-Version: 1.0' . "\n";
     $headers .= 'Content-type: text/html; charset=iso-8859-1' . "\n";
+    /*
+    $from = 'opus-project@helsinki.com';
     $headers .= 'From: '.$from."\n".
              'Reply-To: '.$from."\n" .
              'X-Mailer: PHP/' . phpversion();
+    */
 
     $param = make_query(['email' => $email, 'verify' => $secret]);
     $url = url().'?'.$param;

@@ -70,7 +70,7 @@ NodeName=<servername> CPUs=1 State=UNKNOWN
 PartitionName=standard Nodes=opus2020 Default=NO MaxTime=4320 State=UP
 ```
 
-There are sample comfig files in `Contributed-MT-leaderboard/tools`. You can do:
+There are sample config files in `Contributed-MT-leaderboard/tools`. You can do:
 
 ```
 cd Contributed-MT-leaderboard/tools

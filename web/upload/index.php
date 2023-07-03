@@ -15,7 +15,6 @@
 
 include('../functions.php');
 // include('../header.php');
-include('users.php');
 
 echo '<div class="header">';
 if (isset($_SESSION["user"])){
@@ -34,6 +33,9 @@ echo('<h1>OPUS-MT leaderboard - Translation File Upload</h1>');
 $USER_DATADIR   = $local_datahome.'/Contributed-MT-leaderboard-data';
 $USER_NAME_FILE = $USER_DATADIR.'/users.php';
 $USER_DB        = $USER_DATADIR.'/users.db';
+
+include('users.php');
+
 
 check_setup();
 

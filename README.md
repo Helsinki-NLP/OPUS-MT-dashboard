@@ -16,7 +16,8 @@ The interface is based on a lightweight implementation in PHP. The setup only re
 
 ## Usage
 
-TODO
+* Video tutorial: https://www.youtube.com/watch?v=K2cKoAt3AIY
+
 
 
 ## Setup for contributed translations

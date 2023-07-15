@@ -506,6 +506,16 @@ function clear_session(){
     $_SESSION = array();
 }
 
+function remove_tmpfile($file){
+    if (array_key_exists('files', $_SESSION)){
+        if (array_search($file, $_SESSION['files'])){
+            if (file_exists($file)) {
+                unlink($file);
+            }
+        }
+    }
+}
+
 function cleanup_cache(){
     if (isset($_SESSION['files'])){
         foreach ($_SESSION['files'] as $key => $file){
@@ -522,7 +532,7 @@ function cleanup_cache(){
 function print_translation_logfile($benchmark, $langpair, $model, $pkg='opusmt'){
     
     $logfile = implode('.',[$benchmark, $langpair, 'log']);
-    echo($logfile."\n");
+    // echo($logfile."\n");
     // $tmpfile = get_logfile_with_cache($model, $pkg);
     $tmpfile = get_logfile_with_cache($model, $pkg, '.log.zip');
 
@@ -537,7 +547,7 @@ function print_translation_logfile($benchmark, $langpair, $model, $pkg='opusmt')
         $zip->close();
     }
     if ( ! isset( $_COOKIE['PHPSESSID'] ) ) {
-        unlink($tmpfile);
+        remove_tmpfile($tmpfile);
     }
 }
 
@@ -605,7 +615,7 @@ function get_translations ($benchmark, $langpair, $model, $pkg='opusmt'){
     }
     
     if ( ! isset( $_COOKIE['PHPSESSID'] ) ) {
-        unlink($tmpfile);
+        remove_tmpfile($tmpfile);
     }    
     return $content;
 }
@@ -677,7 +687,7 @@ function get_examples_from_zip($benchmark, $langpair, $model, $pkg='opusmt', $st
         $zip->close();
     }
     if ( ! isset( $_COOKIE['PHPSESSID'] ) ) {
-        unlink($tmpfile);
+        remove_tmpfile($tmpfile);
     }
     return array_slice($examples, $start*4, ($end-$start+1)*4);
 }

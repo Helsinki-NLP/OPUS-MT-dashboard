@@ -1,10 +1,19 @@
 <?php
 
 
+function model_size_color($size, $chart){
+  list($red,$green,$blue) = size_to_rgb($size);
+  return imagecolorallocate($chart, $red,$green,$blue);
+}
+
+
 // return a color for a given model and model package
 
 function model_color($package, $model){
-    
+
+  // return 'blue';
+  // return model_size($package, $model);
+  
     $type2color = array( 'contributed' => 'purple',
                          'external'    => 'grey',
                          'Tatoeba-MT-models' => 'blue',
@@ -25,6 +34,7 @@ function model_color($package, $model){
         return $type2color[$modelparts[count($modelparts)-3]];
     }
 }
+
 
 
 function barchart(&$data, $metric, $maxscore, &$colors, $index_label){
@@ -149,7 +159,9 @@ function barchart(&$data, $metric, $maxscore, &$colors, $index_label){
 
         if ($x2 != $x1 and $y2 != $y1){
             $color = array_key_exists($key, $colors) ? $colors[$key] : 'blue';
-            $barColor = array_key_exists($color, $barColors) ? $barColors[$color] : $barColors['grey'];
+	    $barColor = array_key_exists($color, $barColors) ? $barColors[$color] : model_size_color($colors[$key], $chart);
+
+            // $barColor = array_key_exists($color, $barColors) ? $barColors[$color] : $barColors['grey'];
             imagefilledrectangle($chart, $x1, $y1, $x2, $y2, $barColor);
         }
     

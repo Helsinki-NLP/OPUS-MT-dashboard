@@ -64,7 +64,10 @@ elseif ($benchmark != 'all'){
     foreach($lines as $line) {
         $array = explode("\t", rtrim($line));
         array_unshift($data,$array[0]);
-        array_unshift($type,model_color($array[count($array)-1], $array[1]));
+        // array_unshift($type,model_color($array[count($array)-1], $array[1]));
+	$size = ceil(model_size($array[count($array)-1], modelurl_to_model($array[1])));
+	array_unshift($type,$size);
+	// array_unshift($type,model_size($array[count($array)-1], modelurl_to_model($array[1])));
         $nrscores++;
     }
     $maxscore = end($data);

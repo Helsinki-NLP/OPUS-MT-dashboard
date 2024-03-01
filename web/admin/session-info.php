@@ -69,4 +69,18 @@ system("find ".sys_get_temp_dir()." -type f -name '*.eval.zip'");
 echo '</pre>';
 
 
+if (array_key_exists('models', $_SESSION)){
+
+  echo("<h2>Model info</h2>");
+  
+  foreach ($_SESSION['models'] as $packages => $package){
+    foreach ($package as $models => $model){
+      foreach ($model as $key => $val){
+	echo "$packages/$models: $key => $val <br/>";
+      }
+    }
+  }
+}
+
+
 ?>

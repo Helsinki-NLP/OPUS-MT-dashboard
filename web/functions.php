@@ -41,7 +41,7 @@ $storage_urls['user-scores']         = $storage_urls['contributed'];
 // local file locations
 
 // $local_datahome       = '/media/OPUS';
-$local_datahome       = '/media/OPUS/dev';
+// $local_datahome       = '/media/OPUS/dev';
 $local_datahome       = '/media/OPUS-MT';
 
 $leaderboard_dirs['opusmt']      = $local_datahome.'/OPUS-MT-leaderboard';
@@ -506,22 +506,14 @@ function clear_session(){
     $_SESSION = array();
 }
 
-function remove_tmpfile($file){
-    if (array_key_exists('files', $_SESSION)){
-        if (array_search($file, $_SESSION['files'])){
-            if (file_exists($file)) {
-                unlink($file);
-            }
-        }
-    }
-}
-
 function cleanup_cache(){
     if (isset($_SESSION['files'])){
         foreach ($_SESSION['files'] as $key => $file){
+	  if (is_string($file)){
             if (file_exists($file)) {
-                unlink($file);
+	      unlink($file);
             }
+	  }
         }
         $_SESSION['files'] = array();
     }
@@ -532,7 +524,7 @@ function cleanup_cache(){
 function print_translation_logfile($benchmark, $langpair, $model, $pkg='opusmt'){
     
     $logfile = implode('.',[$benchmark, $langpair, 'log']);
-    // echo($logfile."\n");
+    echo($logfile."\n");
     // $tmpfile = get_logfile_with_cache($model, $pkg);
     $tmpfile = get_logfile_with_cache($model, $pkg, '.log.zip');
 
@@ -547,7 +539,7 @@ function print_translation_logfile($benchmark, $langpair, $model, $pkg='opusmt')
         $zip->close();
     }
     if ( ! isset( $_COOKIE['PHPSESSID'] ) ) {
-        remove_tmpfile($tmpfile);
+        unlink($tmpfile);
     }
 }
 
@@ -615,7 +607,7 @@ function get_translations ($benchmark, $langpair, $model, $pkg='opusmt'){
     }
     
     if ( ! isset( $_COOKIE['PHPSESSID'] ) ) {
-        remove_tmpfile($tmpfile);
+        unlink($tmpfile);
     }    
     return $content;
 }
@@ -687,7 +679,7 @@ function get_examples_from_zip($benchmark, $langpair, $model, $pkg='opusmt', $st
         $zip->close();
     }
     if ( ! isset( $_COOKIE['PHPSESSID'] ) ) {
-        remove_tmpfile($tmpfile);
+        unlink($tmpfile);
     }
     return array_slice($examples, $start*4, ($end-$start+1)*4);
 }
@@ -816,6 +808,62 @@ function modelurl_to_model($modelurl){
 }
 
 
+function model_size($package, $model){
+  if (array_key_exists('models', $_SESSION)){
+      if (array_key_exists($package, $_SESSION['models'])){
+	if (array_key_exists($model, $_SESSION['models'][$package])){
+	  if (array_key_exists('size', $_SESSION['models'][$package][$model])){
+	    return $_SESSION['models'][$package][$model]['size'];
+	  }
+	}
+      }
+  }
+  
+  // 0 means unknown
+  $_SESSION['models'][$package][$model]['size'] = 0;
+
+  $file = get_file_location('models/modelsize.txt', $package);
+  if ($lines = @file($file)){
+    foreach ($lines as $line){
+      $val = explode("\t",$line);
+      if ($val[1] == 'parameters'){
+	$size = floatval($val[2]);
+	$_SESSION['models'][$package][$val[0]]['size'] = $size;
+      }
+    }
+  }
+  return $_SESSION['models'][$package][$model]['size'];
+}
+
+
+
+function model_size_individual($package, $model){
+  if (array_key_exists('models', $_SESSION)){
+      if (array_key_exists($package, $_SESSION['models'])){
+	if (array_key_exists($model, $_SESSION['models'][$package])){
+	  if (array_key_exists('size', $_SESSION['models'][$package][$model])){
+	    return $_SESSION['models'][$package][$model]['size'];
+	  }
+	}
+      }
+  }
+  $file = get_file_location(implode('/',['models',$model.".info"]), $package);
+  if ($lines = @file($file)){
+    foreach ($lines as $line){
+      $val = explode(': ',$line);
+      if ($val[0] == 'parameters'){
+	$size = floatval($val[1]);
+	$_SESSION['models'][$package][$model]['size'] = $size;
+	return $size;
+      }
+    }
+  }
+  // 0 means unknown
+  $_SESSION['models'][$package][$model]['size'] = 0;
+  return 0;
+}
+
+
 
 
 
@@ -938,10 +986,10 @@ function print_scores($model='all', $langpair='all', $benchmark='all', $pkg='opu
         echo("<th>Benchmark</th>");
     }
     if ( $benchmark == 'avg'){
-        echo("<th>$metric</th><th>Model</th><th>Link</th></tr>");
+        echo("<th>$metric</th><th>Model</th><th>Size</th><th>Link</th></tr>");
     }
     else{
-        echo("<th>$metric</th><th>Output</th><th>Model</th><th>Link</th></tr>");
+        echo("<th>$metric</th><th>Output</th><th>Model</th><th>Size</th><th>Link</th></tr>");
     }
     
     $count=0;
@@ -952,6 +1000,8 @@ function print_scores($model='all', $langpair='all', $benchmark='all', $pkg='opu
         $modelurl = $parts[1];
         $model = modelurl_to_model($modelurl);
         $modelpkg = $parts[2];
+	$modelsize = model_size($modelpkg,$model);
+	$modelsize = $modelsize > 0 ? $modelsize.'M' : '?';
         
         // remove extension .zip if it exists
         if (substr($modelurl, -4) == '.zip'){
@@ -1000,7 +1050,7 @@ function print_scores($model='all', $langpair='all', $benchmark='all', $pkg='opu
             echo("<td>$show_translations_link</td>");
         }
         // echo("<td>$model_download_link, $eval_download_link</td><td>$model_scores_link</td></tr>");
-        echo("<td>$model_scores_link</td><td>$model_download_link</td></tr>");
+        echo("<td>$model_scores_link</td><td>$modelsize</td><td>$model_download_link</td></tr>");
         $count++;
     }
     echo('</table>');
@@ -1169,6 +1219,57 @@ function score_color($nr){
 }
 
 
+function size_to_rgb($size){
+  
+  if ($size <= 0){
+    return [164, 164, 164];
+  }
+
+  $max = log(100);
+  $size = $size < 24 ? 1 : $size-24;
+  $logsize = log($size);
+
+  $avg = 60;
+  $good = 30;
+  $norm = $logsize/$max*100;
+  $norm = $norm > 100 ? 100 : $norm;
+  $diff = $avg-$logsize/$max*100;
+
+  $red=196;
+  $green=196;
+  $blue=196;
+
+  if ($diff<0){
+    $change1 = abs(pow((0-$diff/$avg),2)*64);
+    $change2 = abs(($diff/$avg+1)*32);
+    $green-=$change1;
+    $blue-=$change1+$change2;
+  }
+  else{
+    $change1 = abs(pow(($diff/$good),1)*96);
+    $change2 = 0;
+    if ($diff<$good){
+      $change2 = abs((1-$diff/$good)*32);
+    }
+    if ($change1>64){
+      $change1 = 64;
+    }
+    $red-=$change1;
+    $blue-=$change1+$change2;
+  }
+  $red < 0 ? $red = 0: $red;
+  $green < 0 ? $green = 0: $green;
+  $blue < 0 ? $blue = 0: $blue;
+
+  return [floor($red),floor($green),floor($blue)];
+}
+
+function size_color($size){
+  list($red,$green,$blue) = size_to_rgb($size);
+  return sprintf("#%x%x%x",$red,$green,$blue);
+}
+
+
 
 function print_legend(){
     echo '<br/><div class="heatmap">';
@@ -1191,6 +1292,22 @@ function print_legend(){
     echo '</div>';
 }
 
+function print_size_legend(){
+  echo '<br/><div class="heatmap">';
+  echo '<br/>';
+  echo '<table><tr><td>color: </td>';
+  for ($size=24; $size<1200; $size+=ceil($size*0.5)){
+    echo '<td bgcolor="'.size_color($size).'">&nbsp;&nbsp;&nbsp;</td>';
+  }
+  echo '<td bgcolor="'.size_color(0).'">&nbsp;&nbsp;&nbsp;</td>';  
+  echo '</tr><tr><td>#params: </td>';
+  for ($size=24; $size<1200; $size+=ceil($size*0.5)){
+    echo '<td>'.$size.'M</td>';
+  }
+  echo '<td>unknown</td>';
+  echo '</tr></table>';
+  echo '</div>';
+}
 
 
 // print a table with all scores and score differences

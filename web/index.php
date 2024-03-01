@@ -239,6 +239,7 @@ if ( ! $heatmap_shown ){
         }
     }
     elseif ($model == 'top' || $model == 'avg'){
+      print_size_legend();
         if ($userscores_exists  and $chart == "standard"){
             if ($userscores == "yes"){
                 $url_param = make_query(['userscores' => 'no']);
@@ -256,6 +257,9 @@ if ( ! $heatmap_shown ){
         if ($benchmark == 'all' || (strpos($benchmark,'tatoeba') !== false)){
             echo('<li>Note: Tatoeba test sets are not reliable for OPUS-MT models!</li>');
         }
+    }
+    elseif (($benchmark != 'all') && ($model == "all")){
+      print_size_legend();
     }
     /*
     else{

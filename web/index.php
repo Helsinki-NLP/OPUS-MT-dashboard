@@ -199,6 +199,12 @@ elseif ($model != 'top' && $model != 'all' && $model != 'verified' && $model != 
         echo("[standard] [<a rel=\"nofollow\" href=\"$link\">heatmap</a>]</li>");
     }
 }
+else{
+    echo('<li><b>Chart Type:</b> ');
+    print_plot_type_options($chart);
+    $barchart_script = $chart == 'scatterplot' ? 'scatterplot.php' : 'barchart.php';
+    echo("</li>");
+}
 
 
 

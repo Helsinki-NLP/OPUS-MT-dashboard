@@ -740,6 +740,21 @@ function print_chart_type_options($selected_type="standard"){
     }
 }
 
+function print_plot_type_options($selected_type="barchart"){
+    $chart_types = array('barchart', 'scatterplot');    
+    foreach ($chart_types as $c){
+        if ($c == $selected_type){
+            echo("[$c]");
+        }
+        else{
+            $query = make_query(['chart' => $c]);
+            $link = $_SERVER['PHP_SELF'].'?'.$query;
+            echo("[<a rel=\"nofollow\" href=\"$link\">$c</a>]");
+        }
+    }
+}
+
+
 function print_metric_options($selected_metric='bleu'){
     global $evaluation_metrics;
     foreach ($evaluation_metrics as $m){
@@ -991,6 +1006,8 @@ function print_scores($model='all', $langpair='all', $benchmark='all', $pkg='opu
     else{
         echo("<th>$metric</th><th>Output</th><th>Model</th><th>Size</th><th>Link</th></tr>");
     }
+
+    
     
     $count=0;
     foreach ($lines as $line){
@@ -1029,8 +1046,7 @@ function print_scores($model='all', $langpair='all', $benchmark='all', $pkg='opu
         $scoreslink = "<a rel=\"nofollow\" href=\"index.php?$url_param\">scores</a>";
         $modelshort = short_model_name($model);
         $model_scores_link = "<a rel=\"nofollow\" href=\"index.php?$url_param\">$modelshort</a>";
-
-
+	
         if ( $benchmark == 'all'){
             $url_param = make_query(['test' => $test, 'scoreslang' => $langpair ]);
             echo("<tr><td>$count</td><td><a rel=\"nofollow\" href=\"index.php?$url_param\">$test</a></td>");
@@ -1055,7 +1071,6 @@ function print_scores($model='all', $langpair='all', $benchmark='all', $pkg='opu
     }
     echo('</table>');
 }
-
 
 
 function print_langpair_heatmap($model, $metric='bleu', $benchmark='all', $pkg='opusmt', $source='unchanged'){

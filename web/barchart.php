@@ -88,7 +88,13 @@ else{
 }
 
 
+if ($metric == 'bleu' || $metric == 'spbleu'){
+  $scale = 100;
+}
+else{
+  $scale = 1;
+}
 
-$chart = barchart($data, $metric, $maxscore, $type, $index_label);
+$chart = barchart($data, $maxscore, $type, $index_label, $metric, $scale);
 header('Content-Type: image/png');
 imagepng($chart);

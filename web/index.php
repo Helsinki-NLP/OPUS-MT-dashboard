@@ -272,7 +272,17 @@ if ( ! $heatmap_shown ){
         }
     }
     elseif (($benchmark != 'all') && ($model == "all")){
-      print_size_legend();
+        if ($chartlegend == 'size'){
+            print_size_legend();
+            $url_param = make_query(['legend' => 'type']);
+            echo('<br/><li><a rel="nofollow" href="index.php?'. SID . '&'.$url_param.'">use model type colors</a></li>');
+        }
+        else{
+            echo('<li>orange = OPUS-MT, blue = Tatoeba-MT models, red = HPLT-MT models</li>');
+            echo('<li>green = compact models, grey = external models, purple = user-contributed</li>');
+            $url_param = make_query(['legend' => 'size']);
+            echo('<li><a rel="nofollow" href="index.php?'. SID . '&'.$url_param.'">use model size colors</a></li>');
+        }
     }
     /*
     else{

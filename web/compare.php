@@ -158,7 +158,8 @@ foreach ($sorted_models as $model => $release){
     $parts = explode('/',rtrim($model));
     $modelzip = array_pop($parts);
 
-    $modelbase = modelurl_to_model(rtrim($model));
+    // $modelbase = modelurl_to_model(rtrim($model));
+    list($modelbase,$modelurl) = normalize_modelname($model);
     $new_model = implode('/',[$pkg, $modelbase]);
 
     if (($model1 != 'unknown') && ($model2 == 'unknown')){

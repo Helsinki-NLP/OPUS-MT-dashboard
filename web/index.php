@@ -14,13 +14,14 @@
 include 'functions.php';
 
 // get query parameters
-$package    = get_param('pkg', 'opusmt');
-$benchmark  = get_param('test', 'all');
-$metric     = get_param('metric', 'bleu');
-$showlang   = get_param('scoreslang', 'all');
-$model      = get_param('model', 'top');
-$chart      = get_param('chart', 'standard');
-$userscores = get_param('userscores', 'no');
+$package     = get_param('pkg', 'opusmt');
+$benchmark   = get_param('test', 'all');
+$metric      = get_param('metric', 'bleu');
+$showlang    = get_param('scoreslang', 'all');
+$model       = get_param('model', 'top');
+$chart       = get_param('chart', 'standard');
+$chartlegend = get_param('legend', 'type');
+$userscores  = get_param('userscores', 'no');
 
 
 list($srclang, $trglang, $langpair) = get_langpair();
@@ -199,7 +200,7 @@ elseif ($model != 'top' && $model != 'all' && $model != 'verified' && $model != 
         echo("[standard] [<a rel=\"nofollow\" href=\"$link\">heatmap</a>]</li>");
     }
 }
-else{
+elseif ($benchmark != 'all'){
     echo('<li><b>Chart Type:</b> ');
     print_plot_type_options($chart);
     $barchart_script = $chart == 'scatterplot' ? 'scatterplot.php' : 'barchart.php';
@@ -244,19 +245,25 @@ if ( ! $heatmap_shown ){
             echo('<li>blue = OPUS-MT / Tatoeba-MT models, grey = external models</li>');
         }
     }
-    elseif ($model == 'top' || $model == 'avg'){
-      print_size_legend();
-        if ($userscores_exists  and $chart == "standard"){
+    elseif ($model == 'top' || $benchmark == 'avg'){
+        if ($chartlegend == 'size'){
+            print_size_legend();
+            $url_param = make_query(['legend' => 'type']);
+            echo('<br/><li><a rel="nofollow" href="index.php?'. SID . '&'.$url_param.'">use model type colors</a></li>');
+        }
+        else{
+            echo('<li>orange = OPUS-MT, blue = Tatoeba-MT models, red = HPLT-MT models</li>');
+            echo('<li>green = compact models, grey = external models, purple = user-contributed</li>');
+            $url_param = make_query(['legend' => 'size']);
+            echo('<li><a rel="nofollow" href="index.php?'. SID . '&'.$url_param.'">use model size colors</a></li>');
+        }
+        if ($userscores_exists and $chart == "standard"){
             if ($userscores == "yes"){
                 $url_param = make_query(['userscores' => 'no']);
-                echo('<li>orange = OPUS-MT, blue = Tatoeba-MT models, green = compact models</li>');
-                echo('<li>grey = external models, purple = user-contributed</li>');
                 echo('<li><a rel="nofollow" href="index.php?'. SID . '&'.$url_param.'">exclude scores of user-contributed translations</a></li>');
             }
             else{
                 $url_param = make_query(['userscores' => 'yes']);
-                echo('<li>orange = OPUS-MT, blue = Tatoeba-MT models, green = compact models</li>');
-                echo('<li>grey = external models, purple = user-contributed</li>');
                 echo('<li><a rel="nofollow" href="index.php?'. SID . '&'.$url_param.'">include scores of user-contributed translations</a></li>');
             }
         }

@@ -130,17 +130,17 @@ foreach($scores[1] as $key => $value) {
     if ((array_key_exists($key,$scores[2])) or ($topscores)){
         $nrscores++;
         array_push($data,$value);
-	array_push($colors,'blue');
+        array_push($colors,'blue');
     
         foreach (array(2, 3) as $v) {
             if ($scores_exist[$v]){
                 if (array_key_exists($key,$scores[$v])){
                     array_push($data,$scores[$v][$key]);
-		    array_push($colors,$model_colors[$v]);
+                    array_push($colors,$model_colors[$v]);
                 }
                 else{
                     array_push($data,0);
-		    array_push($colors,$model_colors[$v]);
+                    array_push($colors,$model_colors[$v]);
                 }
             }
         }

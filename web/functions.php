@@ -16,7 +16,7 @@ $package = get_param('pkg', 'opusmt');
 
 // online file locations
 
-$leaderboard_urls['opusmt']      = 'https://raw.githubusercontent.com/Helsinki-NLP/OPUS-MT-leaderboard/master';
+$leaderboard_urls['opusmt']      = 'https://raw.githubusercontent.com/Helsinki-NLP/OPUS-MT-leaderboard/hplt';
 $leaderboard_urls['external']    = 'https://raw.githubusercontent.com/Helsinki-NLP/External-MT-leaderboard/master';
 $leaderboard_urls['contributed'] = 'https://raw.githubusercontent.com/Helsinki-NLP/Contributed-MT-leaderboard/master';
 
@@ -819,7 +819,58 @@ function modelurl_to_model($modelurl){
         $modelbase = substr($modelzip, 0, -4);
         return $modelbase;
     }
+    if (substr($modelurl,0,27) == 'https://huggingface.co/HPLT'){
+        $model = explode('/',$modelurl);
+        $modelname = array_pop($model);
+        $modelparts = explode('-',$modelname);
+        $modellang = implode('-',[$modelparts[1],$modelparts[2]]);
+        $modelbase = implode('/',['HPLT-MT-models',$modellang,$modelname]);
+        return $modelbase;
+    }   
     return $modelurl;
+}
+
+
+## this function takes care of the mess with model names in the dashboard and model URL's
+## TODO: we should store internal model names and URL's consistently in the leaderboard files!
+
+function normalize_modelname($modelstr){
+    $modelparts = explode('/',$modelstr);
+    if ($modelparts[0] == 'https:'){
+        $modelurl = $modelstr;
+        if ($modelparts[3] == 'HPLT'){
+            $modelname = explode('-',$modelparts[4]);
+            $modellang = implode('-',[$modelname[1],$modelname[2]]);
+            $model = implode('/',['HPLT-MT-models',$modellang,$modelparts[4]]);
+        }
+        else{
+            $model = implode('/',array_slice($modelparts, 3));
+        }
+    }
+    elseif (substr($modelstr, -4) == '.zip'){
+        $modelurl = implode('/',['https://object.pouta.csc.fi',$modelstr]);
+        $model = $modelstr;
+    }
+    elseif ($modelparts[0] == 'huggingface'){
+        array_shift($modelparts);
+        $modelurl = implode('/',['https://huggingface.co',implode('/',$modelparts)]);
+        $model = $modelstr;
+    }
+    elseif ($modelparts[0] == 'HPLT'){
+        $modelname = explode('-',$modelparts[1]);
+        $modellang = implode('-',[$modelname[1],$modelname[2]]);
+        $model = implode('/',['HPLT-MT-models',$modellang,$modelparts[1]]);
+        $modelurl = implode('/',['https://huggingface.co',implode('/',$modelparts)]);
+    }
+    else{
+        $modelurl = implode('/',['https://huggingface.co',$modelstr]);
+        $model = $modelstr;
+    }
+    
+    if (substr($model, -4) == '.zip'){
+        $model = substr($model, 0, -4);
+    }
+    return array($model,$modelurl);
 }
 
 
@@ -1014,20 +1065,24 @@ function print_scores($model='all', $langpair='all', $benchmark='all', $pkg='opu
         $id--;
         $parts = explode("\t",rtrim($line));
         $test = $benchmark == 'all' ? array_shift($parts) : $benchmark;
-        $modelurl = $parts[1];
-        $model = modelurl_to_model($modelurl);
+        list($model, $modelurl) = normalize_modelname($parts[1]);
+        // $modelurl = $parts[1];
+        // $model = modelurl_to_model($modelurl);
         $modelpkg = $parts[2];
-	$modelsize = model_size($modelpkg,$model);
-	$modelsize = $modelsize > 0 ? $modelsize.'M' : '?';
+        $modelsize = model_size($modelpkg,$model);
+        $modelsize = $modelsize > 0 ? $modelsize.'M' : '?';
         
         // remove extension .zip if it exists
         if (substr($modelurl, -4) == '.zip'){
             $model_download_link = "<a rel=\"nofollow\" href=\"$modelurl\">zip-file</a>";
         }
         else{
+            $model_download_link = "<a rel=\"nofollow\" href=\"$modelurl\">URL</a>";
+            
             // TODO: we need a better solution to link to model data cards
             //       this is just a hack to link to huggingface models
             //   --> need to store model info and links somewhere!
+            /*
             $array = explode('/', $modelurl);
             if ($array[0] == 'huggingface'){
                 $array[0] = 'https://huggingface.co';
@@ -1037,6 +1092,7 @@ function print_scores($model='all', $langpair='all', $benchmark='all', $pkg='opu
             else{
                 $model_download_link = '';
             }
+            */
         }
 
         $eval_file_url = $storage_urls[$pkg].'/models/'.$model.'.eval.zip';
@@ -1344,7 +1400,8 @@ function print_topscore_differences($langpair='deu-eng', $benchmark='all', $metr
         $key = $array[0];
         $scores1[$key] = $score;
         $pkg1[$key] = 'opusmt';
-        $model1[$key] = modelurl_to_model($array[2]);
+        list($model1[$key], $modelurl) = normalize_modelname($array[2]);
+        // $model1[$key] = modelurl_to_model($array[2]);
     }
 
     $scores2 = array();

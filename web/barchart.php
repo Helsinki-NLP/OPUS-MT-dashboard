@@ -13,11 +13,15 @@ $metric    = get_param('metric', 'bleu');
 $showlang  = get_param('scoreslang', 'all');
 $model     = get_param('model', 'top');
 $userscores = get_param('userscores', 'no');
+$chartlegend = get_param('legend', 'type');
+
 
 
 list($srclang, $trglang, $langpair) = get_langpair();
 
 $lines = read_model_scores($langpair, $benchmark, $metric, $model, $package);
+# echo(implode("<br/>",$lines));
+# exit;
 
 
 if ($benchmark == 'avg'){
@@ -64,10 +68,14 @@ elseif ($benchmark != 'all'){
     foreach($lines as $line) {
         $array = explode("\t", rtrim($line));
         array_unshift($data,$array[0]);
-        // array_unshift($type,model_color($array[count($array)-1], $array[1]));
-	$size = ceil(model_size($array[count($array)-1], modelurl_to_model($array[1])));
-	array_unshift($type,$size);
-	// array_unshift($type,model_size($array[count($array)-1], modelurl_to_model($array[1])));
+        list($modelid, $modelurl) = normalize_modelname($array[1]);
+        if ($chartlegend == 'size'){
+            $size = ceil(model_size($array[count($array)-1], $modelid));
+            array_unshift($type,$size);
+        }
+        else{
+            array_unshift($type,model_color($array[count($array)-1], $modelid));
+        }
         $nrscores++;
     }
     $maxscore = end($data);
@@ -94,6 +102,10 @@ if ($metric == 'bleu' || $metric == 'spbleu'){
 else{
   $scale = 1;
 }
+
+// echo(implode("<br/>",$data));
+// exit;
+
 
 $chart = barchart($data, $maxscore, $type, $index_label, $metric, $scale);
 header('Content-Type: image/png');

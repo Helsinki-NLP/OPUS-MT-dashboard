@@ -17,7 +17,8 @@ function model_color($package, $model){
     $type2color = array( 'contributed' => 'purple',
                          'external'    => 'grey',
                          'Tatoeba-MT-models' => 'blue',
-                         'OPUS-MT-models' => 'orange' );
+                         'OPUS-MT-models' => 'orange',
+                         'HPLT-MT-models'    => 'darkred');
     
     if ($package != 'opusmt'){
         return $type2color[$package];
@@ -29,9 +30,9 @@ function model_color($package, $model){
         return 'green';
     }
     else{
-        $modelparts = explode('/',$model);
-        $type = $modelparts[count($modelparts)-3];
-        return $type2color[$modelparts[count($modelparts)-3]];
+        list($modelid, $modelurl) = normalize_modelname($model);
+        $modelparts = explode('/',$modelid);
+        return array_key_exists($modelparts[0], $type2color) ? $type2color[$modelparts[0]] : 'grey';
     }
 }
 
@@ -104,12 +105,16 @@ function barchart(&$data, $maxscore, &$colors, $index_label, $value_label,
   $gridColor = imagecolorallocate($chart, 212, 212, 212);
   $barColor = imagecolorallocate($chart, 47, 133, 217);
 
-  $barColors = array('blue' => imagecolorallocate($chart, 47, 133, 217),
-                     'orange' => imagecolorallocate($chart, 217, 133, 47),
-                     'grey' => imagecolorallocate($chart, 164, 164, 164),
-                     'purple' => imagecolorallocate($chart, 133, 133, 164),
-                     'green' => imagecolorallocate($chart, 47, 196, 47),
-                     'red' => imagecolorallocate($chart, 217, 47, 47));
+  $barColors = array(
+      'black' => imagecolorallocate($chart, 0, 0, 0),
+      'white' => imagecolorallocate($chart, 255, 255, 255),
+      'blue' => imagecolorallocate($chart, 47, 133, 217),
+      'orange' => imagecolorallocate($chart, 217, 133, 47),
+      'grey' => imagecolorallocate($chart, 164, 164, 164),
+      'purple' => imagecolorallocate($chart, 133, 133, 164),
+      'green' => imagecolorallocate($chart, 47, 196, 47),
+      'darkred' => imagecolorallocate($chart, 196, 28, 42),
+      'red' => imagecolorallocate($chart, 217, 47, 47));
 
   imagefill($chart, 0, 0, $backgroundColor);
   imagesetthickness($chart, $lineWidth);
@@ -201,6 +206,15 @@ function scatter_plot(&$data, &$colors, $xLabel, $yLabel, $xMaxValue=100, $yMaxV
     $logscaleX = true;
     $logscaleY = false;
 
+    $xScaleMargin = ceil(0.01 * ($xMaxValue - $xMinValue));
+    $yScaleMargin = floor(0.1 * ($yMaxValue - $yMinValue))/10;
+    
+    $xMinValue -= $xScaleMargin;
+    $xMaxValue += $xScaleMargin;
+    $yMinValue -= $yScaleMargin;
+    $yMaxValue += $yScaleMargin;
+
+    
     if ($logscaleY){
         $yMinValue = $yMinValue <= 0 ? 1 : $yMinValue;
     }
@@ -248,12 +262,16 @@ function scatter_plot(&$data, &$colors, $xLabel, $yLabel, $xMaxValue=100, $yMaxV
     $gridColor = imagecolorallocate($chart, 212, 212, 212);
     $barColor = imagecolorallocate($chart, 47, 133, 217);
 
-    $barColors = array('blue' => imagecolorallocate($chart, 47, 133, 217),
-                       'orange' => imagecolorallocate($chart, 217, 133, 47),
-                       'grey' => imagecolorallocate($chart, 164, 164, 164),
-                       'purple' => imagecolorallocate($chart, 133, 133, 164),
-                       'green' => imagecolorallocate($chart, 47, 196, 47),
-                       'red' => imagecolorallocate($chart, 217, 47, 47));
+    $barColors = array(
+        'black' => imagecolorallocate($chart, 0, 0, 0),
+        'white' => imagecolorallocate($chart, 255, 255, 255),
+        'blue' => imagecolorallocate($chart, 47, 133, 217),
+        'orange' => imagecolorallocate($chart, 217, 133, 47),
+        'grey' => imagecolorallocate($chart, 164, 164, 164),
+        'purple' => imagecolorallocate($chart, 133, 133, 164),
+        'green' => imagecolorallocate($chart, 47, 196, 47),
+        'darkred' => imagecolorallocate($chart, 196, 28, 42),
+        'red' => imagecolorallocate($chart, 217, 47, 47));
 
     imagefill($chart, 0, 0, $backgroundColor);
     imagesetthickness($chart, $lineWidth);
@@ -337,7 +355,8 @@ function scatter_plot(&$data, &$colors, $xLabel, $yLabel, $xMaxValue=100, $yMaxV
         $midY = ceil($gridBottom - $normY*$gridHeight);
         $color = array_key_exists($label, $colors) ? $colors[$label] : 'blue';
         $barColor = array_key_exists($color, $barColors) ? $barColors[$color] : model_size_color($colors[$label], $chart);
-        imagefilledellipse($chart, $midX, $midY, 10, 10, $barColor);
+        imagefilledellipse($chart, $midX, $midY, 15, 15, $barColor);
+        imageellipse($chart, $midX, $midY, 15, 15, $barColors['white']);
 
         // $labelBox = imagettfbbox($fontSize, 0, $font, strval($label));
         imagettftext($chart, $fontSize, 0, $midX + 10, $midY, $labelColor, $font, strval($label));

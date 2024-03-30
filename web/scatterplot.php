@@ -13,6 +13,7 @@ $metric    = get_param('metric', 'bleu');
 $showlang  = get_param('scoreslang', 'all');
 $model     = get_param('model', 'top');
 $userscores = get_param('userscores', 'no');
+$chartlegend = get_param('legend', 'type');
 
 
 list($srclang, $trglang, $langpair) = get_langpair();
@@ -40,13 +41,19 @@ foreach($lines as $line) {
     $array = explode("\t", rtrim($line));
     $score = (float) $array[0];
     $size = ceil(model_size($array[count($array)-1], modelurl_to_model($array[1])));
+    if ($chartlegend == 'size'){
+        $color = $size;
+    }
+    else{
+        $color = model_color($array[count($array)-1], modelurl_to_model($array[1]));
+    }
 
     $id--;
     if ($size == 0){
         continue;
     }
     $data[$id] = array($size, $score);
-    $type[$id] = $size;
+    $type[$id] = $color;
 
     if ( $maxscore < $score ){
         $maxscore = $score;

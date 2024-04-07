@@ -27,6 +27,12 @@ $storage_urls['contributed']     = 'https://object.pouta.csc.fi/Contributed-MT-l
 $testset_url                     = 'https://raw.githubusercontent.com/Helsinki-NLP/OPUS-MT-testsets/master';
 
 
+// general locations for GitHub repos
+
+$github_urls             = $leaderboard_urls;
+$github_urls['testsets'] = $testset_url;
+
+
 // for backwards compatibility
 
 $leaderboard_urls['scores']          = $leaderboard_urls['opusmt'];
@@ -47,6 +53,7 @@ $local_datahome       = '/media/OPUS-MT';
 $leaderboard_dirs['opusmt']      = $local_datahome.'/OPUS-MT-leaderboard';
 $leaderboard_dirs['external']    = $local_datahome.'/External-MT-leaderboard';
 $leaderboard_dirs['contributed'] = $local_datahome.'/Contributed-MT-leaderboard';
+$leaderboard_dirs['testsets']    = $local_datahome.'/OPUS-MT-testsets';
 
 // for backwards compatibility
 
@@ -365,16 +372,28 @@ function get_reference_filenames($testset, $langpair){
     return $_SESSION['reference-files'][$testset][$langpair];
 }
 
+
+// get testset filenames and put them into the session cache
+
 function cache_testset_filenames($testset, $langpair){
     global $testset_url;
-    $lines = read_file_with_cache(implode('/',[$testset_url,'testsets.tsv']));
-    foreach ($lines as $line){
-        $fields = explode("\t",rtrim($line));
-        $lp=implode('-',[$fields[0],$fields[1]]);
-        $_SESSION['testset-files'][$fields[2]][$lp] = $fields[6];
-        $_SESSION['reference-files'][$fields[2]][$lp] = array_slice($fields, 7);
+    
+    $fp = @fopen(implode('/',[$testset_url,'testsets.tsv']), "r");
+    if ($fp) {
+        while (($line = fgets($fp, 4096)) !== false) {
+            $fields = explode("\t",rtrim($line));
+            if ($fields[2] == $testset){
+                $lp=implode('-',[$fields[0],$fields[1]]);
+                if ($lp == $langpair){
+                    $_SESSION['testset-files'][$fields[2]][$lp] = $fields[6];
+                    $_SESSION['reference-files'][$fields[2]][$lp] = array_slice($fields, 7);
+                }
+            }
+        }
+        fclose($fp);
     }
 }
+
 
 // generic function to read file with session cache
 
@@ -501,6 +520,66 @@ function get_logfile_with_cache($model, $pkg='opusmt', $ext='.eval.zip', $cache_
     unlink($tmpfile);
 }
 
+
+// copy files to local tmpfiles
+
+function get_file_with_cache($path, $pkg='opusmt', $cache_size=10){
+    global $github_urls, $storage_dirs;
+    
+    $url  = implode('/',[$github_urls[$pkg],$path]);
+    $file = implode('/',[$storage_dirs[$pkg],$path]);
+
+    // local file exists? --> return it
+    if (file_exists($file)){
+        return $file;
+    }
+    
+    if (! array_key_exists('cached-files', $_SESSION)){
+        $_SESSION['cached-files'] = array();
+        $_SESSION['next-filecache-key'] = 0;
+    }
+    $key = array_search($url, $_SESSION['cached-files']);
+    if ($key !== false){
+        if (array_key_exists('files', $_SESSION)){
+            if (array_key_exists($key, $_SESSION['files'])){
+                if (file_exists($_SESSION['files'][$key])){
+                    // echo(".... found file $url as $key</br>");
+                    return $_SESSION['files'][$key];
+                }
+            }
+        }
+    }
+
+    if ($_SESSION['next-filecache-key'] >= $cache_size){
+        $_SESSION['next-filecache-key'] = 0;
+    }
+
+    $key = $_SESSION['next-filecache-key'];
+    $_SESSION['cached-files'][$key] = $url;
+
+    // delete old cached file
+    if (array_key_exists('files', $_SESSION)){
+        if (array_key_exists($key, $_SESSION['files'])){
+            if (file_exists($_SESSION['files'][$key])){
+                unlink($_SESSION['files'][$key]);
+                // echo(".... remove ".$_SESSION['files'][$key]);
+            }
+        }
+    }
+
+    // create new cached file
+    $tmpfile = tempnam(sys_get_temp_dir(),'opusmteval');
+    if (copy($url, $tmpfile)) {
+        // echo(".... pushed file $url as $key</br>");
+        $_SESSION['files'][$key] = $tmpfile;
+        $_SESSION['next-filecache-key']++;
+        return $_SESSION['files'][$key];
+    }
+    unlink($tmpfile);
+}
+
+
+
 function clear_session(){
     cleanup_cache();
     $_SESSION = array();
@@ -509,11 +588,11 @@ function clear_session(){
 function cleanup_cache(){
     if (isset($_SESSION['files'])){
         foreach ($_SESSION['files'] as $key => $file){
-	  if (is_string($file)){
-            if (file_exists($file)) {
-	      unlink($file);
+            if (is_string($file)){
+                if (file_exists($file)) {
+                    unlink($file);
+                }
             }
-	  }
         }
         $_SESSION['files'] = array();
     }
@@ -544,7 +623,74 @@ function print_translation_logfile($benchmark, $langpair, $model, $pkg='opusmt')
 }
 
 
-function get_system_translations($benchmark, $langpair, $model, $pkg='opusmt', $start=0, $end=-1){
+
+
+/////// NEW: read selected lines from a file
+/////// TODO: still reads sequentially through files
+/////// --> should remember file positions
+
+function selected_lines_from_file($file, $start=0, $end=-1){
+    $output = array();
+    $fp = @fopen($file, "r");
+    if ($fp) {
+        $count = 0;
+        while (($line = fgets($fp, 4096)) !== false) {
+            if ($count < $end){
+                if ($count >= $start){
+                    array_push($output,$line);
+                }
+            }
+            else{
+                break;
+            }
+            $count++;
+        }
+        fclose($fp);
+    }
+    return $output;
+    
+    /*
+    // read entire file and return a slize
+    $output = @file($file);
+    if ($end > $start){
+        $end = $end <= count($output) ? $end : count($output);
+        return array_slice($output, $start, $end-$start+1);
+    }
+    return $output;
+    */
+}
+
+
+function get_system_translations($benchmark, $langpair, $model, $pkg='opusmt', $start=0, $end=-1){    
+    $filename = implode('.',[$benchmark, $langpair, 'output']);
+    $filepath = implode('/',['models',$model,$filename]);
+    $file = get_file_with_cache($filepath,$pkg);
+    return selected_lines_from_file($file, $start, $end);    
+}
+
+function get_testset_input($benchmark, $langpair, $start=0, $end=-1){
+    $filepath = get_testset_filename($benchmark, $langpair);
+    $file = get_file_with_cache($filepath,'testsets');
+    return selected_lines_from_file($file, $start, $end);    
+}
+
+function get_testset_reference($benchmark, $langpair, $start=0, $end=-1){
+    $files = get_reference_filenames($benchmark, $langpair);
+    if (count($files) > 0){
+        $file = get_file_with_cache($files[0],'testsets');
+        return selected_lines_from_file($file, $start, $end);    
+    }
+}
+
+
+
+/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
+///// TODO: the functions below put too much into the session variable!
+/////       (read_file_with_cache fills up memory!)
+
+function get_system_translations_from_cache($benchmark, $langpair, $model, $pkg='opusmt', $start=0, $end=-1){
     $filename = implode('.',[$benchmark, $langpair, 'output']);
     $file     = implode('/',['models',$model,$filename]);
     $filepath = get_file_location($file, $pkg);
@@ -556,7 +702,7 @@ function get_system_translations($benchmark, $langpair, $model, $pkg='opusmt', $
     return $output;
 }
 
-function get_testset_input($benchmark, $langpair, $start=0, $end=-1){
+function get_testset_input_from_cache($benchmark, $langpair, $start=0, $end=-1){
     global $testset_url, $testset_dir;
     $file = get_testset_filename($benchmark, $langpair);
     $localfile = implode('/',[$testset_dir,$file]);
@@ -574,7 +720,7 @@ function get_testset_input($benchmark, $langpair, $start=0, $end=-1){
 }
 
 // returns only the first reference (in case multiple files exist)
-function get_testset_reference($benchmark, $langpair, $start=0, $end=-1){
+function get_testset_reference_from_cache($benchmark, $langpair, $start=0, $end=-1){
     global $testset_url, $testset_dir;
     $files = get_reference_filenames($benchmark, $langpair);
     if (count($files) > 0){
@@ -593,6 +739,13 @@ function get_testset_reference($benchmark, $langpair, $start=0, $end=-1){
     }
     return array();
 }
+
+/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////
+
+
+
 
 
 function get_translations ($benchmark, $langpair, $model, $pkg='opusmt'){
@@ -616,7 +769,7 @@ function get_selected_translations ($benchmark, $langpair, $model, $pkg='opusmt'
 
     // read from compare-files in large zip archives
     // --> this is surprisingly fast and does not require a lot of memory as we don't cache anything
-    return get_examples_from_zip($benchmark, $langpair, $model, $pkg, $start, $end);
+    // return get_examples_from_zip($benchmark, $langpair, $model, $pkg, $start, $end);
 
     // below would be the alternative of putting input, reference and system output together on the fly
     // --> this would use files from the repo and does not need to unpack from zip files

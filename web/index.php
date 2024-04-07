@@ -216,6 +216,7 @@ echo("</ul>");
 
 
 if ( ! $heatmap_shown ){
+    // $url_param = make_query(['model1' => 'unknown', 'model2' => 'unknown', 'test' => $benchmark]);
     $url_param = make_query(['model1' => 'unknown', 'model2' => 'unknown']);
     if ( isset( $_COOKIE['PHPSESSID'] ) ) {
         echo("<img src=\"$barchart_script?". SID .'&'.$url_param."\" alt=\"barchart\" />");
@@ -253,7 +254,7 @@ if ( ! $heatmap_shown ){
         }
         else{
             echo('<li>orange = OPUS-MT, blue = Tatoeba-MT models, red = HPLT-MT models</li>');
-            echo('<li>green = compact models, grey = external models, purple = user-contributed</li>');
+            echo('<li>green = student models, grey = external models, purple = user-contributed</li>');
             $url_param = make_query(['legend' => 'size']);
             echo('<li><a rel="nofollow" href="index.php?'. SID . '&'.$url_param.'">use model size colors</a></li>');
         }
@@ -279,14 +280,14 @@ if ( ! $heatmap_shown ){
         }
         else{
             echo('<li>orange = OPUS-MT, blue = Tatoeba-MT models, red = HPLT-MT models</li>');
-            echo('<li>green = compact models, grey = external models, purple = user-contributed</li>');
+            echo('<li>green = student models, grey = external models, purple = user-contributed</li>');
             $url_param = make_query(['legend' => 'size']);
             echo('<li><a rel="nofollow" href="index.php?'. SID . '&'.$url_param.'">use model size colors</a></li>');
         }
     }
     /*
     else{
-        echo('<li>orange = OPUS-MT, blue = Tatoeba-MT models, green = compact models</li>');
+        echo('<li>orange = OPUS-MT, blue = Tatoeba-MT models, green = student models</li>');
         echo('<li>grey = external models, purple = user-contributed</li>');
     }
     */

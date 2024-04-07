@@ -16,6 +16,8 @@ $userscores = get_param('userscores', 'no');
 $chartlegend = get_param('legend', 'type');
 
 
+// echo("test = $benchmark");
+// exit;
 
 list($srclang, $trglang, $langpair) = get_langpair();
 

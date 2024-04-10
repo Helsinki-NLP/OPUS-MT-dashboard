@@ -16,11 +16,11 @@ $package = get_param('pkg', 'opusmt');
 
 // online file locations
 
-$leaderboard_urls['opusmt']      = 'https://raw.githubusercontent.com/Helsinki-NLP/OPUS-MT-leaderboard/hplt';
+$leaderboard_urls['opusmt']      = 'https://raw.githubusercontent.com/Helsinki-NLP/HPLT-MT-leaderboard/master';
 $leaderboard_urls['external']    = 'https://raw.githubusercontent.com/Helsinki-NLP/External-MT-leaderboard/master';
 $leaderboard_urls['contributed'] = 'https://raw.githubusercontent.com/Helsinki-NLP/Contributed-MT-leaderboard/master';
 
-$storage_urls['opusmt']          = 'https://object.pouta.csc.fi/OPUS-MT-leaderboard';
+$storage_urls['opusmt']          = 'https://object.pouta.csc.fi/HPLT-MT-leaderboard';
 $storage_urls['external']        = 'https://object.pouta.csc.fi/External-MT-leaderboard';
 $storage_urls['contributed']     = 'https://object.pouta.csc.fi/Contributed-MT-leaderboard';
 
@@ -50,7 +50,7 @@ $storage_urls['user-scores']         = $storage_urls['contributed'];
 // $local_datahome       = '/media/OPUS/dev';
 $local_datahome       = '/media/OPUS-MT';
 
-$leaderboard_dirs['opusmt']      = $local_datahome.'/OPUS-MT-leaderboard';
+$leaderboard_dirs['opusmt']      = $local_datahome.'/HPLT-MT-leaderboard';
 $leaderboard_dirs['external']    = $local_datahome.'/External-MT-leaderboard';
 $leaderboard_dirs['contributed'] = $local_datahome.'/Contributed-MT-leaderboard';
 $leaderboard_dirs['testsets']    = $local_datahome.'/OPUS-MT-testsets';
@@ -130,7 +130,7 @@ function get_langpair(){
     }
     else{
         $srclang   = get_param('src', 'eng');
-        $trglang   = get_param('trg', 'fra');
+        $trglang   = get_param('trg', 'ara');
     }
     $langpair  = implode('-',[$srclang,$trglang]);
     return [$srclang, $trglang, $langpair];
@@ -387,6 +387,7 @@ function cache_testset_filenames($testset, $langpair){
                 if ($lp == $langpair){
                     $_SESSION['testset-files'][$fields[2]][$lp] = $fields[6];
                     $_SESSION['reference-files'][$fields[2]][$lp] = array_slice($fields, 7);
+                    break;
                 }
             }
         }
@@ -648,16 +649,6 @@ function selected_lines_from_file($file, $start=0, $end=-1){
         fclose($fp);
     }
     return $output;
-    
-    /*
-    // read entire file and return a slize
-    $output = @file($file);
-    if ($end > $start){
-        $end = $end <= count($output) ? $end : count($output);
-        return array_slice($output, $start, $end-$start+1);
-    }
-    return $output;
-    */
 }
 
 
@@ -784,9 +775,6 @@ function get_selected_translations ($benchmark, $langpair, $model, $pkg='opusmt'
 
 function get_examples_from_cached_files($benchmark, $langpair, $model, $pkg='opusmt', $start=0, $end=99){
     $system    = get_system_translations($benchmark, $langpair, $model, $pkg, $start, $end);
-    if (count($system) == 0){
-        return get_selected_compare_examples($benchmark, $langpair, $model, $pkg, $start, $end);
-    }
     $input     = get_testset_input($benchmark, $langpair, $start, $end);
     $reference = get_testset_reference($benchmark, $langpair, $start, $end);
 

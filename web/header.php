@@ -1,6 +1,6 @@
 <?php 
 
-$leaderboard_url = 'https://raw.githubusercontent.com/Helsinki-NLP/OPUS-MT-leaderboard/master';
+$leaderboard_url = 'https://raw.githubusercontent.com/Helsinki-NLP/HPLT-MT-leaderboard/master';
 
 // form for selecting benchmarks and language pairs
 

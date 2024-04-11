@@ -206,15 +206,14 @@ function scatter_plot(&$data, &$colors, $xLabel, $yLabel, $xMaxValue=100, $yMaxV
     $logscaleX = true;
     $logscaleY = false;
 
-    $xScaleMargin = ceil(0.01 * ($xMaxValue - $xMinValue));
-    $yScaleMargin = floor(0.1 * ($yMaxValue - $yMinValue))/10;
-    
+    $xScaleMargin = 1 + ceil(0.01 * ($xMaxValue - $xMinValue));
+    $yScaleMargin = 0.1 + floor(0.1 * ($yMaxValue - $yMinValue))/10;
+
     $xMinValue -= $xScaleMargin;
     $xMaxValue += $xScaleMargin;
     $yMinValue -= $yScaleMargin;
     $yMaxValue += $yScaleMargin;
 
-    
     if ($logscaleY){
         $yMinValue = $yMinValue <= 0 ? 1 : $yMinValue;
     }

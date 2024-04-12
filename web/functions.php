@@ -1003,6 +1003,10 @@ function normalize_modelname($modelstr){
         $model = implode('/',['HPLT-MT-models',$modellang,$modelparts[1]]);
         $modelurl = implode('/',['https://huggingface.co',implode('/',$modelparts)]);
     }
+    elseif ($modelparts[0] == 'HPLT-MT-models'){
+        $modelurl = implode('/',['https://huggingface.co','HPLT',$modelparts[2]]);
+        $model = $modelstr;
+    }
     else{
         $modelurl = implode('/',['https://huggingface.co',$modelstr]);
         $model = $modelstr;

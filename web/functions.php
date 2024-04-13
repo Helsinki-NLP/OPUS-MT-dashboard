@@ -867,8 +867,8 @@ function print_file_diff($file1, $file2, $diffstyle = 'wdiff'){
     echo '</pre></div>';
 }
 
-function print_chart_type_options($selected_type="standard"){
-    $chart_types = array('standard', 'diff');    
+function print_chart_type_options($selected_type="standard", $heatmap=false){
+    $chart_types = $heatmap ? array('standard', 'diff', 'heatmap'): array('standard', 'diff');
     foreach ($chart_types as $c){
         if ($c == $selected_type){
             echo("[$c]");
@@ -1274,15 +1274,13 @@ function print_scores($model='all', $langpair='all', $benchmark='all', $pkg='opu
 }
 
 
-function print_langpair_heatmap($model, $metric='bleu', $benchmark='all', $pkg='opusmt', $source='unchanged'){
-    $file = get_score_filename('all', $benchmark, $metric, $model, $pkg, $source);
-    $lines = read_model_scores('all', $benchmark, $metric, $model, $pkg, $source);
 
-    $scores = array();
-    $trglangs = array();
+function get_langair_scores(&$scores, &$trglangs, &$benchmarks, $model, $pkg='opusmt',
+                            $metric='bleu', $benchmark='all', $source='unchanged'){
+
     $counts = array();
-    $benchmarks = array();
-    
+    $max = 0;
+    $lines = read_model_scores('all', $benchmark, $metric, $model, $pkg, $source);
     foreach ($lines as $line){
         list($p,$b,$score) = explode("\t",rtrim(array_shift($lines)));
         if (! isset($benchmarks[$b])) $benchmarks[$b] = 0;
@@ -1307,27 +1305,139 @@ function print_langpair_heatmap($model, $metric='bleu', $benchmark='all', $pkg='
         }
     }
 
-    /*
-    if (count($scores) < 3){
-        return false;
+    foreach ($scores as $s => $targets){
+        foreach ($targets as $t => $score){
+            if ($counts[$s][$t] > 1){
+                $scores[$s][$t] /= $counts[$s][$t];
+            }
+            if ($scores[$s][$t] > $max){
+                $max = $scores[$s][$t];
+            }
+        }
     }
-    if (count($trglangs) < 3){
-        return false;
-    }
-    */
+    return $max;
+}
 
-    // shortnames that combine several test sets into one category
-    // (newstest of several years, different versions of tatoeba, flores, ...)
-    // --> a bit too ad-hoc and also problematic as test-parameter
-    /*
-    $shortnames = array();
-    foreach ($benchmarks as $b => $count){
-        list($b) = explode('-',$b);
-        list($b) = explode('_',$b);
-        $b = preg_replace('/[0-9]*$/', '', $b);
-        $shortnames[$b]++;
+function print_langpair_diffmap($model1, $model2, $metric='bleu', $benchmark='all',
+                                $pkg1='opusmt', $pkg2='opusmt', $source='unchanged'){
+
+    $scores1 = array();
+    $scores2 = array();
+    $trglangs1 = array();
+    $trglangs2 = array();
+    $benchmarks = array();
+
+    get_langair_scores($scores1, $trglangs1, $benchmarks, $model1, $pkg1, $metric, $benchmark, $source);
+    get_langair_scores($scores2, $trglangs2, $benchmarks, $model2, $pkg2, $metric, $benchmark, $source);
+
+    echo('<li><b>Selected Benchmark:</b> ');
+    if ( $benchmark == 'all' ){
+        echo("[avg] ");
     }
-    */
+    else{
+        $url_param = make_query(['test' => 'all']);
+        echo("[<a rel=\"nofollow\" href=\"compare.php?$url_param\">avg</a>] ");
+    }
+    foreach ($benchmarks as $b => $count){
+        if ($count > 3){
+            if ( $b == $benchmark ){
+                echo("[$b] ");
+            }
+            else{
+                $url_param = make_query(['test' => $b]);
+                echo("[<a rel=\"nofollow\" href=\"compare.php?$url_param\">$b</a>] ");
+            }
+        }
+    }
+    echo('</li>');    
+        
+
+    // get score difference
+    
+    $score_diff = array();
+    $trglangs = array();
+    $max = 0;
+    $min = 0;
+    foreach ($scores1 as $s => $targets){
+        foreach ($targets as $t => $score){
+            // $score_diff[$s][$t] = $score;
+            if (array_key_exists($s,$scores2)){
+                if (array_key_exists($t,$scores2[$s])){
+                    $score_diff[$s][$t] = $score - $scores2[$s][$t];
+                    $trglangs[$t]=1;
+                    if ($score_diff[$s][$t] > $max){
+                        $max = $score_diff[$s][$t];
+                    }
+                    if ($score_diff[$s][$t] < $min){
+                        $min = $score_diff[$s][$t];
+                    }
+                }
+            }
+        }
+    }
+
+    $show_trglangs = true;
+    $show_scores = true;
+
+    ksort($trglangs);
+    echo('<br/><div class="heatmap"><table><tr><th></th>');
+    if ($show_trglangs){
+        foreach ($trglangs as $t => $count){
+            echo('<th>'.$t.'</th>');
+        }
+    }
+    echo('</tr>');
+
+
+    ksort($score_diff);
+    foreach ($score_diff as $s => $tab){
+        echo('<th>'.$s.'</th>');
+        foreach ($trglangs as $t => $count){
+            if (array_key_exists($t,$tab)){
+                if ($show_scores){
+                    $score = sprintf('%4.1f',$tab[$t]);
+                    if ($benchmark != 'all'){
+                        $query = make_query(['test' => $benchmark,
+                                             'langpair' => "$s-$t",
+                                             'start' => 0, 'end' => 9]);
+                        $translink = "<a rel=\"nofollow\" href=\"compare-translations.php?".SID.'&'.$query."\">";
+                        echo('<td bgcolor="'.scorediff_color($score, $max, $min).'">'.$translink.$score.'</a></td>');
+                    }
+                    else{
+                        echo('<td bgcolor="'.scorediff_color($score, $max, $min).'">'.$score.'</td>');
+                    }
+                }
+                else{
+                    echo('<td bgcolor="'.scorediff_color($tab[$t], $max, $min).'"></td>');
+                }
+            }
+            elseif ($s == $t){
+                if ($show_trglangs){
+                    echo('<th>'.$s.'</th>');
+                }
+                else{
+                    echo('<td></td>');
+                }
+            }
+            else{
+                echo('<td></td>');
+            }
+        }
+        echo('</tr>');
+    }
+    echo('</tr></table></div><br/>');
+    // print_legend();
+    return true;
+}
+
+
+function print_langpair_heatmap($model, $metric='bleu', $benchmark='all', $pkg='opusmt', $source='unchanged'){
+    
+    $scores = array();
+    $trglangs = array();
+    $benchmarks = array();
+
+    get_langair_scores($scores, $trglangs, $benchmarks, $model, $pkg, $metric, $benchmark, $source);
 
     echo('<li><b>Chart Type:</b> ');
     $query = make_query(['chart' => 'standard']);
@@ -1342,7 +1452,6 @@ function print_langpair_heatmap($model, $metric='bleu', $benchmark='all', $pkg='
         echo("[<a rel=\"nofollow\" href=\"index.php?$url_param\">avg</a>] ");
     }
     foreach ($benchmarks as $b => $count){
-        //        if ($count >= count($trglangs)){
         if ($count > 3){
             if ( $b == $benchmark ){
                 echo("[$b] ");
@@ -1353,15 +1462,7 @@ function print_langpair_heatmap($model, $metric='bleu', $benchmark='all', $pkg='
             }
         }
     }
-    /*
-    foreach ($shortnames as $b => $count){
-        $url_param = make_query(['test' => $b]);
-        echo("[<a rel=\"nofollow\" href=\"index.php?$url_param\">$b</a>] ");
-    }
-    */
-    echo('</li>');
-
-    
+    echo('</li>');    
         
     ksort($trglangs);
     echo('<br/><div class="heatmap"><table><tr><th></th>');
@@ -1375,7 +1476,7 @@ function print_langpair_heatmap($model, $metric='bleu', $benchmark='all', $pkg='
         echo('<th>'.$s.'</th>');
         foreach ($trglangs as $t => $count){
             if (array_key_exists($t,$tab)){
-                $score = sprintf('%4.1f',$tab[$t] / $counts[$s][$t]);
+                $score = sprintf('%4.1f',$tab[$t]);
                 if ($benchmark != 'all'){
                     $query = make_query(['test' => $benchmark,
                                          'langpair' => "$s-$t",
@@ -1399,8 +1500,38 @@ function print_langpair_heatmap($model, $metric='bleu', $benchmark='all', $pkg='
     echo('</tr></table></div>');
     echo('<br/><li>Scores shown in percentage points</li>');
     print_legend();
-    // echo('<br/><li>Scores shown in percentage points</li>');
     return true;
+}
+
+
+function scorediff_color($score, $max, $min){
+
+    $red = 255;
+    $green = 255;
+    $blue = 255;
+
+    // have the same scale in both, negative and positive scores
+    if (abs($min) > $max){$max = abs($min);}
+    if (abs($min) < $max){$min = 0-abs($max);}
+
+    // score < 0 --> red
+    if ($score < 0){
+        if ($min < 0){
+            $x = 255 - floor(255*$score/$min);
+            $green = $x;
+            $blue = $x;
+        }
+    }
+    // score > 0 --> blue
+    else{
+        if ($max > 0){
+            $x = 255 - floor(255*$score/$max);
+            $green = $x;
+            $red = $x;
+        }
+    }
+
+    return sprintf("#%02x%02x%02x",$red,$green,$blue);
 }
 
 function score_color($nr){
@@ -1431,7 +1562,7 @@ function score_color($nr){
         $red-=$change1;
         $blue-=$change1+$change2;
     }
-    return sprintf("#%x%x%x",$red,$green,$blue);
+    return sprintf("#%02x%02x%02x",$red,$green,$blue);
 }
 
 

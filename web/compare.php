@@ -67,23 +67,27 @@ if ($model1 != 'unknown'){
     echo("<li><b>Evaluation metric:</b> ");
     print_metric_options($metric);
     echo('</li><li><b>Chart Type:</b> ');
-    print_chart_type_options($chart);
+    print_chart_type_options($chart, true);
     echo('</li></ul>');
 }
 
 if (($model1 != 'unknown') && ($model2 != 'unknown')){
-    $chart_script = $chart == 'diff' ? 'diff-barchart.php' : 'compare-barchart.php';
-    if ( isset( $_COOKIE['PHPSESSID'] ) ) {
-        echo('<img src="'.$chart_script.'?'. SID .'" alt="barchart" /><br/><ul>');
+    if ($chart == 'heatmap'){
+        $heatmap_shown = print_langpair_diffmap($m1_name, $m2_name, $metric, $benchmark, $m1_pkg, $m2_pkg);
     }
     else{
-        $url_param = make_query([]);
-        echo('<img src="'.$chart_script.'?'. $url_param .'" alt="barchart" /><br/><ul>');
+        $chart_script = $chart == 'diff' ? 'diff-barchart.php' : 'compare-barchart.php';
+        if ( isset( $_COOKIE['PHPSESSID'] ) ) {
+            echo('<img src="'.$chart_script.'?'. SID .'" alt="barchart" /><br/><ul>');
+        }
+        else{
+            $url_param = make_query([]);
+            echo('<img src="'.$chart_script.'?'. $url_param .'" alt="barchart" /><br/><ul>');
+        }
+
+        echo('</div><div id="scores">');
+        $langpairs = print_score_table($model1,$model2,$showlang,$benchmark, $metric);
     }
-
-
-    echo('</div><div id="scores">');
-    $langpairs = print_score_table($model1,$model2,$showlang,$benchmark, $metric);
     echo('</div>');
 }
 

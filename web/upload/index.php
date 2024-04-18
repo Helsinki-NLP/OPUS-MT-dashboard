@@ -1,4 +1,9 @@
-<?php session_start(); ?>
+<?php
+
+include('../inc/env.inc');
+include('../inc/functions.inc');
+
+?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 
 <html>
@@ -8,12 +13,8 @@
   <link rel="stylesheet" href="../index.css" type="text/css">
 </head>
 <body>
-
-
 <?php
 
-
-include('../functions.php');
 // include('../header.php');
 
 echo '<div class="header">';
@@ -34,7 +35,7 @@ $USER_DATADIR   = $local_datahome.'/Contributed-MT-leaderboard-data';
 $USER_NAME_FILE = $USER_DATADIR.'/users.php';
 $USER_DB        = $USER_DATADIR.'/users.db';
 
-include('users.php');
+include('../inc/users.inc');
 
 
 check_setup();

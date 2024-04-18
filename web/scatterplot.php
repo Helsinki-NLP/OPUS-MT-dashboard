@@ -1,10 +1,9 @@
 <?php
-session_start();
 
-// adapted from https://www.infscripts.com/how-to-create-a-bar-chart-in-php
+include('inc/env.inc');
+include 'inc/functions.inc';
+include 'inc/charts.inc';
 
-include 'functions.php';
-include 'charts.php';
 
 // get query parameters
 $package   = get_param('pkg', 'opusmt');

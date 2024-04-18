@@ -1,10 +1,12 @@
 <?php
-session_start();
+
+include 'inc/env.inc';
+include 'inc/functions.inc';
+include 'inc/charts.inc';
+
 
 // adapted from https://www.infscripts.com/how-to-create-a-bar-chart-in-php
 
-include 'functions.php';
-include 'charts.php';
 
 // get query parameters
 $benchmark = get_param('test', 'all');

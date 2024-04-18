@@ -1,12 +1,9 @@
 <?php 
 
-$leaderboard_url = 'https://raw.githubusercontent.com/Helsinki-NLP/HPLT-MT-leaderboard/master';
 
 // form for selecting benchmarks and language pairs
 
 echo '<div class="header">';
-
-
 
 echo '<form action="index.php" method="get">';
 echo '  [<a href="index.php?session=clear">restart</a>]';

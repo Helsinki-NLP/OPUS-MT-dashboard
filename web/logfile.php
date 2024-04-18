@@ -1,4 +1,9 @@
-<?php session_start(); ?>
+<?php
+
+include 'inc/env.inc';
+include 'inc/functions.inc';
+
+?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 
 <html>
@@ -8,10 +13,8 @@
   <link rel="stylesheet" href="index.css" type="text/css">
 </head>
 <body>
-
 <?php
 
-include 'functions.php';
 
 // get query parameters
 $package   = get_param('pkg', 'Tatoeba-MT-models');
@@ -40,7 +43,7 @@ foreach ($_SESSION['params'] as $key => $value){
 */
 
 
-include 'header.php';
+include('header.php');
 
 echo("<h1>OPUS-MT Dashboard</h1>");
 

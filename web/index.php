@@ -1,4 +1,11 @@
-<?php session_start(); ?>
+<?php
+
+include('inc/env.inc');
+include 'inc/functions.inc';
+include 'inc/charts.inc';
+include 'inc/tables.inc';
+
+?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 
 <html>
@@ -8,10 +15,8 @@
   <link rel="stylesheet" href="index.css" type="text/css">
 </head>
 <body>
-
 <?php
 
-include 'functions.php';
 
 // get query parameters
 $package     = get_param('pkg', 'opusmt');
@@ -32,7 +37,6 @@ if ($showlang != 'all'){
         list($srclang, $trglang, $langpair) = get_langpair();
     }
 }
-
 
 
 // DEBUGGING: show parameters in session variable
@@ -216,13 +220,23 @@ echo("</ul>");
 
 
 if ( ! $heatmap_shown ){
-    // $url_param = make_query(['model1' => 'unknown', 'model2' => 'unknown', 'test' => $benchmark]);
-    $url_param = make_query(['model1' => 'unknown', 'model2' => 'unknown']);
-    if ( isset( $_COOKIE['PHPSESSID'] ) ) {
-        echo("<img src=\"$barchart_script?". SID .'&'.$url_param."\" alt=\"barchart\" />");
+
+    if ($barchart_script == 'barchart.php'){
+        $data = array();
+        $type = array();
+        read_barchart_scores($data, $type, $langpair, $benchmark, $metric, $model, $package, $chartlegend);
+        barchart_plotly($data,$type, $metric);
     }
     else{
-        echo("<img src=\"$barchart_script?$url_param\" alt=\"barchart\" />");
+    
+        // $url_param = make_query(['model1' => 'unknown', 'model2' => 'unknown', 'test' => $benchmark]);
+        $url_param = make_query(['model1' => 'unknown', 'model2' => 'unknown']);
+        if ( isset( $_COOKIE['PHPSESSID'] ) ) {
+            echo("<img src=\"$barchart_script?". SID .'&'.$url_param."\" alt=\"barchart\" />");
+        }
+        else{
+            echo("<img src=\"$barchart_script?$url_param\" alt=\"barchart\" />");
+        }
     }
 
     // TODO: make this less complicated to show additional info and links
@@ -317,7 +331,6 @@ if ( ! $heatmap_shown ){
     else{
         print_scores($model, $langpair,$benchmark,$package,$metric);
     }
-
     echo('</div>');
 }
 

@@ -1,4 +1,10 @@
-<?php session_start(); ?>
+<?php
+
+include('inc/env.inc');
+include 'inc/functions.inc';
+include 'inc/tables.inc';
+
+?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 
 <html>
@@ -11,8 +17,6 @@
 
 <?php
           
-include 'functions.php';
-
 
 // get query parameters
 $chart     = get_param('chart', 'standard');

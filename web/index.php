@@ -2,7 +2,9 @@
 
 include('inc/env.inc');
 include 'inc/functions.inc';
+include 'inc/display_options.inc';
 include 'inc/charts.inc';
+include 'inc/plotly.inc';
 include 'inc/tables.inc';
 
 ?>
@@ -39,275 +41,165 @@ if ($showlang != 'all'){
 }
 
 
-// DEBUGGING: show parameters in session variable
-/*
-foreach ($_SESSION['params'] as $key => $value){
-    echo "$key => $value <br/>";
-}
-*/
-
-
 include 'header.php';
 
 echo("<h1>OPUS-MT Dashboard</h1>");
 echo('<div id="chart">');
 
 
+
+// Create the link list with different options
+
+$multilingual_model = is_multilingual_model($model);
+$userscores_exists = local_scorefile_exists($langpair, 'all', $metric, 'all', 'contributed', 'user-scores');
+
+$langpair_link = langpair_link();
+$model_selection_links = model_selection_links();
+$compare_link = compare_link();
+$benchmark_link = benchmark_link();
+
+
+// create the list with settings and options
+
 echo("<ul>");
-
-$test = $benchmark;
-if ($benchmark == 'all' || $benchmark == 'avg'){
-    $test = 'all';
-}
-
-$url_param = make_query(['model' => 'all', 'test' => $test, 'pkg' => 'opusmt']);
-$opusmt_link = "[<a rel=\"nofollow\" href=\"index.php?$url_param\">OPUS-MT</a>]";
-
-$url_param = make_query(['model' => 'all', 'test' => $test, 'pkg' => 'external']);
-$external_link = "[<a rel=\"nofollow\" href=\"index.php?$url_param\">external</a>]";
-
-
-$contributed_link = "";
-$userscores_exists = false;
-
-if (local_scorefile_exists($langpair, 'all', $metric, 'all', 'contributed', 'user-scores')){
-    $userscores_exists = true;
-    if ($userscores == "yes"){
-        $url_param = make_query(['model' => 'all', 'test' => $test, 'pkg' => 'contributed']);
-        $contributed_link = "[<a rel=\"nofollow\" href=\"index.php?$url_param\">contributed</a>]";
-    }
-}
-
-
-
-if ($model == 'top'){
-    $model_selection_links = "[all models] $opusmt_link $external_link $contributed_link";
-}
-else{
-    $url_param = make_query(['model' => 'top', 'test' => $test]);
-    $top_models_link = "[<a rel=\"nofollow\" href=\"index.php?$url_param\">all models</a>]";
-    if ($model == 'all'){
-        if ($package == 'external'){
-            $model_selection_links = "$top_models_link $opusmt_link [external] $contributed_link";
-        }
-        elseif ($package == 'contributed'){
-            $model_selection_links = "$top_models_link $opusmt_link $external_link [contributed]";
-        }
-        else{
-            $model_selection_links = "$top_models_link [OPUS-MT] $external_link $contributed_link";
-        }
-    }
-    else{
-        $model_selection_links = "$top_models_link $opusmt_link $external_link $contributed_link";
-    }
-}
-
-
-$url_param = make_query(['test' => 'avg']);
-$avgscores_link = "<a rel=\"nofollow\" href=\"index.php?$url_param\">average score</a>";
-
-$url_param = make_query(['test' => 'all']);
-$alltests_link = "<a rel=\"nofollow\" href=\"index.php?$url_param\">all benchmarks</a>";
-
-$url_param = make_query(['model1' => 'unknown', 'model2' => 'unknown', 'model' => 'unknown']);
-$comparelink = "[<a rel=\"nofollow\" href=\"compare.php?". SID . '&'.$url_param."\">compare</a>]";
-
-
-$multilingual_model = false;
-
+echo("<li><b>Language pair:</b> $langpair_link</li>");
+echo("<li><b>Models:</b> $model_selection_links $compare_link</li>");
 if ($model != 'all' && $model != 'top'){
-    $parts = explode('/',$model);
-    $modelfile = array_pop($parts);
-    $modellang = array_pop($parts);
-
-    if ($modellang == $langpair){
-        echo("<li><b>Language pair:</b> $langpair</li>");
-    }
-    else{
-        $multilingual_model = true;
-        if ($showlang != 'all'){
-            $url_param = make_query(['scoreslang' => 'all']);
-            $alllangs_link = "<a rel=\"nofollow\" href=\"index.php?$url_param\">all languages</a>";
-            echo("<li><b>Language pair:</b> $langpair [$alllangs_link]</li>");
-        }
-        else{
-            $url_param = make_query(['scoreslang' => $langpair, 'chart' => 'standard']);
-            $lang_link = "<a rel=\"nofollow\" href=\"index.php?$url_param\">$langpair</a>";
-            echo("<li><b>Language pair:</b> [$lang_link] all languages</li>");
-        }
-    }
-
-    $url_param = make_query(['model1' => implode('/',[$package, $model]),
-                             'model2' => 'unknown', 'model' => 'unknown']);
-    $comparelink = "[<a rel=\"nofollow\" href=\"compare.php?". SID . '&'.$url_param."\">compare</a>]";
-    $modelhome = $storage_url.$package;
-    $modelshort = short_model_name($model);
-    $downloadlink = "[<a rel=\"nofollow\" href=\"$modelhome/$model.zip\">download</a>]";
-    echo("<li><b>Models:</b> $model_selection_links $comparelink</li>");
     echo("<li><b>Selected:</b> $model</li>");
-
-    $eval_file_url = $storage_urls[$package].'/models/'.$model.'.eval.zip';
-    $downloadlink = "[<a rel=\"nofollow\" href=\"$eval_file_url\">download</a>]";
-    
-    if ($benchmark != 'all'){
-        echo("<li><b>Benchmark:</b> [$alltests_link] $benchmark $downloadlink</li>");
-    }
-    else{
-        echo("<li><b>Benchmark:</b> all benchmarks $downloadlink</li>");
-    }
 }
-
-// no model is selected
-// but a specific benchmark average score is selected
-
-elseif ($benchmark != 'all'){
-    echo("<li><b>Language pair:</b> $langpair</li>");
-    echo("<li><b>Models:</b> $model_selection_links $comparelink</li>");
-    if ($benchmark != 'avg'){
-        echo("<li><b>Benchmark:</b> [$alltests_link] [$avgscores_link] $benchmark</li>");
-    }
-    else{
-        echo("<li><b>Benchmark:</b> [$alltests_link] average score</li>");
-    }
-}
-
-// no specific model nor benchmark are selected
-
-else{
-    echo("<li><b>Language pair:</b> $langpair</li>");
-    echo("<li><b>Models:</b> $model_selection_links $comparelink</li>");
-    echo("<li><b>Benchmark:</b> all benchmarks [$avgscores_link]</li>");
-}
-
-
+echo("<li><b>Benchmark:</b> $benchmark_link</li>");
 echo("<li><b>Evaluation metric:</b> ");
 print_metric_options($metric);
 echo("</li>");
+print_chart_type_links();
+echo("</ul>");
+
 
 $heatmap_shown = false;
 $barchart_script = 'barchart.php';
 
+
+
+// different views that will be available:
+//
+// (1) compare top scores OPUS-MT vs external (+ contributed in table)
+// (2) top scores for OPUS-MT or external
+// (3) averaged scores for all models
+// (4) scores for a specific model
+// (5) scores for a specific benchmark
+// (6) compare scores for 2 selected models
+
+
+// (1) compare top scores OPUS-MT vs external (+ contributed in table)
+
 if ($model == 'top' && $benchmark == 'all'){
-    echo('<li><b>Chart Type:</b> ');
-    print_chart_type_options($chart);
     $barchart_script = $chart == 'diff' ? 'diff-barchart.php' : 'compare-barchart.php';
-    echo("</li>");
+    $url_param = make_query(['model1' => 'unknown', 'model2' => 'unknown']);
+    if ( isset( $_COOKIE['PHPSESSID'] ) ) {
+        echo("<img src=\"$barchart_script?". SID .'&'.$url_param."\" alt=\"barchart\" />");
+    }
+    else{
+        echo("<img src=\"$barchart_script?$url_param\" alt=\"barchart\" />");
+    }
+    echo('<ul>');
+    echo('<li>blue = OPUS-MT / Tatoeba-MT models, grey = external models, purple = user-contributed</li>');
+    print_contributed_link();
+    echo('</ul>');
 }
+
+
+// (2) top scores for OPUS-MT or external
+
+elseif ($model == 'all' && $benchmark == 'all'){
+    $lines = read_model_scores($langpair, $benchmark, $metric, $model, $package);
+    list($data,$type) = read_barchart_scores($lines, $model, $benchmark, $chartlegend, $showlang);
+    barchart_plotly($data,$type, $metric);
+    echo('<ul>');
+    echo('<li>orange = OPUS-MT, blue = Tatoeba-MT models, red = HPLT-MT models</li>');
+    echo('<li>green = student models, grey = external models, purple = user-contributed</li>');
+    print_contributed_link();
+    echo('</ul>');
+}
+
+
+// (3) averaged scores for all models
+
+elseif ($benchmark == 'avg'){
+    if ($chart == 'scatterplot'){
+        $url_param = make_query(['model1' => 'unknown', 'model2' => 'unknown']);
+        if ( isset( $_COOKIE['PHPSESSID'] ) ) {
+            echo("<img src=\"scatterplot.php?". SID .'&'.$url_param."\" alt=\"barchart\" />");
+        }
+        else{
+            echo("<img src=\"scatterplot.php?$url_param\" alt=\"barchart\" />");
+        }
+    }
+    else{
+        $lines = read_model_scores($langpair, $benchmark, $metric, $model, $package);
+        list($data,$type) = read_barchart_scores($lines, $model, $benchmark, $chartlegend, $showlang);
+        barchart_plotly($data,$type, $metric);
+    }
+    if ($chartlegend == 'size'){ print_size_legend(); }
+    echo('<ul>');
+    echo('<li>orange = OPUS-MT, blue = Tatoeba-MT models, red = HPLT-MT models</li>');
+    echo('<li>green = student models, grey = external models, purple = user-contributed</li>');
+    print_contributed_link();
+    echo('</ul>');
+}
+
+
+// (4) scores for a specific model
+
 elseif ($model != 'top' && $model != 'all' && $model != 'verified' && $model != 'unverified'){
     if ($chart == 'heatmap'){
         $heatmap_shown = print_langpair_heatmap($model, $metric, $benchmark, $package);
     }
-    if ($multilingual_model and ! $heatmap_shown ){
-        echo('<li><b>Chart Type:</b> ');
-        $query = make_query(['chart' => 'heatmap', 'scoreslang' => 'all']);
-        $link = $_SERVER['PHP_SELF'].'?'.$query;
-        echo("[standard] [<a rel=\"nofollow\" href=\"$link\">heatmap</a>]</li>");
-    }
-}
-elseif ($benchmark != 'all'){
-    echo('<li><b>Chart Type:</b> ');
-    print_plot_type_options($chart);
-    $barchart_script = $chart == 'scatterplot' ? 'scatterplot.php' : 'barchart.php';
-    echo("</li>");
-}
-
-
-
-echo("</ul>");
-
-
-
-
-
-if ( ! $heatmap_shown ){
-
-    if ($barchart_script == 'barchart.php'){
-        $data = array();
-        $type = array();
-        read_barchart_scores($data, $type, $langpair, $benchmark, $metric, $model, $package, $chartlegend);
-        barchart_plotly($data,$type, $metric);
-    }
     else{
-    
-        // $url_param = make_query(['model1' => 'unknown', 'model2' => 'unknown', 'test' => $benchmark]);
+        $lines = read_model_scores($langpair, $benchmark, $metric, $model, $package);
+        list($data,$type) = read_barchart_scores($lines, $model, $benchmark, $chartlegend, $showlang);
+        barchart_plotly($data,$type, $metric);
+        if ($chartlegend == 'size'){ print_size_legend(); }
+        echo('<ul>');
+        echo('<li>orange = OPUS-MT, blue = Tatoeba-MT models, red = HPLT-MT models</li>');
+        echo('<li>green = student models, grey = external models, purple = user-contributed</li>');
+        print_contributed_link();
+        echo('</ul>');
+    }
+}
+
+
+// (5) scores for a specific benchmark
+
+elseif ($benchmark != 'avg' && $benchmark != 'all'){
+    if ($chart == 'scatterplot'){
         $url_param = make_query(['model1' => 'unknown', 'model2' => 'unknown']);
         if ( isset( $_COOKIE['PHPSESSID'] ) ) {
-            echo("<img src=\"$barchart_script?". SID .'&'.$url_param."\" alt=\"barchart\" />");
+            echo("<img src=\"scatterplot.php?". SID .'&'.$url_param."\" alt=\"barchart\" />");
         }
         else{
-            echo("<img src=\"$barchart_script?$url_param\" alt=\"barchart\" />");
+            echo("<img src=\"scatterplot.php?$url_param\" alt=\"barchart\" />");
         }
     }
-
-    // TODO: make this less complicated to show additional info and links
-    
-    echo('<ul>');
-    if ($model == 'top' && $benchmark == 'all'){
-        $chart_types = array('standard', 'diff');
-        if ($userscores_exists  and $chart == "standard"){
-            if ($userscores == "yes"){
-                $url_param = make_query(['userscores' => 'no']);
-                echo('<li>blue = OPUS-MT / Tatoeba-MT models, grey = external models, purple = user-contributed</li>');
-                echo('<li><a rel="nofollow" href="index.php?'. SID . '&'.$url_param.'">exclude scores of user-contributed translations</a></li>');
-            }
-            else{
-                $url_param = make_query(['userscores' => 'yes']);
-                echo('<li>blue = OPUS-MT / Tatoeba-MT models, grey = external models</li>');
-                echo('<li><a rel="nofollow" href="index.php?'. SID . '&'.$url_param.'">include scores of user-contributed translations</a></li>');
-            }
-        }
-        else{
-            echo('<li>blue = OPUS-MT / Tatoeba-MT models, grey = external models</li>');
-        }
-    }
-    elseif ($model == 'top' || $benchmark == 'avg'){
-        if ($chartlegend == 'size'){
-            print_size_legend();
-            $url_param = make_query(['legend' => 'type']);
-            echo('<br/><li><a rel="nofollow" href="index.php?'. SID . '&'.$url_param.'">use model type colors</a></li>');
-        }
-        else{
-            echo('<li>orange = OPUS-MT, blue = Tatoeba-MT models, red = HPLT-MT models</li>');
-            echo('<li>green = student models, grey = external models, purple = user-contributed</li>');
-            $url_param = make_query(['legend' => 'size']);
-            echo('<li><a rel="nofollow" href="index.php?'. SID . '&'.$url_param.'">use model size colors</a></li>');
-        }
-        if ($userscores_exists and $chart == "standard"){
-            if ($userscores == "yes"){
-                $url_param = make_query(['userscores' => 'no']);
-                echo('<li><a rel="nofollow" href="index.php?'. SID . '&'.$url_param.'">exclude scores of user-contributed translations</a></li>');
-            }
-            else{
-                $url_param = make_query(['userscores' => 'yes']);
-                echo('<li><a rel="nofollow" href="index.php?'. SID . '&'.$url_param.'">include scores of user-contributed translations</a></li>');
-            }
-        }
-        if ($benchmark == 'all' || (strpos($benchmark,'tatoeba') !== false)){
-            echo('<li>Note: Tatoeba test sets are not reliable for OPUS-MT models!</li>');
-        }
-    }
-    elseif (($benchmark != 'all') && ($model == "all")){
-        if ($chartlegend == 'size'){
-            print_size_legend();
-            $url_param = make_query(['legend' => 'type']);
-            echo('<br/><li><a rel="nofollow" href="index.php?'. SID . '&'.$url_param.'">use model type colors</a></li>');
-        }
-        else{
-            echo('<li>orange = OPUS-MT, blue = Tatoeba-MT models, red = HPLT-MT models</li>');
-            echo('<li>green = student models, grey = external models, purple = user-contributed</li>');
-            $url_param = make_query(['legend' => 'size']);
-            echo('<li><a rel="nofollow" href="index.php?'. SID . '&'.$url_param.'">use model size colors</a></li>');
-        }
-    }
-    /*
     else{
-        echo('<li>orange = OPUS-MT, blue = Tatoeba-MT models, green = student models</li>');
-        echo('<li>grey = external models, purple = user-contributed</li>');
+        $lines = read_model_scores($langpair, $benchmark, $metric, $model, $package);
+        list($data,$type) = read_barchart_scores($lines, $model, $benchmark, $chartlegend, $showlang);
+        barchart_plotly($data,$type, $metric);
     }
-    */
-
+    if ($chartlegend == 'size'){ print_size_legend(); }
+    echo('<ul>');
+    echo('<li>orange = OPUS-MT, blue = Tatoeba-MT models, red = HPLT-MT models</li>');
+    echo('<li>green = student models, grey = external models, purple = user-contributed</li>');
+    print_contributed_link();
     echo('</ul>');
 }
+
+
+// (6) compare scores for 2 selected models
+// different script (compare.php)
+
+
+
+
 
 
 /////////////////////////////////////////////////////

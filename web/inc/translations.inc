@@ -48,28 +48,6 @@ function cache_testset_filenames($testset, $langpair){
 
 
 
-function print_translation_logfile($benchmark, $langpair, $model, $pkg='opusmt'){
-    
-    $logfile = implode('.',[$benchmark, $langpair, 'log']);
-    echo($logfile."\n");
-    // $tmpfile = get_logfile_with_cache($model, $pkg);
-    $tmpfile = get_logfile_with_cache($model, $pkg, '.log.zip');
-
-    $zip = new ZipArchive;
-    if ($zip->open($tmpfile) === TRUE) {
-        if ($fp = $zip->getStream($logfile)){
-            while (!feof($fp)) {
-                echo(fread($fp, 8192));
-            }
-            fclose($fp);
-        }
-        $zip->close();
-    }
-    if ( ! isset( $_COOKIE['PHPSESSID'] ) ) {
-        unlink($tmpfile);
-    }
-}
-
 
 
 
@@ -361,69 +339,6 @@ function get_translation_file($model, $pkg='opusmt'){
 }
 
 
-function get_logfile_with_cache($model, $pkg='opusmt', $ext='.eval.zip', $cache_size=10){
-    global $storage_urls, $storage_dirs;
-    
-    $url  = implode('/',[$storage_urls[$pkg],'models',$model]).$ext;
-    $file = implode('/',[$storage_dirs[$pkg],'models',$model]).$ext;
-
-    // local file
-    if (file_exists($file)){
-        return $file;
-    }
-    
-    // permanently cached files
-    $tmpdir = sys_get_temp_dir();
-    $filename = implode('/',[$tmpdir,$pkg,$model.'.eval.zip']);
-    // echo("check for $filename");
-    if (file_exists($filename)){
-        // echo("found permanently cached file $filename");
-        return $filename;
-    }
-    
-    if (! array_key_exists('cached-files', $_SESSION)){
-        $_SESSION['cached-files'] = array();
-        $_SESSION['next-filecache-key'] = 0;
-    }
-    $key = array_search($url, $_SESSION['cached-files']);
-    if ($key !== false){
-        if (array_key_exists('files', $_SESSION)){
-            if (array_key_exists($key, $_SESSION['files'])){
-                if (file_exists($_SESSION['files'][$key])){
-                    // echo "read translations from cache with key $key in file ".$_SESSION['files'][$key];
-                    return $_SESSION['files'][$key];
-                }
-            }
-        }
-    }
-
-    if ($_SESSION['next-filecache-key'] >= $cache_size){
-        $_SESSION['next-filecache-key'] = 0;
-    }
-
-    $key = $_SESSION['next-filecache-key'];
-    // echo "save scores for $file in cache with key $key";
-    $_SESSION['cached-files'][$key] = $url;
-    
-    $tmpfile = tempnam(sys_get_temp_dir(),'opusmteval');
-    if (copy($url, $tmpfile)) {
-        if (filesize($tmpfile) > 104857600){
-            // echo("file size > 100MB -- put in permanent cache! ($filename)");
-            $dir = dirname($filename);
-            if (! file_exists($dir)){
-                mkdir($dir,0777,true);
-            }
-            if (rename($tmpfile,$filename)){
-                // echo("successfully created $filename");
-                return $filename;
-            }
-        }
-        $_SESSION['files'][$key] = $tmpfile;
-        $_SESSION['next-filecache-key']++;
-        return $_SESSION['files'][$key];
-    }
-    unlink($tmpfile);
-}
 
 
 

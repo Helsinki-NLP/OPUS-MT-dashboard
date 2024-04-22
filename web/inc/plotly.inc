@@ -4,10 +4,9 @@
 
 function plot_model_scores_plotly(){
     global $langpair, $benchmark, $metric, $model, $package, $showlang;
-    global $show_max_scores;
     
     $lines = read_model_scores($langpair, $benchmark, $metric, $model, $package);
-    list($data,$colors) = get_model_scores_from_lines($lines, $model, $benchmark, $showlang, $show_max_scores);
+    list($data,$colors) = get_model_scores_from_lines($lines, $model, $benchmark, $showlang);
     barchart_plotly($data, $colors, $metric);
 }
 
@@ -121,7 +120,8 @@ function get_topscores_from_lines(&$lines){
     return [$data,$type];
 }
 
-function get_model_scores_from_lines(&$lines, $model, $benchmark='all', $showlang='all', $show_max_scores=0){
+function get_model_scores_from_lines(&$lines, $model, $benchmark='all', $showlang='all'){
+    global $show_max_scores;
     
     list($modelid, $modelurl) = normalize_modelname($model);
     $color = modelid_color($modelid);

@@ -209,7 +209,7 @@ function print_metric_links(){
 
 
 function print_contributed_link(){
-    global $userscores_exists, $chart;
+    global $userscores, $userscores_exists, $chart;
     if ($userscores_exists  and $chart == "standard"){
         if ($userscores == "yes"){
             $url_param = make_query(['userscores' => 'no']);
@@ -238,7 +238,7 @@ function renderlib_link(){
 
 
 function print_renderlib_link(){
-    echo('<li><b>Render chart with:</b> ');
+    echo('<li>render chart with ');
     echo renderlib_link();
     echo('</li>');
 }

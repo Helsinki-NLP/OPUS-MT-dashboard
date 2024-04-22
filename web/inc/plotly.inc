@@ -76,7 +76,7 @@ function plot_score_comparison_plotly($chart="barchart"){
         $colors = array('blue', 'grey');
         $groups = array('OPUS-MT', 'external');
 
-        if ($userscores == "yes" || $chart != 'diff'){
+        if ($userscores == "yes" && $chart != 'diff'){
             if (local_scorefile_exists($langpair, 'all', $metric, 'all', 'contributed', 'user-scores')){
                 $lines3 = read_scores($langpair, 'all', $metric, 'all', 'contributed', 'user-scores');
                 list($data[2],$type[2]) = get_topscores_from_lines($lines3);

@@ -1,6 +1,9 @@
 <?php
-session_start();
-include 'functions.php';
+
+include 'inc/env.inc';
+include 'inc/functions.inc';
+include 'inc/translations.inc';
+
 $style = get_param('style', 'light');
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">

@@ -1,6 +1,11 @@
 <?php
 
 
+
+$multilingual_model = is_multilingual_model($model);
+$userscores_exists = local_scorefile_exists($langpair, 'all', $metric, 'all', 'contributed', 'user-scores');
+
+
 // langpair link
 
 function langpair_link(){
@@ -25,12 +30,16 @@ function langpair_link(){
     return $langpair_link;
 }
 
+function print_langpair_link(){
+    $langpair_link = langpair_link();
+    echo("<li><b>Language pair:</b> $langpair_link</li>");
+}
+
 
 // links for selecting the model package
 
 function model_selection_links(){
     global $model, $package, $benchmark, $userscores_exists;
-
 
     $test = $benchmark;
     if ($benchmark == 'all' || $benchmark == 'avg'){
@@ -44,8 +53,6 @@ function model_selection_links(){
     $external_link = "[<a rel=\"nofollow\" href=\"index.php?$url_param\">external</a>]";
 
     $contributed_link = "";
-
-
     if ($userscores_exists){
         if ($userscores == "yes"){
             $url_param = make_query(['model' => 'all', 'test' => $test, 'pkg' => 'contributed']);
@@ -75,6 +82,16 @@ function model_selection_links(){
         }
     }
     return $model_selection_links;
+}
+
+function print_model_selection_links(){
+    global $model;
+    $model_selection_links = model_selection_links();
+    $compare_link = compare_link();
+    echo("<li><b>Models:</b> $model_selection_links $compare_link</li>");
+    if ($model != 'all' && $model != 'top'){
+        echo("<li><b>Selected:</b> $model</li>");
+    }
 }
 
 
@@ -132,6 +149,11 @@ function benchmark_link(){
     return $benchmark_link;
 }
 
+function print_benchmark_link(){
+    $benchmark_link = benchmark_link();
+    echo("<li><b>Benchmark:</b> $benchmark_link</li>");
+}
+
 
 function print_chart_type_links(){
     global $model, $benchmark, $chart, $multilingual_model, $chartlegend;
@@ -143,12 +165,19 @@ function print_chart_type_links(){
         echo("</li>");
     }
     elseif ($model != 'top' && $model != 'all' && $model != 'verified' && $model != 'unverified'){
-        if ($multilingual_model and $chart != 'heatmap' ){
+        if ($multilingual_model){
             echo('<li><b>Chart Type:</b> ');
-            $query = make_query(['chart' => 'heatmap', 'scoreslang' => 'all']);
-            $link = $_SERVER['PHP_SELF'].'?'.$query;
-            echo("[standard] [<a rel=\"nofollow\" href=\"$link\">heatmap</a>]");
-            $show_size_link = true;
+            if ($chart == 'heatmap'){
+                $query = make_query(['chart' => 'standard']);
+                $link = $_SERVER['PHP_SELF'].'?'.$query;
+                echo("[<a rel=\"nofollow\" href=\"$link\">standard</a>] [heatmap]</li>");
+            }
+            else{
+                $query = make_query(['chart' => 'heatmap', 'scoreslang' => 'all']);
+                $link = $_SERVER['PHP_SELF'].'?'.$query;
+                echo("[standard] [<a rel=\"nofollow\" href=\"$link\">heatmap</a>]");
+                // $show_size_link = true;
+            }
         }
     }
     elseif ($benchmark != 'all'){
@@ -170,6 +199,15 @@ function print_chart_type_links(){
     }
 }
 
+function print_metric_links(){
+    global $metric;
+    echo("<li><b>Evaluation metric:</b> ");
+    print_metric_options($metric);
+    echo("</li>");
+}
+
+
+
 function print_contributed_link(){
     global $userscores_exists, $chart;
     if ($userscores_exists  and $chart == "standard"){
@@ -184,6 +222,26 @@ function print_contributed_link(){
     }
 }
 
+
+function renderlib_link(){
+    global $renderlib;
+    if ($renderlib == 'plotly'){
+        $url_param = make_query(['renderlib' => 'gd']);
+        $renderlib_link = "[<a rel=\"nofollow\" href=\"".$_SERVER['PHP_SELF']."?". SID . '&'.$url_param."\">gd</a>] [plotly]";
+    }
+    else{
+        $url_param = make_query(['renderlib' => 'plotly']);
+        $renderlib_link = "[gd] [<a rel=\"nofollow\" href=\"".$_SERVER['PHP_SELF']."?". SID . '&'.$url_param."\">plotly</a>]";
+    }
+    return $renderlib_link;
+}
+
+
+function print_renderlib_link(){
+    echo('<li><b>Render chart with:</b> ');
+    echo renderlib_link();
+    echo('</li>');
+}
 
 
 ?>

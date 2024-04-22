@@ -1,6 +1,29 @@
 <?php
 
 
+function plot_score_comparison($chart){
+    $barchart_script = $chart == 'diff' ? 'diff-barchart.php' : 'compare-barchart.php';
+    if ( isset( $_COOKIE['PHPSESSID'] ) ) {
+        echo("<img src=\"$barchart_script?". SID ."\" alt=\"barchart\" />");
+    }
+    else{
+        $url_param = make_query([]);
+        echo("<img src=\"$barchart_script?$url_param\" alt=\"barchart\" />");
+    }
+}
+
+function plot_scores($chart){
+    $barchart_script = $chart == 'scatterplot' ? 'scatterplot.php' : 'barchart.php';
+    $url_param = make_query(['model1' => 'unknown', 'model2' => 'unknown']);
+    if ( isset( $_COOKIE['PHPSESSID'] ) ) {
+        echo("<img src=\"$barchart_script?". SID .'&'.$url_param."\" alt=\"barchart\" />");
+    }
+    else{
+        echo("<img src=\"$barchart_script.php?$url_param\" alt=\"barchart\" />");
+    }
+}
+
+
 function model_size_color($size, $chart){
   list($red,$green,$blue) = size_to_rgb($size);
   return imagecolorallocate($chart, $red,$green,$blue);
@@ -33,6 +56,16 @@ function model_color($package, $model){
         $modelparts = explode('/',$modelid);
         return array_key_exists($modelparts[0], $type2color) ? $type2color[$modelparts[0]] : 'grey';
     }
+}
+
+function modelid_color($modelid){
+    $type2color = array( 'contributed' => 'purple',
+                         'external'    => 'grey',
+                         'Tatoeba-MT-models' => 'blue',
+                         'OPUS-MT-models' => 'orange',
+                         'HPLT-MT-models'    => 'darkred');
+    $modelparts = explode('/',$modelid);
+    return array_key_exists($modelparts[0], $type2color) ? $type2color[$modelparts[0]] : 'grey';
 }
 
 

@@ -228,6 +228,171 @@ function print_scores($model='all', $langpair='all', $benchmark='all', $pkg='opu
     echo('</table>');
 }
 
+
+// print a table with all scores and score differences
+
+function print_score_diffs($model1,$model2,$langpair='all',$benchmark='all', $metric='bleu'){
+    global $table_max_scores;
+    
+    $parts = explode('/',$model1);
+    $pkg1 = array_shift($parts);
+    $name1 = implode('/',$parts);
+    $lines1 = read_scores($langpair, 'all', $metric, $name1, $pkg1);
+    // list($pkg1, $lang1, $name1) = explode('/',$model1);
+    // $lines1 = read_scores($langpair, 'all', $metric, implode('/',[$lang1,$name1]), $pkg1);
+
+    $testsets = array();
+    $langpairs = array();
+    $scores1 = array();
+    foreach($lines1 as $line1) {
+        // echo $line1;
+        $array = explode("\t", $line1);
+        
+        if (! isset($langpairs[$array[0]])) $langpairs[$array[0]] = 0;
+        if (! isset($testsets[$array[1]]))  $testsets[$array[1]] = 0;
+
+        $langpairs[$array[0]]++;
+        $testsets[$array[1]]++;
+        if ($langpair == 'all' || $langpair == $array[0]){
+            if ($benchmark == 'all' || $benchmark == $array[1]){
+                $key = $array[0].'/'.$array[1];
+                // $score = $metric == 'bleu' ? $array[3] : $array[2];
+                $score = $array[2];
+                $scores1[$key] = $score;
+            }
+        }
+    }
+
+    $parts = explode('/',$model2);
+    $pkg2 = array_shift($parts);
+    $name2 = implode('/',$parts);
+    $lines2 = read_scores($langpair, 'all', $metric, $name2, $pkg2);
+    // list($pkg2, $lang2, $name2) = explode('/',$model2);
+    // $lines2 = read_scores($langpair, 'all', $metric, implode('/',[$lang2,$name2]), $pkg2);
+
+
+    $common_langs = array();
+    $common_tests = array();
+    $scores2 = array();
+    foreach($lines2 as $line2) {
+        $array = explode("\t", $line2);
+        if (array_key_exists($array[0],$langpairs)){
+            if (! isset($common_langs[$array[0]])) $common_langs[$array[0]] = 0;
+            $common_langs[$array[0]]++;
+        }
+        if (array_key_exists($array[1],$testsets)){
+            if (! isset($common_tests[$array[1]])) $common_tests[$array[1]] = 0;
+            $common_tests[$array[1]]++;
+        }
+        if ($langpair == 'all' || $langpair == $array[0]){
+            if ($benchmark == 'all' || $benchmark == $array[1]){
+                $key = $array[0].'/'.$array[1];
+                // $score = $metric == 'bleu' ? $array[3] : $array[2];
+                $score = $array[2];
+                $scores2[$key] = $score;
+            }
+        }
+    }
+    
+    $avg_score1 = 0;
+    $avg_score2 = 0;
+    $count_scores1 = 0;
+    $count_scores2 = 0;
+
+    
+    echo('<div id="scores"><div class="query"><table>');
+    if (count($scores1) > $table_max_scores){
+        echo "<p>There are ".count($scores1)." $metric scores for model 1. Show max $table_max_scores!</p>";
+    }
+
+    echo("<tr><th>ID</th><th>Language</th><th>Benchmark ($metric)</th><th>Output</th><th>Model 1</th><th>Model 2</th><th>Diff</th></tr>");
+    $id = 0;
+
+    foreach($scores1 as $key => $score1) {
+        if ($id > $table_max_scores){
+            break;
+        }
+        if (array_key_exists($key,$scores2)){
+            $score2 = $scores2[$key];
+
+            $diff = $score1 - $score2;
+            $diff_pretty = $metric == 'bleu' ? sprintf('%4.1f',$diff) : sprintf('%5.3f',$diff);
+
+            list($lang, $test) = explode('/',$key);
+            $testsets[$test]++;
+            $common_langs[$lang]++;
+
+            $lang_query = array();
+            $test_query = array();
+            
+            if ($langpair == 'all' || $langpair == $lang){
+                if ($benchmark == 'all' || $benchmark == $test){
+                    $avg_score1 += $score1;
+                    $count_scores1++;
+                    $avg_score2 += $score2;
+                    $count_scores2++;
+                    
+                    if (! array_key_exists($lang,$lang_query)){
+                        $query = make_query(['scoreslang' => $lang]);
+                        $lang_query[$lang] = '<a rel="nofollow" href="compare.php?'.$query.'">'.$lang.'</a>';
+                    }
+                    if (! array_key_exists($test,$test_query)){
+                        $query = make_query(['test' => $test]);
+                        $test_query[$test] = '<a rel="nofollow" href="compare.php?'.$query.'">'.$test.'</a>';
+                    }
+
+                    $query = make_query(['test' => $test,'langpair' => $lang, 'start' => 0, 'end' => 9]);
+                    $translink = "<a rel=\"nofollow\" href=\"compare-translations.php?".SID.'&'.$query."\">compare</a>";
+                    
+                    echo('<tr><td>');
+                    echo(implode('</td><td>',[$id, $lang_query[$lang], $test_query[$test], $translink, $score1, $score2, $diff_pretty]));
+                    echo('</td></tr>');
+                    $id++;
+                }
+            }
+        }
+    }
+        
+    if ($count_scores1 > 1){
+        $avg_score1 /= $count_scores1;
+    }
+    if ($count_scores2 > 1){
+        $avg_score2 /= $count_scores2;
+    }
+    $diff = $avg_score1 - $avg_score2;
+    
+    if ($metric == 'bleu'){
+        $avg1 = sprintf('%4.1f',$avg_score1);
+        $avg2 = sprintf('%4.1f',$avg_score2);
+        $diff = sprintf('%4.1f',$diff);
+    }
+    else{
+        $avg1 = sprintf('%5.3f',$avg_score1);
+        $avg2 = sprintf('%5.3f',$avg_score2);
+        $diff = sprintf('%5.3f',$diff);
+    }
+
+    $langlink = '';
+    $testlink = '';
+    if ($langpair != 'all'){
+        if (sizeof($common_langs) > 1){
+            $url_param = make_query(['scoreslang' => 'all']);
+            $langlink = "<a rel=\"nofollow\" href=\"compare.php?".$url_param."\">show all</a>";
+        }
+    }
+    if ($benchmark != 'all'){
+        if (sizeof($testsets) > 1){
+            $url_param = make_query(['test' => 'all']);
+            $testlink = "<a rel=\"nofollow\" href=\"compare.php?".$url_param."\">show all</a>";
+        }
+    }
+    echo("<tr><th></th><th>$langlink</th><th>$testlink</th><th>average</th><th>$avg1</th><th>$avg2</th><th>$diff</th></tr>");
+
+    echo('</table></div></div>');
+    return $common_langs;
+}
+
+
 function print_langpair_diffmap($model1, $model2, $metric='bleu', $benchmark='all',
                                 $pkg1='opusmt', $pkg2='opusmt', $source='unchanged'){
 
@@ -240,7 +405,7 @@ function print_langpair_diffmap($model1, $model2, $metric='bleu', $benchmark='al
     get_langpair_scores($scores1, $trglangs1, $benchmarks, $model1, $pkg1, $metric, $benchmark, $source);
     get_langpair_scores($scores2, $trglangs2, $benchmarks, $model2, $pkg2, $metric, $benchmark, $source);
 
-    echo('<li><b>Selected Benchmark:</b> ');
+    echo('<ul><li><b>Selected Benchmark:</b> ');
     if ( $benchmark == 'all' ){
         echo("[avg] ");
     }
@@ -259,7 +424,8 @@ function print_langpair_diffmap($model1, $model2, $metric='bleu', $benchmark='al
             }
         }
     }
-    echo('</li>');    
+    echo("<li>Scores = difference in $metric scores between model 1 and model 2</li>");
+    echo('</li></ul>');
         
 
     // get score difference
@@ -349,33 +515,33 @@ function print_langpair_heatmap($model, $metric='bleu', $benchmark='all', $pkg='
 
     get_langpair_scores($scores, $trglangs, $benchmarks, $model, $pkg, $metric, $benchmark, $source);
 
-    echo('<li><b>Chart Type:</b> ');
-    $query = make_query(['chart' => 'standard']);
-    $link = $_SERVER['PHP_SELF'].'?'.$query;
-    echo("[<a rel=\"nofollow\" href=\"$link\">standard</a>] [heatmap]</li>");
-    echo('<li><b>Selected Benchmark:</b> ');
-    if ( $benchmark == 'all' ){
-        echo("[avg] ");
-    }
-    else{
-        $url_param = make_query(['test' => 'all']);
-        echo("[<a rel=\"nofollow\" href=\"index.php?$url_param\">avg</a>] ");
-    }
-    foreach ($benchmarks as $b => $count){
-        if ($count > 3){
-            if ( $b == $benchmark ){
-                echo("[$b] ");
-            }
-            else{
-                $url_param = make_query(['test' => $b]);
-                echo("[<a rel=\"nofollow\" href=\"index.php?$url_param\">$b</a>] ");
+    echo('<ul><li>');
+    if (count($benchmarks) > 1){
+        echo('<b>Selected Benchmark:</b> ');
+        if ( $benchmark == 'all' ){
+            echo("[avg] ");
+        }
+        else{
+            $url_param = make_query(['test' => 'all']);
+            echo("[<a rel=\"nofollow\" href=\"index.php?$url_param\">avg</a>] ");
+        }
+        foreach ($benchmarks as $b => $count){
+            if ($count > 3){
+                if ( $b == $benchmark ){
+                    echo("[$b] ");
+                }
+                else{
+                    $url_param = make_query(['test' => $b]);
+                    echo("[<a rel=\"nofollow\" href=\"index.php?$url_param\">$b</a>] ");
+                }
             }
         }
     }
-    echo('</li>');    
+    echo('<li>Scores shown in percentage points</li>');
+    echo('</li></ul>');    
         
     ksort($trglangs);
-    echo('<br/><div class="heatmap"><table><tr><th></th>');
+    echo('<div class="heatmap"><table><tr><th></th>');
     foreach ($trglangs as $t => $count){
         echo('<th>'.$t.'</th>');
     }
@@ -408,7 +574,7 @@ function print_langpair_heatmap($model, $metric='bleu', $benchmark='all', $pkg='
         echo('</tr>');
     }
     echo('</tr></table></div>');
-    echo('<br/><li>Scores shown in percentage points</li>');
+    // echo('<br/>');
     print_legend();
     return true;
 }

@@ -500,30 +500,30 @@ function normalize_modelname($modelstr){
 
 
 function model_size($package, $model){
-  if (array_key_exists('models', $_SESSION)){
-      if (array_key_exists($package, $_SESSION['models'])){
-	if (array_key_exists($model, $_SESSION['models'][$package])){
-	  if (array_key_exists('size', $_SESSION['models'][$package][$model])){
-	    return $_SESSION['models'][$package][$model]['size'];
-	  }
-	}
-      }
-  }
-  
-  // 0 means unknown
-  $_SESSION['models'][$package][$model]['size'] = 0;
-
-  $file = get_file_location('models/modelsize.txt', $package);
-  if ($lines = @file($file)){
-    foreach ($lines as $line){
-      $val = explode("\t",$line);
-      if ($val[1] == 'parameters'){
-	$size = floatval($val[2]);
-	$_SESSION['models'][$package][$val[0]]['size'] = $size;
-      }
+    if (array_key_exists('models', $_SESSION)){
+        if (array_key_exists($package, $_SESSION['models'])){
+            if (array_key_exists($model, $_SESSION['models'][$package])){
+                if (array_key_exists('size', $_SESSION['models'][$package][$model])){
+                    return $_SESSION['models'][$package][$model]['size'];
+                }
+            }
+        }
     }
-  }
-  return $_SESSION['models'][$package][$model]['size'];
+  
+    // 0 means unknown
+    $_SESSION['models'][$package][$model]['size'] = 0;
+
+    $file = get_file_location('models/modelsize.txt', $package);
+    if ($lines = @file($file)){
+        foreach ($lines as $line){
+            $val = explode("\t",$line);
+            if ($val[1] == 'parameters'){
+                $size = floatval($val[2]);
+                $_SESSION['models'][$package][$val[0]]['size'] = $size;
+            }
+        }
+    }
+    return $_SESSION['models'][$package][$model]['size'];
 }
 
 

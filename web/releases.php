@@ -1,4 +1,9 @@
-<?php session_start(); ?>
+<?php
+
+include('inc/env.inc');
+include('inc/functions.inc');
+
+?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 
 <html>
@@ -11,21 +16,18 @@
 
 <?php
                                
-include 'functions.php';
 
 list($srclang, $trglang, $langpair) = get_langpair();
 
 include 'header.php';
 echo('<h1>OPUS-MT Dashboard: Release History</h1>');
 
-// $package = 'OPUS-MT';
-$package = 'HPLT-MT';
 
-$releases_url = "https://raw.githubusercontent.com/Helsinki-NLP/$package-leaderboard/master/release-history.txt";
+$releases_url = $leaderboard_url."/release-history.txt";
 $releases = file($releases_url);
 $storage  = 'https://object.pouta.csc.fi';
 
-if ($package == 'HPLT-MT'){
+if ($base_leaderboard == 'HPLT-MT-leaderboard'){
     sort($releases);
     echo '<ul>';
 }
@@ -55,7 +57,7 @@ foreach ($releases as $release){
     }
 }
 
-if ($package == 'HPLT-MT'){
+if ($base_leaderboard == 'HPLT-MT-leaderboard'){
     echo '</ul>';
 }
 

@@ -273,8 +273,13 @@ function barchart_plotly(&$data,&$colors,$metric){
         array_push($rgba,"rgba($red,$green,$blue,1)");
         if ($benchmark != 'all'){
             $path = explode('/',$key);
-            array_shift($path);
-            array_push($text,implode('/',$path));
+            if (count($path)>1){
+                array_shift($path);
+                array_push($text,implode('/',$path));
+            }
+            else{
+                array_push($text,$key);
+            }
         }
         else{
             array_push($text,$key);

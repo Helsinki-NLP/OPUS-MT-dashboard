@@ -37,6 +37,13 @@ function get_file_location($file, $pkg='opusmt'){
     return $url;
 }
 
+function local_scorefile_exists($langpair, $benchmark, $metric='bleu', $model='all', $pkg='opusmt', $source='unchanged'){
+    $file = get_score_filename($langpair, $benchmark, $metric, $model, $pkg, $source);
+    if (file_exists($file)){
+        return true;
+    }
+    return false;
+}
 
 
 function get_score_filename($langpair, $benchmark, $metric='bleu', $model='all', $pkg='opusmt', $source='unchanged'){
@@ -76,6 +83,9 @@ function get_score_filename($langpair, $benchmark, $metric='bleu', $model='all',
 }
 
 
+// read benchmark scores from OPUS-MT, external and contributed models
+// mostly for getting the scores for a specific benchmark (or a benchmark average)
+// (back off to read-scores for other modes)
 
 function read_model_scores($langpair, $benchmark, $metric='bleu', $model='all', $pkg='opusmt', $source='unchanged', $cache_size=10){
     global $userscores;
@@ -109,15 +119,8 @@ function read_model_scores($langpair, $benchmark, $metric='bleu', $model='all', 
 }
 
 
-function local_scorefile_exists($langpair, $benchmark, $metric='bleu', $model='all', $pkg='opusmt', $source='unchanged'){
-    $file = get_score_filename($langpair, $benchmark, $metric, $model, $pkg, $source);
-    if (file_exists($file)){
-        return true;
-    }
-    return false;
-}
 
-// read scores from session cache or from file
+// read scores from session cache or from file (local or online)
 
 function read_scores($langpair, $benchmark, $metric='bleu', $model='all', $pkg='opusmt', $source='unchanged', $cache_size=10){
     $file = get_score_filename($langpair, $benchmark, $metric, $model, $pkg, $source);
@@ -372,49 +375,9 @@ function get_logfile_with_cache($model, $pkg='opusmt', $ext='.eval.zip', $cache_
 
 
 
-function print_chart_type_options($selected_type="standard", $heatmap=false){
-    $chart_types = $heatmap ? array('standard', 'diff', 'heatmap'): array('standard', 'diff');
-    foreach ($chart_types as $c){
-        if ($c == $selected_type){
-            echo("[$c]");
-        }
-        else{
-            $query = make_query(['chart' => $c]);
-            $link = $_SERVER['PHP_SELF'].'?'.$query;
-            echo("[<a rel=\"nofollow\" href=\"$link\">$c</a>]");
-        }
-    }
-}
-
-function print_plot_type_options($selected_type="barchart"){
-    $chart_types = array('barchart', 'scatterplot');    
-    foreach ($chart_types as $c){
-        if ($c == $selected_type){
-            echo("[$c]");
-        }
-        else{
-            $query = make_query(['chart' => $c]);
-            $link = $_SERVER['PHP_SELF'].'?'.$query;
-            echo("[<a rel=\"nofollow\" href=\"$link\">$c</a>]");
-        }
-    }
-}
 
 
-function print_metric_options($selected_metric='bleu'){
-    global $evaluation_metrics;
-    foreach ($evaluation_metrics as $m){
-        if ($m == $selected_metric){
-            echo(" $m ");
-        }
-        else{
-            $query = make_query(array('metric' => $m));
-            $link = $_SERVER['PHP_SELF'].'?'.$query;
-            echo("[<a rel=\"nofollow\" href=\"$link\">$m</a>]");
-        }
-    }
-}
-
+// an abbreviated model name for displaying in the table
 
 function short_model_name($modelid){
     $model = explode('/',$modelid);
@@ -429,6 +392,10 @@ function short_model_name($modelid){
     return $modelname;
 }
 
+
+// get the model from a model-URL
+// TODO: avoid hard-coded decisions
+// TOOD: deprecated because of normalize_modelname function below?
 
 function modelurl_to_model($modelurl){
     if (substr($modelurl, -4) == '.zip'){
@@ -499,6 +466,9 @@ function normalize_modelname($modelstr){
 }
 
 
+// retrieve information about the size of a model
+// (in terms of parameters)
+
 function model_size($package, $model){
     if (array_key_exists('models', $_SESSION)){
         if (array_key_exists($package, $_SESSION['models'])){
@@ -527,84 +497,89 @@ function model_size($package, $model){
 }
 
 
+// TODO: where is this function used?
 
 function model_size_individual($package, $model){
-  if (array_key_exists('models', $_SESSION)){
-      if (array_key_exists($package, $_SESSION['models'])){
-	if (array_key_exists($model, $_SESSION['models'][$package])){
-	  if (array_key_exists('size', $_SESSION['models'][$package][$model])){
-	    return $_SESSION['models'][$package][$model]['size'];
-	  }
-	}
-      }
-  }
-  $file = get_file_location(implode('/',['models',$model.".info"]), $package);
-  if ($lines = @file($file)){
-    foreach ($lines as $line){
-      $val = explode(': ',$line);
-      if ($val[0] == 'parameters'){
-	$size = floatval($val[1]);
-	$_SESSION['models'][$package][$model]['size'] = $size;
-	return $size;
-      }
+    if (array_key_exists('models', $_SESSION)){
+        if (array_key_exists($package, $_SESSION['models'])){
+            if (array_key_exists($model, $_SESSION['models'][$package])){
+                if (array_key_exists('size', $_SESSION['models'][$package][$model])){
+                    return $_SESSION['models'][$package][$model]['size'];
+                }
+            }
+        }
     }
-  }
-  // 0 means unknown
-  $_SESSION['models'][$package][$model]['size'] = 0;
-  return 0;
+    $file = get_file_location(implode('/',['models',$model.".info"]), $package);
+    if ($lines = @file($file)){
+        foreach ($lines as $line){
+            $val = explode(': ',$line);
+            if ($val[0] == 'parameters'){
+                $size = floatval($val[1]);
+                $_SESSION['models'][$package][$model]['size'] = $size;
+                return $size;
+            }
+        }
+    }
+    // 0 means unknown
+    $_SESSION['models'][$package][$model]['size'] = 0;
+    return 0;
 }
 
 
 
+// rather complicated map to some color scale from model size
 
 function size_to_rgb($size){
   
-  if ($size <= 0){
-    return [164, 164, 164];
-  }
-
-  $max = log(100);
-  $size = $size < 24 ? 1 : $size-24;
-  $logsize = log($size);
-
-  $avg = 60;
-  $good = 30;
-  $norm = $logsize/$max*100;
-  $norm = $norm > 100 ? 100 : $norm;
-  $diff = $avg-$logsize/$max*100;
-
-  $red=196;
-  $green=196;
-  $blue=196;
-
-  if ($diff<0){
-    $change1 = abs(pow((0-$diff/$avg),2)*64);
-    $change2 = abs(($diff/$avg+1)*32);
-    $green-=$change1;
-    $blue-=$change1+$change2;
-  }
-  else{
-    $change1 = abs(pow(($diff/$good),1)*96);
-    $change2 = 0;
-    if ($diff<$good){
-      $change2 = abs((1-$diff/$good)*32);
+    if ($size <= 0){
+        return [164, 164, 164];
     }
-    if ($change1>64){
-      $change1 = 64;
-    }
-    $red-=$change1;
-    $blue-=$change1+$change2;
-  }
-  $red < 0 ? $red = 0: $red;
-  $green < 0 ? $green = 0: $green;
-  $blue < 0 ? $blue = 0: $blue;
 
-  return [floor($red),floor($green),floor($blue)];
+    $max = log(100);
+    $size = $size < 24 ? 1 : $size-24;
+    $logsize = log($size);
+
+    $avg = 60;
+    $good = 30;
+    $norm = $logsize/$max*100;
+    $norm = $norm > 100 ? 100 : $norm;
+    $diff = $avg-$logsize/$max*100;
+
+    $red=196;
+    $green=196;
+    $blue=196;
+
+    if ($diff<0){
+        $change1 = abs(pow((0-$diff/$avg),2)*64);
+        $change2 = abs(($diff/$avg+1)*32);
+        $green-=$change1;
+        $blue-=$change1+$change2;
+    }
+    else{
+        $change1 = abs(pow(($diff/$good),1)*96);
+        $change2 = 0;
+        if ($diff<$good){
+            $change2 = abs((1-$diff/$good)*32);
+        }
+        if ($change1>64){
+            $change1 = 64;
+        }
+        $red-=$change1;
+        $blue-=$change1+$change2;
+    }
+    $red < 0 ? $red = 0: $red;
+    $green < 0 ? $green = 0: $green;
+    $blue < 0 ? $blue = 0: $blue;
+
+    return [floor($red),floor($green),floor($blue)];
 }
 
+
+// convert size color for web-use
+
 function size_color($size){
-  list($red,$green,$blue) = size_to_rgb($size);
-  return sprintf("#%x%x%x",$red,$green,$blue);
+    list($red,$green,$blue) = size_to_rgb($size);
+    return sprintf("#%x%x%x",$red,$green,$blue);
 }
 
 

@@ -1,6 +1,13 @@
 <?php
 
 
+// other methods and info for plotting:
+// https://blog.ckportfolio.com/tutorial/canvas-visualization-with-php-and-javascript-library
+// https://www.w3schools.com/graphics/tryit.asp?filename=trychartjs_bars_colors_more
+// https://www.w3schools.com/graphics/tryit.asp?filename=tryplotly_bars
+// https://www.w3schools.com/graphics/default.asp
+
+
 function plot_score_comparison($chart){
     $barchart_script = $chart == 'diff' ? 'diff-barchart.php' : 'compare-barchart.php';
     if ( isset( $_COOKIE['PHPSESSID'] ) ) {
@@ -13,7 +20,7 @@ function plot_score_comparison($chart){
 }
 
 function plot_scores($chart){
-    $barchart_script = $chart == 'scatterplot.php' ? 'scatterplot.php' : 'barchart.php';
+    $barchart_script = $chart == 'scatterplot' ? 'scatterplot.php' : 'barchart.php';
     $url_param = make_query(['model1' => 'unknown', 'model2' => 'unknown']);
     if ( isset( $_COOKIE['PHPSESSID'] ) ) {
         echo("<img src=\"$barchart_script?". SID .'&'.$url_param."\" alt=\"barchart\" />");

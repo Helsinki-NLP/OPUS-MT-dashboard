@@ -154,6 +154,23 @@ function print_benchmark_link(){
     echo("<li><b>Benchmark:</b> $benchmark_link</li>");
 }
 
+// display options
+// --> move to display_options.inc
+
+function print_chart_type_options($selected_type="standard", $heatmap=false){
+    $chart_types = $heatmap ? array('standard', 'diff', 'heatmap'): array('standard', 'diff');
+    foreach ($chart_types as $c){
+        if ($c == $selected_type){
+            echo("[$c]");
+        }
+        else{
+            $query = make_query(['chart' => $c]);
+            $link = $_SERVER['PHP_SELF'].'?'.$query;
+            echo("[<a rel=\"nofollow\" href=\"$link\">$c</a>]");
+        }
+    }
+}
+
 
 function print_chart_type_links(){
     global $model, $benchmark, $chart, $multilingual_model, $chartlegend;
@@ -206,7 +223,34 @@ function print_metric_links(){
     echo("</li>");
 }
 
+function print_metric_options($selected_metric='bleu'){
+    global $evaluation_metrics;
+    foreach ($evaluation_metrics as $m){
+        if ($m == $selected_metric){
+            echo(" $m ");
+        }
+        else{
+            $query = make_query(array('metric' => $m));
+            $link = $_SERVER['PHP_SELF'].'?'.$query;
+            echo("[<a rel=\"nofollow\" href=\"$link\">$m</a>]");
+        }
+    }
+}
 
+
+function print_plot_type_options($selected_type="barchart"){
+    $chart_types = array('barchart', 'scatterplot');    
+    foreach ($chart_types as $c){
+        if ($c == $selected_type){
+            echo("[$c]");
+        }
+        else{
+            $query = make_query(['chart' => $c]);
+            $link = $_SERVER['PHP_SELF'].'?'.$query;
+            echo("[<a rel=\"nofollow\" href=\"$link\">$c</a>]");
+        }
+    }
+}
 
 function print_contributed_link(){
     global $userscores, $userscores_exists, $chart;

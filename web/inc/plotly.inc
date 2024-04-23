@@ -1,5 +1,8 @@
 <?php
 
+// more info on plotly:
+// https://plotly.com/javascript/line-and-scatter/
+// https://plotly.com/javascript/bar-charts
 
 
 function plot_model_scores_plotly(){

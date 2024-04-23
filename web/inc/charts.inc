@@ -13,13 +13,13 @@ function plot_score_comparison($chart){
 }
 
 function plot_scores($chart){
-    $barchart_script = $chart == 'scatterplot' ? 'scatterplot.php' : 'barchart.php';
+    $barchart_script = $chart == 'scatterplot.php' ? 'scatterplot.php' : 'barchart.php';
     $url_param = make_query(['model1' => 'unknown', 'model2' => 'unknown']);
     if ( isset( $_COOKIE['PHPSESSID'] ) ) {
         echo("<img src=\"$barchart_script?". SID .'&'.$url_param."\" alt=\"barchart\" />");
     }
     else{
-        echo("<img src=\"$barchart_script.php?$url_param\" alt=\"barchart\" />");
+        echo("<img src=\"$barchart_script?$url_param\" alt=\"barchart\" />");
     }
 }
 

@@ -7,9 +7,10 @@
 
 function plot_model_scores_plotly(){
     global $langpair, $benchmark, $metric, $model, $package, $showlang;
-    
+    global $show_max_scores;
+
     $lines = read_model_scores($langpair, $benchmark, $metric, $model, $package);
-    list($data,$colors) = get_model_scores_from_lines($lines, $model, $benchmark, $showlang);
+    list($data,$colors) = get_model_scores_from_lines($lines, $model, $benchmark, $showlang, $show_max_scores);
     barchart_plotly($data, $colors, $metric);
 }
 
@@ -36,6 +37,7 @@ function plot_benchmark_scores_plotly($chart="barchart"){
 
 function plot_score_comparison_plotly($chart="barchart"){    
     global $langpair, $benchmark, $metric, $model, $package, $chartlegend, $showlang;
+    global $show_max_scores;
     
     $model1 = get_param('model1', 'unknown');
     $model2 = get_param('model2', 'unknown');
@@ -57,10 +59,15 @@ function plot_score_comparison_plotly($chart="barchart"){
         $allcolors = array();
         list($alldata[0], $allcolors[0]) = get_model_scores_from_lines($lines1, $model1, $benchmark, $showlang);
         list($alldata[1], $allcolors[1]) = get_model_scores_from_lines($lines2, $model2, $benchmark, $showlang);
+        $count = 0;
         foreach ($alldata[0] as $key => $val){
             if (array_key_exists($key, $alldata[1])){
                 $data[0][$key] = $alldata[0][$key];
                 $data[1][$key] = $alldata[1][$key];
+                if ($count > $show_max_scores){
+                    break;
+                }
+                $count++;
             }
         }
 
@@ -123,8 +130,7 @@ function get_topscores_from_lines(&$lines){
     return [$data,$type];
 }
 
-function get_model_scores_from_lines(&$lines, $model, $benchmark='all', $showlang='all'){
-    global $show_max_scores;
+function get_model_scores_from_lines(&$lines, $model, $benchmark='all', $showlang='all', $show_max_scores=0){
     
     list($modelid, $modelurl) = normalize_modelname($model);
     $color = modelid_color($modelid);

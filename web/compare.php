@@ -93,6 +93,28 @@ if (($model1 != 'unknown') && ($model2 != 'unknown')){
         $langpairs = print_score_diffs($model1,$model2,$showlang,$benchmark, $metric);
     }
     echo('</div>');
+    echo('<br/><div id="list">');
+    echo('<ul>');
+    if (count($langpairs) > 1 && count($langpairs) < 20){
+        echo('<li><b>Langpair(s):</b> ');
+        ksort($langpairs);
+        foreach ($langpairs as $lp => $count){
+            if ($lp == $showlang){
+                echo("[$showlang]");
+            }
+            else{
+                $url_param = make_query(['scoreslang' => $lp]);
+                echo("[<a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$lp</a>]");
+            }
+        }            
+        if ($showlang != 'all'){
+            $url_param = make_query(['scoreslang' => 'all']);
+            echo("[<a rel=\"nofollow\" href=\"compare.php?".$url_param."\">all</a>]");
+        }
+        echo('</li>');
+    }
+    print_renderlib_link();
+    echo('</ul></div>');
 }
 
 
@@ -100,28 +122,6 @@ if (($model1 != 'unknown') && ($model2 != 'unknown')){
 
 if ($model1 != 'unknown'){
     if ($model2 != 'unknown'){
-        echo('<br/><div id="list">');
-        echo('<ul>');
-        if (count($langpairs) > 1 && count($langpairs) < 20){
-            echo('<ul><li><b>Langpair(s):</b> ');
-            ksort($langpairs);
-            foreach ($langpairs as $lp => $count){
-                if ($lp == $showlang){
-                    echo("[$showlang]");
-                }
-                else{
-                    $url_param = make_query(['scoreslang' => $lp]);
-                    echo("[<a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$lp</a>]");
-                }
-            }            
-            if ($showlang != 'all'){
-                $url_param = make_query(['scoreslang' => 'all']);
-                echo("[<a rel=\"nofollow\" href=\"compare.php?".$url_param."\">all</a>]");
-            }
-            echo('</li>');
-        }
-        print_renderlib_link();
-        echo('</ul>');
         echo('<h2>Start with a new model</h2>');
     }
     else{
@@ -170,7 +170,7 @@ foreach ($sorted_models as $model => $release){
     $modelzip = array_pop($parts);
 
     // $modelbase = modelurl_to_model(rtrim($model));
-    list($modelbase,$modelurl) = normalize_modelname($model);
+    list($modelbase,$modelurl) = normalize_modelname(rtrim($model));
     $new_model = implode('/',[$pkg, $modelbase]);
 
     if (($model1 != 'unknown') && ($model2 == 'unknown')){

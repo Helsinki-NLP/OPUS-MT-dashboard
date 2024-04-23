@@ -9,7 +9,6 @@ include('inc/tables.inc');
 
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-
 <html>
 <head>
   <title>OPUS-MT Dashboard - Compare Models</title>
@@ -17,7 +16,6 @@ include('inc/tables.inc');
   <link rel="stylesheet" href="index.css" type="text/css">
 </head>
 <body>
-
 <?php
           
 
@@ -32,20 +30,8 @@ list($srclang, $trglang, $langpair) = get_langpair();
 
 $showlang  = get_param('scoreslang', $langpair);
 
-
-
-// DEBUGGING: show parameters in session variable
-/*
-foreach ($_SESSION['params'] as $key => $value){
-    echo "$key => $value <br/>";
-}
-*/
-
-
-
 include 'header.php';
 echo('<h1>OPUS-MT Dashboard: Compare Models</h1>');
-
 
 if ($model1 != 'unknown'){
     echo('<div id="chart"><ul>');
@@ -54,10 +40,7 @@ if ($model1 != 'unknown'){
     $m1_pkg = array_shift($parts);
     $m1_name = implode('/',$parts);
     $url_param = make_query(['model' => $m1_name, 'pkg' => $m1_pkg]);
-    // list($m1_pkg, $m1_lang, $m1_name) = explode('/',$model1);
-    // $url_param = make_query(['model' => $m1_lang.'/'.$m1_name, 'pkg' => $m1_pkg]);
     $m_link = "<a rel=\"nofollow\" href=\"index.php?".$url_param."\">";
-    // echo('<li><b>Model 1 (blue):</b> '.$m_link.$model1.'</a></li>');
     echo('<li><b>Model 1 (blue):</b> '.$m_link.$m1_name.'</a></li>');
 
     if ($model2 != 'unknown'){
@@ -65,10 +48,7 @@ if ($model1 != 'unknown'){
         $m2_pkg = array_shift($parts);
         $m2_name = implode('/',$parts);
         $url_param = make_query(['model' => $m2_name, 'pkg' => $m2_pkg]);
-        // list($m2_pkg, $m2_lang, $m2_name) = explode('/',$model2);
-        // $url_param = make_query(['model' => $m2_lang.'/'.$m2_name, 'pkg' => $m2_pkg]);
         $m_link = "<a rel=\"nofollow\" href=\"index.php?".$url_param."\">";
-        // echo('<li><b>Model 2 (orange):</b> '.$m_link.$model2.'</a></li>');
         echo('<li><b>Model 2 (orange):</b> '.$m_link.$m2_name.'</a></li>');
     }
     echo("<li><b>Evaluation metric:</b> ");
@@ -91,33 +71,31 @@ if (($model1 != 'unknown') && ($model2 != 'unknown')){
         }
         echo('</div><div id="scores">');
         $langpairs = print_score_diffs($model1,$model2,$showlang,$benchmark, $metric);
+        echo('</div><div id="list">');
+        echo('<ul>');
+        if (count($langpairs) > 1 && count($langpairs) < 20){
+            echo('<li><b>Langpair(s):</b> ');
+            ksort($langpairs);
+            foreach ($langpairs as $lp => $count){
+                if ($lp == $showlang){
+                    echo("[$showlang]");
+                }
+                else{
+                    $url_param = make_query(['scoreslang' => $lp]);
+                    echo("[<a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$lp</a>]");
+                }
+            }            
+            if ($showlang != 'all'){
+                $url_param = make_query(['scoreslang' => 'all']);
+                echo("[<a rel=\"nofollow\" href=\"compare.php?".$url_param."\">all</a>]");
+            }
+            echo('</li>');
+        }
+        print_renderlib_link();
+        echo('</ul>');
     }
     echo('</div>');
-    echo('<br/><div id="list">');
-    echo('<ul>');
-    if (count($langpairs) > 1 && count($langpairs) < 20){
-        echo('<li><b>Langpair(s):</b> ');
-        ksort($langpairs);
-        foreach ($langpairs as $lp => $count){
-            if ($lp == $showlang){
-                echo("[$showlang]");
-            }
-            else{
-                $url_param = make_query(['scoreslang' => $lp]);
-                echo("[<a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$lp</a>]");
-            }
-        }            
-        if ($showlang != 'all'){
-            $url_param = make_query(['scoreslang' => 'all']);
-            echo("[<a rel=\"nofollow\" href=\"compare.php?".$url_param."\">all</a>]");
-        }
-        echo('</li>');
-    }
-    print_renderlib_link();
-    echo('</ul></div>');
 }
-
-
 
 
 if ($model1 != 'unknown'){
@@ -149,49 +127,44 @@ function print_model_list($pkg, $langpair, $model1, $model2){
 
     $scores_url = $leaderboard_urls[$pkg].'/scores';
 
-// TODO: do we also want to cache model lists in the SESSION variable?
-$models = file(implode('/',[$scores_url,$langpair,'model-list.txt']));
+    // TODO: do we also want to cache model lists in the SESSION variable?
+    $models = file(implode('/',[$scores_url,$langpair,'model-list.txt']));
 
-$sorted_models = array();
-if (is_array($models)){
-    foreach ($models as $model){
-        $parts = explode('-',rtrim($model));
-        $day = array_pop($parts);
-        $month = array_pop($parts);
-        $year = array_pop($parts);
-        $sorted_models[$model] = "$year$month$day";
-    }
-    arsort($sorted_models);
-}
-
-echo("<ul>");
-foreach ($sorted_models as $model => $release){
-    $parts = explode('/',rtrim($model));
-    $modelzip = array_pop($parts);
-
-    // $modelbase = modelurl_to_model(rtrim($model));
-    list($modelbase,$modelurl) = normalize_modelname(rtrim($model));
-    $new_model = implode('/',[$pkg, $modelbase]);
-
-    if (($model1 != 'unknown') && ($model2 == 'unknown')){
-        if ($model1 == $new_model){
-            echo("<li>$modelbase</li>");
-            // echo("<li>$new_model</li>");
+    $sorted_models = array();
+    if (is_array($models)){
+        foreach ($models as $model){
+            $parts = explode('-',rtrim($model));
+            $day = array_pop($parts);
+            $month = array_pop($parts);
+            $year = array_pop($parts);
+            $sorted_models[$model] = "$year$month$day";
         }
-        else{
-            $url_param = make_query(['model1' => $model1, 'model2' => $new_model]);
+        arsort($sorted_models);
+    }
+
+    echo("<ul>");
+    foreach ($sorted_models as $model => $release){
+        $parts = explode('/',rtrim($model));
+        $modelzip = array_pop($parts);
+
+        list($modelbase,$modelurl) = normalize_modelname(rtrim($model));
+        $new_model = implode('/',[$pkg, $modelbase]);
+
+        if (($model1 != 'unknown') && ($model2 == 'unknown')){
+            if ($model1 == $new_model){
+                echo("<li>$modelbase</li>");
+            }
+            else{
+                $url_param = make_query(['model1' => $model1, 'model2' => $new_model]);
+                echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$modelbase</a></li>");
+            }
+        }
+        else{        
+            $url_param = make_query(['model1' => $new_model, 'model2' => 'unknown']);
             echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$modelbase</a></li>");
-            // echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$new_model</a></li>");
-        }
+        }   
     }
-    else{        
-        $url_param = make_query(['model1' => $new_model, 'model2' => 'unknown']);
-        echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$modelbase</a></li>");
-        // echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$new_model</a></li>");
-    }   
-}
-echo("</ul>");
-
+    echo("</ul>");
 }
 
 

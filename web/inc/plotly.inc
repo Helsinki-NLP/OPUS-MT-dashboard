@@ -18,7 +18,7 @@ function plot_model_scores_plotly(){
 function plot_topscores_plotly(){
     global $langpair, $benchmark, $metric, $model, $package, $chartlegend;
     $lines = read_model_scores($langpair, $benchmark, $metric, $model, $package);
-    list($data,$type) = get_topscores_from_lines($lines);
+    list($data,$type) = get_topscores_from_lines($lines, $chartlegend);
     barchart_plotly($data, $type, $metric);
 }
 
@@ -109,7 +109,7 @@ function plot_score_comparison_plotly($chart="barchart"){
                 }
             }
         }
-        barchart_plotly($diff,$color, $metric);
+        barchart_plotly($diff,$color, "difference in ".$metric);
     }
     else{
         compare_barchart_plotly($data,$colors, $groups, $metric);
@@ -119,7 +119,7 @@ function plot_score_comparison_plotly($chart="barchart"){
 
 
 
-function get_topscores_from_lines(&$lines){
+function get_topscores_from_lines(&$lines, $chartlegend='type'){
     $data = array();
     $type = array();
     foreach($lines as $line) {

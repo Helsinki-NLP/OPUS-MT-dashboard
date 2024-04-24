@@ -2,9 +2,7 @@
 
 include('inc/env.inc');
 include('inc/functions.inc');
-include('inc/display_options.inc');
 include('inc/charts.inc');
-include('inc/plotly.inc');
 include('inc/tables.inc');
 
 ?>
@@ -19,15 +17,10 @@ include('inc/tables.inc');
 <?php
           
 
-// get query parameters
+// get additional query parameters
 $chart     = get_param('chart', 'standard');
-$benchmark = get_param('test', 'all');
-$metric    = get_param('metric', 'bleu');
 $model1    = get_param('model1', 'unknown');
 $model2    = get_param('model2', 'unknown');
-
-list($srclang, $trglang, $langpair) = get_langpair();
-
 $showlang  = get_param('scoreslang', $langpair);
 
 include 'header.php';
@@ -60,15 +53,12 @@ if ($model1 != 'unknown'){
 
 if (($model1 != 'unknown') && ($model2 != 'unknown')){
     if ($chart == 'heatmap'){
-        $heatmap_shown = print_langpair_diffmap($m1_name, $m2_name, $metric, $benchmark, $m1_pkg, $m2_pkg);
+        $heatmap_shown = print_langpair_diffmap($m1_name, $m2_name,
+                                                $metric, $benchmark,
+                                                $m1_pkg, $m2_pkg);
     }
     else{
-        if ($renderlib == 'gd'){
-            plot_score_comparison($chart);
-        }
-        else{
-            plot_score_comparison_plotly($chart);
-        }
+        plot_model_comparison($chart);
         echo('</div><div id="scores">');
         $langpairs = print_score_diffs($model1,$model2,$showlang,$benchmark, $metric);
         echo('</div><div id="list">');
@@ -91,7 +81,6 @@ if (($model1 != 'unknown') && ($model2 != 'unknown')){
             }
             echo('</li>');
         }
-        print_renderlib_link();
         echo('</ul>');
     }
     echo('</div>');

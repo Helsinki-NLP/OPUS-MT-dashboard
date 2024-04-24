@@ -141,6 +141,18 @@ function get_param($key, $default){
     return $default;
 }
 
+function set_param($key, $value){
+    $_SESSION['params'][$key] = $value;
+}
+
+function delete_param($key){
+    if (array_key_exists('params', $_SESSION)){
+        if (array_key_exists($key, $_SESSION['params'])){
+            unset($_SESSION['params'][$key]);
+        }
+    }
+}
+
 function get_langpair(){
     global $default_srclang, $default_trglang;
     if (isset($_GET['langpair'])){
@@ -156,9 +168,6 @@ function get_langpair(){
     return [$srclang, $trglang, $langpair];
 }
 
-function set_param($key, $value){
-    $_SESSION['params'][$key] = $value;
-}
 
 function set_langpair($langpair){
     list($srclang,$trglang) = explode('-',$langpair);

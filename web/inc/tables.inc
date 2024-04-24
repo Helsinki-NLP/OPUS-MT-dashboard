@@ -689,6 +689,12 @@ function print_size_legend(){
 function print_topscore_differences($langpair='deu-eng', $benchmark='all', $metric='bleu', $contributed='no'){
     global $chart;
 
+    // don't print contributed model scores 
+    // if the chart shows score differences between OPUS-MT and external models
+    if ($chart == "diff"){
+        $contributed = 'no';
+    }
+
     $lines1 = read_scores($langpair, 'all', $metric, 'all', 'opusmt', 'opusmt');
     $lines2 = read_scores($langpair, 'all', $metric, 'all', 'external', 'external');
     $lines3 = array();

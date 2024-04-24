@@ -6,6 +6,7 @@
 include 'inc/env.inc';
 include 'inc/functions.inc';
 include 'inc/charts.inc';
+// include 'inc/gd.inc';
 
 // get query parameters
 $package   = get_param('pkg', 'opusmt');
@@ -17,15 +18,9 @@ $userscores = get_param('userscores', 'no');
 $chartlegend = get_param('legend', 'type');
 
 
-// echo("test = $benchmark");
-// exit;
-
 list($srclang, $trglang, $langpair) = get_langpair();
 
 $lines = read_model_scores($langpair, $benchmark, $metric, $model, $package);
-# echo(implode("<br/>",$lines));
-# exit;
-
 
 if ($benchmark == 'avg'){
     $averaged_benchmarks = array_shift($lines);
@@ -105,10 +100,6 @@ if ($metric == 'bleu' || $metric == 'spbleu'){
 else{
   $scale = 1;
 }
-
-// echo(implode("<br/>",$data));
-// exit;
-
 
 $chart = barchart($data, $maxscore, $type, $index_label, $metric, $scale);
 header('Content-Type: image/png');

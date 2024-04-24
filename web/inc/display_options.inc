@@ -6,6 +6,20 @@ $multilingual_model = is_multilingual_model($model);
 $userscores_exists = local_scorefile_exists($langpair, 'all', $metric, 'all', 'contributed', 'user-scores');
 
 
+
+// Create the link list with different display options
+
+function print_display_options(){
+    echo("<ul>");
+    print_langpair_link();
+    print_model_selection_links();
+    print_benchmark_link();
+    print_metric_links();
+    print_chart_type_links();
+    echo("</ul>");
+}
+
+
 // langpair link
 
 function langpair_link(){

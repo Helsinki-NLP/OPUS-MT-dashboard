@@ -390,14 +390,14 @@ function scatterplot_plotly(&$data, &$colors, $metric, $chartlegend='type'){
     echo("mode: 'markers',");
     echo('type: "scatter",');
     // echo('orientation: "v",');
-    echo('marker: {size: 12, color: colors, line: {color: "rgb(255,255,255)", width: 1} }');
+    echo('marker: {size: 15, color: colors, line: {color: "rgb(255,255,255)", width: 1} }');
     echo("}];\n");
 
     // echo("const layout = {yaxis:{title: '$metric'}, xaxis: { tickangle: -45 }};");
     // echo("const layout = {showlegend: false, showtitle: false, yaxis:{title: '$metric'}, xaxis: { type: 'log', title: 'size in millions of parameters (log scale)'}};");
     echo("const layout = {
 yaxis:{title: '$metric'},
-xaxis: { type: 'log', title: 'size in millions of parameters (log scale)'},
+xaxis: { type: 'log', title: 'size in millions of parameters'},
 margin: {
     l: 50,
     r: 50,

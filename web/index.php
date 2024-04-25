@@ -19,7 +19,8 @@ include('inc/tables.inc');
 
 
 // get query parameters
-$chart       = get_param('chart', 'standard');
+// $chart       = get_param('chart', 'standard');
+$chart       = get_param('chart', 'diff');
 $chartlegend = get_param('legend', 'type');
 $userscores  = get_param('userscores', 'no');
 

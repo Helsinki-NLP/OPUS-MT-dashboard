@@ -2,6 +2,7 @@
 
 include('inc/env.inc');
 include('inc/functions.inc');
+include('inc/scores.inc');
 include('inc/charts.inc');
 include('inc/tables.inc');
 
@@ -49,7 +50,7 @@ if ($model == 'top' && $benchmark == 'all'){
     print_display_options();
     plot_topscore_comparison($chart);
     echo '</div><div id="scores" class="query">';
-    print_topscore_differences($langpair, $benchmark, $metric, $userscores);
+    print_topscore_differences_table($langpair, $benchmark, $metric, $userscores);
     echo('</div>');
 }
 
@@ -61,7 +62,7 @@ elseif ($model == 'all' && $benchmark == 'all'){
     plot_topscores($chart);
     // plot_topscores($chart, $chartlegend);
     echo '</div><div id="scores" class="query">';
-    print_scores($model, $langpair,$benchmark,$package,$metric);
+    print_topscore_table($langpair, $metric, $package);
     echo('</div>');
 }
 
@@ -72,7 +73,7 @@ elseif ($benchmark == 'avg'){
     print_display_options();
     plot_benchmark_scores($chart, $chartlegend);
     echo '</div><div id="scores" class="query">';
-    print_scores($model, $langpair,$benchmark,$package,$metric);
+    print_testscores_table($langpair, $benchmark, $metric, $package, $model);
     echo('</div>');
 }
 
@@ -88,7 +89,7 @@ elseif ($model != 'top' && $model != 'all' && $model != 'verified' && $model != 
     else{
         plot_model_scores($chart, $chartlegend);
         echo '</div><div id="scores" class="query">';
-        print_model_scores($model,$showlang,$benchmark,$package,$metric);
+        print_modelscore_table($model,$showlang, $benchmark, $package, $metric);
         echo('</div>');
     }
 }
@@ -100,7 +101,7 @@ elseif ($benchmark != 'avg' && $benchmark != 'all'){
     print_display_options();
     plot_benchmark_scores($chart, $chartlegend);
     echo '</div><div id="scores" class="query">';
-    print_scores($model, $langpair,$benchmark,$package,$metric);
+    print_testscores_table($langpair, $benchmark, $metric, $package, $model);
     echo('</div>');
 }
 

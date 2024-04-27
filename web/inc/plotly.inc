@@ -9,28 +9,48 @@ function plot_model_scores_plotly(){
     global $langpair, $benchmark, $metric, $model, $package, $showlang;
     global $show_max_scores;
 
-    $lines = read_model_scores($langpair, $benchmark, $metric, $model, $package);
-    list($data,$colors) = get_model_scores_from_lines($lines, $model, $benchmark, $showlang, $show_max_scores);
-    barchart_plotly($data, $colors, $metric);
+    $scores = get_model_scores($model, $metric, $package, $benchmark, $showlang, $show_max_scores);
+    $colors = array();
+    $color = modelid_color($model);
+    foreach ($scores as $test => $score){
+        $colors[$test] = $color;
+    }
+    barchart_plotly($scores, $colors, $metric);
 }
 
 
 function plot_topscores_plotly(){
     global $langpair, $benchmark, $metric, $model, $package, $chartlegend;
-    $lines = read_model_scores($langpair, $benchmark, $metric, $model, $package);
-    list($data,$type) = get_topscores_from_lines($lines, $chartlegend);
-    barchart_plotly($data, $type, $metric);
+    list($scores,$models) = get_topscores($langpair, $metric, $package);
+    $colors = array();
+    foreach ($models as $test => $modelid){
+        $colors[$test] = modelid_color($modelid);
+    }
+    barchart_plotly($scores, $colors, $metric);
 }
 
 function plot_benchmark_scores_plotly($chart="barchart"){
     global $langpair, $benchmark, $metric, $model, $package, $chartlegend;
-    $lines = read_model_scores($langpair, $benchmark, $metric, $model, $package);
+
+    $scores = get_benchmark_scores($langpair, $benchmark, $metric, $package, $model);
+    $scores = array_reverse($scores, true);
+    
+    $data = array();
+    $type = array();
+    foreach ($scores as $key => $value){
+        list($pkg,$modelid) = explode("\t",$key);
+        $data[$modelid] = $value;
+        if ($chartlegend == 'size' || $chart == 'scatterplot'){
+            $type[$modelid] = model_size($pkg,$modelid);
+        }
+        else{
+            $type[$modelid] = modelid_color($modelid,$pkg);
+        }
+    }
     if ($chart == 'scatterplot'){
-        list($data,$size) = get_benchmark_scores_from_lines($lines, $benchmark, 'size');
-        scatterplot_plotly($data, $size, $metric, $chartlegend);
+        scatterplot_plotly($data, $type, $metric, $chartlegend);
     }
     else{
-        list($data,$type) = get_benchmark_scores_from_lines($lines, $benchmark, $chartlegend);
         barchart_plotly($data, $type, $metric);
     }
 }
@@ -48,17 +68,15 @@ function plot_score_comparison_plotly($chart="barchart"){
         $parts = explode('/',$model1);
         $pkg1 = array_shift($parts);
         $name1 = implode('/',$parts);
-        $lines1 = read_scores($langpair, 'all', $metric, $name1, $pkg1);
 
         $parts = explode('/',$model2);
         $pkg2 = array_shift($parts);
         $name2 = implode('/',$parts);
-        $lines2 = read_scores($langpair, 'all', $metric, $name2, $pkg2);
 
         $alldata = array();
-        $allcolors = array();
-        list($alldata[0], $allcolors[0]) = get_model_scores_from_lines($lines1, $model1, $benchmark, $showlang);
-        list($alldata[1], $allcolors[1]) = get_model_scores_from_lines($lines2, $model2, $benchmark, $showlang);
+        $alldata[0] = get_model_scores($name1, $metric, $pkg1, $benchmark, $showlang);
+        $alldata[1] = get_model_scores($name2, $metric, $pkg2, $benchmark, $showlang);
+        
         $count = 0;
         foreach ($alldata[0] as $key => $val){
             if (array_key_exists($key, $alldata[1])){
@@ -75,20 +93,17 @@ function plot_score_comparison_plotly($chart="barchart"){
         $groups = array('model 1', 'model 2');
     }
     elseif ($model == 'top'){
-        $lines1 = read_scores($langpair, 'all', $metric, 'all', 'opusmt', 'scores');
-        $lines2 = read_scores($langpair, 'all', $metric, 'all', 'external', 'external-scores');
-
-        $type = array();
-        list($data[0],$type[0]) = get_topscores_from_lines($lines1);
-        list($data[1],$type[1]) = get_topscores_from_lines($lines2);
+        
+        $models = array();
+        list($data[0],$models[0]) = get_topscores($langpair, $metric, 'opusmt');
+        list($data[1],$models[1]) = get_topscores($langpair, $metric, 'external');
         
         $colors = array('blue', 'grey');
         $groups = array('OPUS-MT', 'external');
 
         if ($userscores == "yes" && $chart != 'diff'){
             if (local_scorefile_exists($langpair, 'all', $metric, 'all', 'contributed', 'user-scores')){
-                $lines3 = read_scores($langpair, 'all', $metric, 'all', 'contributed', 'user-scores');
-                list($data[2],$type[2]) = get_topscores_from_lines($lines3);
+                list($data[2],$models[2]) = get_topscores($langpair, $metric, 'contributed');
                 array_push($colors, 'purple');
                 array_push($groups, 'contributed');
             }
@@ -117,83 +132,6 @@ function plot_score_comparison_plotly($chart="barchart"){
 }
 
 
-
-
-function get_topscores_from_lines(&$lines, $chartlegend='type'){
-    $data = array();
-    $type = array();
-    foreach($lines as $line) {
-        $array = explode("\t", rtrim($line));
-        $data[$array[0]] = $array[1];
-        $type[$array[0]] = model_color($array[count($array)-1], $array[2]);        
-    }
-    return [$data,$type];
-}
-
-function get_model_scores_from_lines(&$lines, $model, $benchmark='all', $showlang='all', $show_max_scores=0){
-    
-    list($modelid, $modelurl) = normalize_modelname($model);
-    $color = modelid_color($modelid);
-
-    $data = array();
-    $colors = array();
-
-    $nrscores=0;
-    foreach($lines as $line) {
-        if ($show_max_scores > 0 && $nrscores > $show_max_scores){
-            break;
-        }
-        $array = explode("\t", rtrim($line));
-        $key = $array[1].'/'.$array[0];
-        if ($showlang != 'all'){
-            if ($showlang != $array[0]){
-                continue;
-            }
-            $key = $array[1];
-        }
-        if ($benchmark != 'all'){
-            if ($array[1] != $benchmark){
-                continue;
-            }
-            $key = $array[0];
-        }
-            
-        $score = (float) $array[2];        
-        $data[$key] = $score;
-        $colors[$key] = $color;
-        
-        $nrscores++;
-    }
-    return [$data,$colors];
-}
-
-
-function get_benchmark_scores_from_lines(&$lines, $benchmark, $chartlegend='type'){
-    
-    // first line is a header for averaged scores
-    if ($benchmark == 'avg'){
-        $averaged_benchmarks = array_shift($lines);
-    }
-
-    $data = array();
-    $type = array();
-    foreach($lines as $line) {
-        $array = explode("\t", rtrim($line));
-            
-        list($modelid, $modelurl) = normalize_modelname($array[1]);        
-        $data[$modelid] = $array[0];
-        
-        if ($chartlegend == 'size'){
-            $type[$modelid] = model_size($array[count($array)-1], $modelid);
-        }
-        else{
-            $type[$modelid] = model_color($array[count($array)-1], $modelid);
-        }
-    }
-    $data = array_reverse($data, true);
-    $type = array_reverse($type, true);
-    return [$data,$type];
-}
 
 
 // either get RGB values for a given pre-defined color

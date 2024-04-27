@@ -2,6 +2,7 @@
 
 include('inc/env.inc');
 include('inc/functions.inc');
+include('inc/scores.inc');
 include('inc/charts.inc');
 include('inc/tables.inc');
 
@@ -60,7 +61,7 @@ if (($model1 != 'unknown') && ($model2 != 'unknown')){
     else{
         plot_model_comparison($chart);
         echo('</div><div id="scores">');
-        $langpairs = print_score_diffs($model1,$model2,$showlang,$benchmark, $metric);
+        $langpairs = print_modelscore_differences_table($model1,$model2,$showlang,$benchmark, $metric);
         echo('</div><div id="list">');
         echo('<ul>');
         if (count($langpairs) > 1 && count($langpairs) < 20){

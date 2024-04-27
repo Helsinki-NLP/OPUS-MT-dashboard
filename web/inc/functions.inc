@@ -200,11 +200,11 @@ function read_file_with_cache($file, $cache_size=10){
     
     $key = array_search($file, $_SESSION['cached-files']);
     if ($key !== false){
-        if (array_key_exists('files', $_SESSION)){
-            if (array_key_exists($key, $_SESSION['files'])){
+        if (array_key_exists('file-content', $_SESSION)){
+            if (array_key_exists($key, $_SESSION['file-content'])){
                 // echo "read scores from cached file with key $key";
-                if (is_array($_SESSION['files'][$key])){
-                    return $_SESSION['files'][$key];
+                if (is_array($_SESSION['file-content'][$key])){
+                    return $_SESSION['file-content'][$key];
                 }
             }
         }
@@ -217,10 +217,10 @@ function read_file_with_cache($file, $cache_size=10){
     $key = $_SESSION['next-filecache-key'];
     // echo "save scores for $file in cache with key $key";
     $_SESSION['cached-files'][$key] = $file;
-    $_SESSION['files'][$key] = @file($file);
+    $_SESSION['file-content'][$key] = @file($file);
     $_SESSION['next-filecache-key']++;
-    if (is_array($_SESSION['files'][$key])){
-        return $_SESSION['files'][$key];
+    if (is_array($_SESSION['file-content'][$key])){
+        return $_SESSION['file-content'][$key];
     }
     return array();
 }
@@ -419,8 +419,28 @@ function modelurl_to_model($modelurl){
 }
 
 
-## this function takes care of the mess with model names in the dashboard and model URL's
-## TODO: we should store internal model names and URL's consistently in the leaderboard files!
+// map model-ID to download URL
+// TODO: avoid hard-coded mapping 
+
+function modelid_to_url($modelid, $package='opusmt'){
+    $modelparts = explode('/',$modelid);
+    if ($package == 'opusmt'){
+        if ($modelparts[0] == 'HPLT-MT-models'){
+            $modelname = array_pop($modelparts);
+            return implode('/',['https://huggingface.co','HPLT',$modelname]);
+        }
+        return implode('/',['https://object.pouta.csc.fi',$modelid]).'.zip';
+    }
+    elseif ($modelparts[0] == 'huggingface'){
+        array_shift($modelparts);
+        return implode('/',['https://huggingface.co',implode('/',$modelparts)]);
+    }
+    return '';
+}
+
+
+// this function takes care of the mess with model names in the dashboard and model URL's
+// TODO: we should store internal model names and URL's consistently in the leaderboard files!
 
 function normalize_modelname($modelstr){
     $modelparts = explode('/',$modelstr);

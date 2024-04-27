@@ -127,10 +127,15 @@ function modelid_color($modelid){
                          'Tatoeba-MT-models' => 'blue',
                          'OPUS-MT-models' => 'orange',
                          'HPLT-MT-models'    => 'darkred');
+    if (strpos($modelid,'transformer-small') !== false){
+        return 'green';
+    }
+    elseif (strpos($modelid,'transformer-tiny') !== false){
+        return 'green';
+    }
     $modelparts = explode('/',$modelid);
     return array_key_exists($modelparts[0], $type2color) ? $type2color[$modelparts[0]] : 'grey';
 }
-
 
 
 ?>

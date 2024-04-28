@@ -3,7 +3,7 @@
 
 // print a table with all scores and score differences
 
-function print_topscore_differences_table($langpair='deu-eng', $benchmark='all', $metric='bleu', $contributed='no'){
+function print_topscore_comparison_table($langpair='deu-eng', $benchmark='all', $metric='bleu', $contributed='no'){
     global $chart;
 
     // don't print contributed model scores 
@@ -22,13 +22,13 @@ function print_topscore_differences_table($langpair='deu-eng', $benchmark='all',
     }
 
     if (count($scores2) == 0 && count($scores3) == 0){
-        return print_topscore_table($langpair, $metric, 'opusmt');
+        return print_topscore_table($scores1, $model1, $langpair, $metric, $package);
     }
     elseif (count($scores1) == 0 && count($scores3) == 0){
-        return print_topscore_table($langpair, $metric, 'external');
+        return print_topscore_table($scores2, $model2, $langpair, $metric, $package);
     }
     elseif (count($scores1) == 0 && count($scores2) == 0){
-        return print_topscore_table($langpair, $metric, 'contributed');
+        return print_topscore_table($scores3, $model3, $langpair, $metric, $package);
     }
     
     $avg_score1 = 0;
@@ -185,10 +185,9 @@ function print_topscore_differences_table($langpair='deu-eng', $benchmark='all',
 
 
 
-function print_topscore_table($langpair, $metric='bleu', $pkg='opusmt'){
+function print_topscore_table(&$scores, &$models, $langpair, $metric='bleu', $pkg='opusmt'){
     global $storage_urls;
     
-    list($scores,$models) = get_topscores($langpair, $metric, $pkg);
     echo("<h3>Model Scores (top scoring model on all available benchmarks)</h3>");
     echo("<table><tr><th>ID</th><th>Benchmark</th><th>$metric</th><th>Output</th><th>Model</th><th>Size</th><th>Link</th></tr>");
 
@@ -227,10 +226,9 @@ function print_topscore_table($langpair, $metric='bleu', $pkg='opusmt'){
 }
 
 
-function print_modelscore_table($model,$langpair='all',$benchmark='all', $pkg='opusmt',$metric='all'){
-    global $storage_urls, $table_max_scores, $multilingual_model;
+function print_modelscore_table(&$scores, $model,$langpair='all',$benchmark='all', $pkg='opusmt',$metric='all'){
+    global $table_max_scores, $multilingual_model;
 
-    $scores = get_model_scores($model, $metric, $pkg, $benchmark, $langpair, $table_max_scores);
     $logfiles = read_logfile_list($model, $pkg);
 
     echo("<h3>Model Scores (selected model)</h3>");
@@ -296,10 +294,10 @@ function print_modelscore_table($model,$langpair='all',$benchmark='all', $pkg='o
 }
 
 
-function print_testscores_table($langpair, $benchmark='avg', $metric='bleu', $pkg='opusmt', $model='top'){
+function print_testscores_table(&$scores, $langpair, $benchmark='avg', $metric='bleu', $pkg='opusmt', $model='top'){
     global $storage_urls, $userscores, $averaged_benchmarks;;
 
-    $scores = get_benchmark_scores($langpair, $benchmark, $metric, $pkg, $model);
+    // $scores = get_benchmark_scores($langpair, $benchmark, $metric, $pkg, $model);
     
     if (count($scores) == 0){
         echo("<h3>No model scores found</h3>");
@@ -517,9 +515,10 @@ function get_langpair_scores(&$scores, &$trglangs, &$benchmarks, $model, $pkg='o
 
     $counts = array();
     $max = 0;
-    $lines = read_model_scores('all', $benchmark, $metric, $model, $pkg, $source);
-    foreach ($lines as $line){
-        list($p,$b,$score) = explode("\t",rtrim(array_shift($lines)));
+
+    $data = get_model_scores($model, $metric, $pkg);
+    foreach ($data as $key => $score){
+        list($b,$p) = explode('/',$key);
         if (! isset($benchmarks[$b])) $benchmarks[$b] = 0;
         $benchmarks[$b]++;
         if (($benchmark == 'all') or ($b == $benchmark)){

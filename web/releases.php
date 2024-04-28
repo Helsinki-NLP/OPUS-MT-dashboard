@@ -19,7 +19,7 @@ include('inc/functions.inc');
 
 list($srclang, $trglang, $langpair) = get_langpair();
 
-include 'header.php';
+include('inc/header.inc');
 echo('<h1>OPUS-MT Dashboard: Release History</h1>');
 
 
@@ -62,7 +62,7 @@ if ($base_leaderboard == 'HPLT-MT-leaderboard'){
 }
 
 
-include('footer.php');
+include('inc/footer.inc');
 
 ?>
 </body>

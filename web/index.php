@@ -26,7 +26,7 @@ $chartlegend = get_param('legend', 'type');
 $userscores  = get_param('userscores', 'no');
 
 
-include 'header.php';
+include('inc/header.inc');
 
 echo("<h1>OPUS-MT Dashboard</h1>");
 echo('<div id="chart">');
@@ -42,15 +42,26 @@ echo('<div id="chart">');
 // (6) compare scores for 2 selected models
 
 
+
+
 // (1) compare top scores OPUS-MT vs external (+ contributed in table)
 
 if ($model == 'top' && $benchmark == 'all'){
-    delete_param('model1');
-    delete_param('model2');
-    print_display_options();
-    plot_topscore_comparison($chart);
+    
+    $models = array();
+    $scores = array();
+    list($scores[0],$models[0]) = get_topscores($langpair, $metric, 'opusmt');
+    list($scores[1],$models[1]) = get_topscores($langpair, $metric, 'external');
+    if ($userscores == "yes" && $chart != 'diff'){
+        if (local_scorefile_exists($langpair, 'all', $metric, 'all', 'contributed', 'user-scores')){
+            list($scores[2],$models[2]) = get_topscores($langpair, $metric, 'contributed');
+        }
+    }
+    
+    print_display_options();    
+    plot_topscore_comparison($scores, $models, $metric, $chart);
     echo '</div><div id="scores" class="query">';
-    print_topscore_differences_table($langpair, $benchmark, $metric, $userscores);
+    print_topscore_comparison_table($langpair, $benchmark, $metric, $userscores);
     echo('</div>');
 }
 
@@ -58,11 +69,12 @@ if ($model == 'top' && $benchmark == 'all'){
 // (2) top scores for OPUS-MT or external
 
 elseif ($model == 'all' && $benchmark == 'all'){
+    list($scores,$models) = get_topscores($langpair, $metric, $package);
     print_display_options();
-    plot_topscores($chart);
-    // plot_topscores($chart, $chartlegend);
+    plot_topscores($scores, $models, $chart);
+    // plot_topscores($scores, $models, $chart, $chartlegend);
     echo '</div><div id="scores" class="query">';
-    print_topscore_table($langpair, $metric, $package);
+    print_topscore_table($scores, $models, $langpair, $metric, $package);
     echo('</div>');
 }
 
@@ -70,10 +82,11 @@ elseif ($model == 'all' && $benchmark == 'all'){
 // (3) averaged scores for all models
 
 elseif ($benchmark == 'avg'){
+    $scores = get_benchmark_scores($langpair, $benchmark, $metric, $package, $model);
     print_display_options();
-    plot_benchmark_scores($chart, $chartlegend);
+    plot_benchmark_scores($scores, $chart, $chartlegend);
     echo '</div><div id="scores" class="query">';
-    print_testscores_table($langpair, $benchmark, $metric, $package, $model);
+    print_testscores_table($scores, $langpair, $benchmark, $metric, $package, $model);
     echo('</div>');
 }
 
@@ -83,13 +96,14 @@ elseif ($benchmark == 'avg'){
 elseif ($model != 'top' && $model != 'all' && $model != 'verified' && $model != 'unverified'){
     $chartlegend = 'type';
     print_display_options();
-    if ($chart == 'heatmap'){
+    if ($chart == 'heatmap' && $multilingual_model){
         print_langpair_heatmap($model, $metric, $benchmark, $package);
     }
     else{
-        plot_model_scores($chart, $chartlegend);
+        $scores = get_model_scores($model, $metric, $package, $benchmark, $showlang, $table_max_scores);
+        plot_model_scores($scores, $chart, $chartlegend);
         echo '</div><div id="scores" class="query">';
-        print_modelscore_table($model,$showlang, $benchmark, $package, $metric);
+        print_modelscore_table($scores, $model,$showlang, $benchmark, $package, $metric);
         echo('</div>');
     }
 }
@@ -98,10 +112,11 @@ elseif ($model != 'top' && $model != 'all' && $model != 'verified' && $model != 
 // (5) scores for a specific benchmark
 
 elseif ($benchmark != 'avg' && $benchmark != 'all'){
+    $scores = get_benchmark_scores($langpair, $benchmark, $metric, $package, $model);
     print_display_options();
-    plot_benchmark_scores($chart, $chartlegend);
+    plot_benchmark_scores($scores, $chart, $chartlegend);
     echo '</div><div id="scores" class="query">';
-    print_testscores_table($langpair, $benchmark, $metric, $package, $model);
+    print_testscores_table($scores, $langpair, $benchmark, $metric, $package, $model);
     echo('</div>');
 }
 
@@ -110,7 +125,7 @@ elseif ($benchmark != 'avg' && $benchmark != 'all'){
 // different script (compare.php)
 
 
-include('footer.php');
+include('inc/footer.inc');
 
 ?>
 </body>

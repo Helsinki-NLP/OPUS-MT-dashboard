@@ -5,6 +5,7 @@
 
 include 'inc/env.inc';
 include 'inc/functions.inc';
+include 'inc/scores.inc';
 include 'inc/charts.inc';
 // include 'inc/gd.inc';
 
@@ -91,6 +92,7 @@ else{
             $maxscore = $array[1];
         }
     }
+    // list($data, $type) = get_topscores($langpair, $metric, $package);
 }
 
 

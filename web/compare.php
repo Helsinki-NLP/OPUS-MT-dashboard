@@ -24,7 +24,8 @@ $model1    = get_param('model1', 'unknown');
 $model2    = get_param('model2', 'unknown');
 $showlang  = get_param('scoreslang', $langpair);
 
-include 'header.php';
+include('inc/header.inc');
+
 echo('<h1>OPUS-MT Dashboard: Compare Models</h1>');
 
 if ($model1 != 'unknown'){
@@ -160,7 +161,7 @@ function print_model_list($pkg, $langpair, $model1, $model2){
 
 
 
-include('footer.php');
+include('inc/footer.inc');
 
 ?>
 </body>

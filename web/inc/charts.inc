@@ -17,7 +17,7 @@ function plot_model_comparison($chart){
         plot_score_comparison_gd($chart);
     }
     else{
-        plot_score_comparison_plotly($chart);
+        plot_model_comparison_plotly($chart);
     }
     echo('<ul>');
     echo('<li>blue = model 1, orange = model 2</li>');
@@ -25,13 +25,13 @@ function plot_model_comparison($chart){
     echo('</ul>');
 }
 
-function plot_topscore_comparison($chart){
+function plot_topscore_comparison(&$scores, &$models, $metric, $chart){
     global $renderlib;
     if ($renderlib == 'gd'){
         plot_score_comparison_gd($chart);
     }
     else{
-        plot_score_comparison_plotly($chart);
+        plot_topscore_comparison_plotly($scores, $models, $metric, $chart);
     }
     echo('<ul>');
     echo('<li>blue = OPUS-MT / Tatoeba-MT models, grey = external models, purple = user-contributed</li>');
@@ -40,36 +40,36 @@ function plot_topscore_comparison($chart){
     echo('</ul>');
 }
 
-function plot_topscores($chart, $chartlegend='type'){
+function plot_topscores(&$scores, &$models, $chart, $chartlegend='type'){
     global $renderlib;
     if ($renderlib == 'gd'){
         plot_scores_gd($chart);
     }
     else{
-        plot_topscores_plotly();
+        plot_topscores_plotly($scores, $models);
     }
     print_chart_legend($chartlegend);
 }
 
-function plot_benchmark_scores($chart, $chartlegend='type'){
+function plot_benchmark_scores(&$scores, $chart, $chartlegend='type'){
     global $renderlib;
     if ($renderlib == 'gd'){
         plot_scores_gd($chart);
     }
     else{
-        plot_benchmark_scores_plotly($chart);
+        plot_benchmark_scores_plotly($scores, $chart);
     }
     print_chart_legend($chartlegend);
 }
 
 
-function plot_model_scores($chart, $chartlegend='type'){
+function plot_model_scores(&$scores, $chart, $chartlegend='type'){
     global $renderlib;
     if ($renderlib == 'gd'){
         plot_scores_gd($chart);
     }
     else{
-        plot_model_scores_plotly();
+        plot_model_scores_plotly($scores);
     }
     print_chart_legend($chartlegend);
 }

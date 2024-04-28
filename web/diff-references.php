@@ -36,7 +36,7 @@ $end       = get_param('end', 9);
 
 list($srclang, $trglang, $langpair) = get_langpair();
 
-include 'header.php';
+include('inc/header.inc');
 echo("<h1>OPUS-MT Dashboard: Benchmark Translations</h1>");
 
 
@@ -95,7 +95,7 @@ if ($model != 'all'){
     }
 }
 
-include('footer.php');
+include('inc/footer.inc');
 
 ?>
 </body>

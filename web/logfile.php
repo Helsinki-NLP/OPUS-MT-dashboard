@@ -43,7 +43,7 @@ foreach ($_SESSION['params'] as $key => $value){
 */
 
 
-include('header.php');
+include('inc/header.inc');
 
 echo("<h1>OPUS-MT Dashboard</h1>");
 
@@ -52,7 +52,7 @@ print_translation_logfile ($benchmark, $langpair, $model, $package);
 echo('</pre>');
 
 
-include('footer.php');
+include('inc/footer.inc');
 
 ?>
 </body>

@@ -5,11 +5,10 @@
 // https://plotly.com/javascript/bar-charts
 
 
-function plot_model_scores_plotly(){
+function plot_model_scores_plotly(&$scores){
     global $langpair, $benchmark, $metric, $model, $package, $showlang;
     global $show_max_scores;
 
-    $scores = get_model_scores($model, $metric, $package, $benchmark, $showlang, $show_max_scores);
     $colors = array();
     $color = modelid_color($model);
     foreach ($scores as $test => $score){
@@ -19,9 +18,8 @@ function plot_model_scores_plotly(){
 }
 
 
-function plot_topscores_plotly(){
+function plot_topscores_plotly(&$scores, &$models){
     global $langpair, $benchmark, $metric, $model, $package, $chartlegend;
-    list($scores,$models) = get_topscores($langpair, $metric, $package);
     $colors = array();
     foreach ($models as $test => $modelid){
         $colors[$test] = modelid_color($modelid);
@@ -29,15 +27,14 @@ function plot_topscores_plotly(){
     barchart_plotly($scores, $colors, $metric);
 }
 
-function plot_benchmark_scores_plotly($chart="barchart"){
+function plot_benchmark_scores_plotly(&$scores, $chart="barchart"){
     global $langpair, $benchmark, $metric, $model, $package, $chartlegend;
 
-    $scores = get_benchmark_scores($langpair, $benchmark, $metric, $package, $model);
-    $scores = array_reverse($scores, true);
+    $reverse = array_reverse($scores, true);
     
     $data = array();
     $type = array();
-    foreach ($scores as $key => $value){
+    foreach ($reverse as $key => $value){
         list($pkg,$modelid) = explode("\t",$key);
         $data[$modelid] = $value;
         if ($chartlegend == 'size' || $chart == 'scatterplot'){
@@ -55,7 +52,22 @@ function plot_benchmark_scores_plotly($chart="barchart"){
     }
 }
 
-function plot_score_comparison_plotly($chart="barchart"){    
+
+// compare scores of top OPUS-MT with top external models (and contributed translations)
+
+function plot_topscore_comparison_plotly(&$data, &$models, $metric='bleu', $chart="barchart"){
+
+    $colors = array('blue', 'grey', 'purple');
+    $groups = array('OPUS-MT', 'external', 'contributed');
+
+    plot_comparison_chart_plotly($data, $colors, $groups, $chart, $metric);
+}
+
+
+
+// compare scores of two models
+
+function plot_model_comparison_plotly($chart="barchart"){    
     global $langpair, $benchmark, $metric, $model, $package, $chartlegend, $showlang;
     global $show_max_scores;
     
@@ -91,25 +103,14 @@ function plot_score_comparison_plotly($chart="barchart"){
 
         $colors = array('blue', 'orange');
         $groups = array('model 1', 'model 2');
+        plot_comparison_chart_plotly($data, $colors, $groups, $chart, $metric);
     }
-    elseif ($model == 'top'){
-        
-        $models = array();
-        list($data[0],$models[0]) = get_topscores($langpair, $metric, 'opusmt');
-        list($data[1],$models[1]) = get_topscores($langpair, $metric, 'external');
-        
-        $colors = array('blue', 'grey');
-        $groups = array('OPUS-MT', 'external');
+}
 
-        if ($userscores == "yes" && $chart != 'diff'){
-            if (local_scorefile_exists($langpair, 'all', $metric, 'all', 'contributed', 'user-scores')){
-                list($data[2],$models[2]) = get_topscores($langpair, $metric, 'contributed');
-                array_push($colors, 'purple');
-                array_push($groups, 'contributed');
-            }
-        }
-    }
 
+// plot a chart for comparing 2 sets of scores (either score differences or bars next to each other)
+
+function plot_comparison_chart_plotly(&$data, &$colors, &$groups, $chart="barchart", $metric='bleu'){
     if ($chart == 'diff'){
         $color = array();
         $diff = array();

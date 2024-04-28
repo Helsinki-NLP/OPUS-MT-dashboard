@@ -15,7 +15,7 @@ include('../inc/functions.inc');
 <body>
 <?php
 
-// include('../header.php');
+// include('../inc/header.inc');
 
 echo '<div class="header">';
 if (isset($_SESSION["user"])){
@@ -383,7 +383,7 @@ function create_remove_job($user, $system, $benchmark, $langpair, $file){
 
 
 
-include('../footer.php');
+include('../inc.footer.inc');
 
 
 function get_user_systems($homedir){

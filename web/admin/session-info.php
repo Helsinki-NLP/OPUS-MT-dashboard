@@ -30,8 +30,10 @@ if (array_key_exists('action', $_GET)){
 
 echo("<h2>Session parameters</h2>");
 
-foreach ($_SESSION['params'] as $key => $value){
-    echo "$key => $value <br/>";
+if (array_key_exists('params', $_SESSION)){
+    foreach ($_SESSION['params'] as $key => $value){
+        echo "$key => $value <br/>";
+    }
 }
 
 echo("<h2>Cached score files</h2>");
@@ -49,6 +51,7 @@ if (array_key_exists('cached-files', $_SESSION)){
         echo "$key => $value <br/>";
     }
 }
+
 
 echo('<br/>Temporary file names:<br/>');
 if (array_key_exists('files', $_SESSION)){

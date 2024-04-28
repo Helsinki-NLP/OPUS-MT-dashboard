@@ -1,33 +1,25 @@
 <?php
 
+function get_topscores($langpair, $metric='bleu', $package='opusmt'){
+    
+    $file = get_score_filename($langpair, 'all', $metric, 'all', $package);
+    $lines = read_file_with_cache($file);
 
-$averaged_benchmarks = '';
-
-
-// set to true to use sqlite score DBs
-$USE_SQLITE = false;
-
-if ($USE_SQLITE){
-    include('inc/scoredb.inc');
-}
-else{
-    include('inc/scorefiles.inc');
-}
-
-
-
-// skip some benchmarks
-
-function skip_benchmark($benchmark){
-    $skipped = array('flores101-dev','flores200-dev','wikipedia.dev',
-                     'news2008','news-test2008','newsdiscussdev2015');
-    if (in_array($benchmark,$skipped)){ return true; }
-    if (strpos($benchmark, 'newsdev') !== false){ return true; }
-    return false;
+    $scores = array();
+    $models = array();
+    foreach($lines as $line) {
+        $array = explode("\t", rtrim($line));
+        if (skip_benchmark($array[0])){
+            continue;
+        }
+        list($modelid, $modelurl) = normalize_modelname($array[2]);
+        $scores[$array[0]] = $array[1];
+        $models[$array[0]] = $modelid;
+    }
+    return [$scores,$models];
 }
 
-
-
+/*
 function get_model_scores($model, $metric='bleu', $package='opusmt',
                           $benchmark='all', $langpair='all',
                           $show_max_scores=0){
@@ -105,6 +97,6 @@ function get_package_benchmark_scores($langpair, $benchmark, $metric='bleu', $pa
     // $scores = array_reverse($scores, true);
     return $scores;
 }
-
+*/
 
 ?>

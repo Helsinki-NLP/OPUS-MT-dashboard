@@ -3,32 +3,29 @@
 
 // print a table with all scores and score differences
 
-function print_topscore_comparison_table($langpair='deu-eng', $benchmark='all', $metric='bleu', $contributed='no'){
-    global $chart;
+function print_topscore_comparison_table(&$scores, &$models,
+                                         $langpair='deu-eng', $benchmark='all', $metric='bleu',
+                                         $contributed='no', $chart='standard'){
+
+    if (count($scores) < 3){
+        $scores[2] = array();
+        $models[2] = array();
+    }
 
     // don't print contributed model scores 
     // if the chart shows score differences between OPUS-MT and external models
-    if ($chart == "diff"){
+    if ($chart == "diff" || count($scores[2]) == 0){
         $contributed = 'no';
     }
 
-    list($scores1,$model1) = get_topscores($langpair, $metric, 'opusmt');
-    list($scores2,$model2) = get_topscores($langpair, $metric, 'external');
-    if ($contributed == 'yes'){
-        list($scores3,$model3) = get_topscores($langpair, $metric, 'contributed');
-        if (count($scores3) == 0){
-            $contributed == 'no';
-        }
+    if (count($scores[1]) == 0 && count($scores[2]) == 0){
+        return print_topscore_table($scores[0], $models[0], $langpair, $metric, $package);
     }
-
-    if (count($scores2) == 0 && count($scores3) == 0){
-        return print_topscore_table($scores1, $model1, $langpair, $metric, $package);
+    elseif (count($scores[0]) == 0 && count($scores[2]) == 0){
+        return print_topscore_table($scores[1], $models[1], $langpair, $metric, $package);
     }
-    elseif (count($scores1) == 0 && count($scores3) == 0){
-        return print_topscore_table($scores2, $model2, $langpair, $metric, $package);
-    }
-    elseif (count($scores1) == 0 && count($scores2) == 0){
-        return print_topscore_table($scores3, $model3, $langpair, $metric, $package);
+    elseif (count($scores[0]) == 0 && count($scores[1]) == 0){
+        return print_topscore_table($scores[2], $model3, $langpair, $metric, $package);
     }
     
     $avg_score1 = 0;
@@ -48,15 +45,15 @@ function print_topscore_comparison_table($langpair='deu-eng', $benchmark='all', 
     echo('</tr>');
     $id = 0;
 
-    foreach($scores1 as $key => $score1) {
+    foreach($scores[0] as $key => $score1) {
         if ($chart == "diff"){
-            if (! array_key_exists($key,$scores2)){
+            if (! array_key_exists($key,$scores[1])){
                 continue;
             }
         }
         if ($contributed == 'yes'){
-            if (array_key_exists($key,$scores3)){
-                $score3 = $scores3[$key];
+            if (array_key_exists($key,$scores[2])){
+                $score3 = $scores[2][$key];
                 $diff3 = $score1 - $score3;
                 $diff3_pretty = $metric == 'bleu' ? sprintf('%4.1f',$diff3) : sprintf('%5.3f',$diff3);
                 $avg_score3 += $score3;
@@ -74,8 +71,8 @@ function print_topscore_comparison_table($langpair='deu-eng', $benchmark='all', 
             }
         }
             
-        if (array_key_exists($key,$scores2)){
-            $score2 = $scores2[$key];
+        if (array_key_exists($key,$scores[1])){
+            $score2 = $scores[1][$key];
 
             $diff = $score1 - $score2;
             $diff_pretty = $metric == 'bleu' ? sprintf('%4.1f',$diff) : sprintf('%5.3f',$diff);
@@ -86,17 +83,20 @@ function print_topscore_comparison_table($langpair='deu-eng', $benchmark='all', 
                 $avg_score2 += $score2;
                 $count_scores2++;
 
-                $model1short = short_model_name($model1[$key]);
-                $model2short = short_model_name($model2[$key]);
+                $model1short = short_model_name($models[0][$key]);
+                $model2short = short_model_name($models[1][$key]);
                 
-                $url_param = make_query(['model' => $model1[$key], 'pkg' => 'opusmt']);
+                $url_param = make_query(['model' => $models[0][$key], 'pkg' => 'opusmt']);
                 $model1link = "<a rel=\"nofollow\" href=\"index.php?$url_param\">$model1short</a>";
 
-                $url_param = make_query(['model' => $model2[$key], 'pkg' => 'external']);
+                $url_param = make_query(['model' => $models[1][$key], 'pkg' => 'external']);
                 $model2link = "<a rel=\"nofollow\" href=\"index.php?$url_param\">$model2short</a>";
 
 
-                $query = make_query(['test' => $key, 'model1' => "opusmt/$model1[$key]", 'model2' => "external/$model2[$key]", 'start' => 0, 'end' => 9]);
+                $query = make_query(['test' => $key,
+                                     'model1' => 'opusmt/'.$models[0][$key],
+                                     'model2' => 'external/'.$models[1][$key],
+                                     'start' => 0, 'end' => 9]);
                 $translink = "<a rel=\"nofollow\" href=\"compare-translations.php?".SID.'&'.$query."\">compare</a>";
                 $url_param = make_query(['test' => $key]);
                 $testlink = "<a rel=\"nofollow\" href=\"index.php?$url_param\">$key</a>";
@@ -119,11 +119,11 @@ function print_topscore_comparison_table($langpair='deu-eng', $benchmark='all', 
             if ($benchmark == 'all' || $benchmark == $key){
                 $avg_score1 += $score1;
                 $count_scores1++;
-                $model1short = short_model_name($model1[$key]);
+                $model1short = short_model_name($models[0][$key]);
                 
-                $url_param = make_query(['model' => $model1[$key], 'pkg' => 'opusmt']);
+                $url_param = make_query(['model' => $models[0][$key], 'pkg' => 'opusmt']);
                 $model1link = "<a rel=\"nofollow\" href=\"index.php?$url_param\">$model1short</a>";
-                $query = make_query(['test' => $key, 'model' => "opusmt/$model1[$key]", 'start' => 0, 'end' => 9]);
+                $query = make_query(['test' => $key, 'model' => 'opusmt/'.$models[0][$key], 'start' => 0, 'end' => 9]);
                 $translink = "<a rel=\"nofollow\" href=\"translations.php?".SID.'&'.$query."\">show</a>";
 
                 $url_param = make_query(['test' => $key]);
@@ -365,30 +365,15 @@ function print_testscores_table(&$scores, $langpair, $benchmark='avg', $metric='
 
 // print a table with all scores and score differences
 
-function print_modelscore_differences_table($model1,$model2,$langpair='all',$benchmark='all', $metric='bleu'){
+function print_modelscore_differences_table(&$scores, $langpair='all',$benchmark='all', $metric='bleu'){
     global $table_max_scores;
-    
-    $parts = explode('/',$model1);
-    $pkg1 = array_shift($parts);
-    $name1 = implode('/',$parts);
-
-    // $scores1 = get_model_scores($name1, $metric, $pkg1, $benchmark, $langpair);
-    $scores1 = get_model_scores($name1, $metric, $pkg1, 'all', 'all');
-
-    $parts = explode('/',$model2);
-    $pkg2 = array_shift($parts);
-    $name2 = implode('/',$parts);
-
-    // $scores2 = get_model_scores($name2, $metric, $pkg2, $benchmark, $langpair);
-    $scores2 = get_model_scores($name2, $metric, $pkg2, 'all', 'all');
-
     
     // get all common lang-pairs and testsets
     // (that's for showing a link to expand the list)
     
-    foreach($scores1 as $key => $score1) {
+    foreach($scores[0] as $key => $score1) {
         list($test, $lang) = explode('/',$key);
-        if (array_key_exists($key,$scores2)){
+        if (array_key_exists($key,$scores[1])){
             if (! isset($common_langs[$lang])) $common_langs[$lang] = 0;
             if (! isset($common_tests[$test])) $common_tests[$test] = 0;
 
@@ -410,14 +395,14 @@ function print_modelscore_differences_table($model1,$model2,$langpair='all',$ben
     echo("<tr><th>ID</th><th>Language</th><th>Benchmark ($metric)</th><th>Output</th><th>Model 1</th><th>Model 2</th><th>Diff</th></tr>");
 
     $id = 0;
-    foreach($scores1 as $key => $score1) {
+    foreach($scores[0] as $key => $score1) {
         if ($id > $table_max_scores){
             echo('<tr><td>');
             echo(implode('</td><td>',['...', '...', '...', '...', '...', '...', '...']));
             echo('</td></tr>');
             break;
         }
-        if (array_key_exists($key,$scores2)){
+        if (array_key_exists($key,$scores[1])){
             list($test, $lang) = explode('/',$key);
             
             if ($langpair!='all' && $lang!=$langpair){
@@ -427,7 +412,7 @@ function print_modelscore_differences_table($model1,$model2,$langpair='all',$ben
                 continue;
             }
             
-            $score2 = $scores2[$key];
+            $score2 = $scores[1][$key];
             $diff = $score1 - $score2;
             $diff_pretty = $metric == 'bleu' ? sprintf('%4.1f',$diff) : sprintf('%5.3f',$diff);
             
@@ -512,11 +497,12 @@ function print_modelscore_differences_table($model1,$model2,$langpair='all',$ben
 
 function get_langpair_scores(&$scores, &$trglangs, &$benchmarks, $model, $pkg='opusmt',
                             $metric='bleu', $benchmark='all', $source='unchanged'){
+    global $opusmt;
 
     $counts = array();
     $max = 0;
 
-    $data = get_model_scores($model, $metric, $pkg);
+    $data = $opusmt->get_model_scores($model, $metric, $pkg);
     foreach ($data as $key => $score){
         list($b,$p) = explode('/',$key);
         if (! isset($benchmarks[$b])) $benchmarks[$b] = 0;

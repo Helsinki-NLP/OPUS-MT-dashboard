@@ -4,17 +4,6 @@
 $averaged_benchmarks = '';
 
 
-// set to true to use sqlite score DBs
-$USE_SQLITE = false;
-
-if ($USE_SQLITE){
-    include('inc/scoredb.inc');
-}
-else{
-    include('inc/scorefiles.inc');
-}
-
-
 
 // skip some benchmarks
 

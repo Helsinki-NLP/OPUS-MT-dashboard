@@ -499,6 +499,35 @@ function size_color($size){
 
 
 
+// return a color for a given model and model package
+
+function model_color($package, $model){
+
+    $type2color = array( 'contributed' => 'purple',
+                         'external'    => 'grey',
+                         'Tatoeba-MT-models' => 'blue',
+                         'OPUS-MT-models' => 'orange',
+                         'HPLT-MT-models'    => 'darkred');
+
+    // return array_key_exists($package, $type2color) ? $type2color[$package] : 'grey';
+
+    if ($package != 'opusmt'){
+        return $type2color[$package];
+    }
+    elseif (strpos($model,'transformer-small') !== false){
+        return 'green';
+    }
+    elseif (strpos($model,'transformer-tiny') !== false){
+        return 'green';
+    }
+    else{
+        list($modelid, $modelurl) = normalize_modelname($model);
+        $modelparts = explode('/',$modelid);
+        return array_key_exists($modelparts[0], $type2color) ? $type2color[$modelparts[0]] : 'grey';
+    }
+}
+
+
 
 
 

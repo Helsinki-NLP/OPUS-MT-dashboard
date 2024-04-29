@@ -2,9 +2,10 @@
 
 include('inc/env.inc');
 include('inc/functions.inc');
-include('inc/scores.inc');
-include('inc/charts.inc');
 include('inc/tables.inc');
+
+include('inc/Graphics.inc');
+include('inc/ScoreReader.inc');
 
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
@@ -42,6 +43,8 @@ echo('<div id="chart">');
 // (6) compare scores for 2 selected models
 
 
+$opusmt = ScoreReader::new($score_reader);
+$graphics = Graphics::new($renderlib);
 
 
 // (1) compare top scores OPUS-MT vs external (+ contributed in table)
@@ -50,18 +53,18 @@ if ($model == 'top' && $benchmark == 'all'){
     
     $models = array();
     $scores = array();
-    list($scores[0],$models[0]) = get_topscores($langpair, $metric, 'opusmt');
-    list($scores[1],$models[1]) = get_topscores($langpair, $metric, 'external');
+    list($scores[0],$models[0]) = $opusmt->get_topscores($langpair, $metric, 'opusmt');
+    list($scores[1],$models[1]) = $opusmt->get_topscores($langpair, $metric, 'external');
     if ($userscores == "yes" && $chart != 'diff'){
         if (local_scorefile_exists($langpair, 'all', $metric, 'all', 'contributed', 'user-scores')){
-            list($scores[2],$models[2]) = get_topscores($langpair, $metric, 'contributed');
+            list($scores[2],$models[2]) = $opusmt->get_topscores($langpair, $metric, 'contributed');
         }
     }
     
     print_display_options();    
-    plot_topscore_comparison($scores, $models, $metric, $chart);
+    $graphics->plot_topscore_comparison($scores, $models, $metric, $chart);
     echo '</div><div id="scores" class="query">';
-    print_topscore_comparison_table($langpair, $benchmark, $metric, $userscores);
+    print_topscore_comparison_table($scores, $models, $langpair, $benchmark, $metric, $userscores, $chart);
     echo('</div>');
 }
 
@@ -69,9 +72,9 @@ if ($model == 'top' && $benchmark == 'all'){
 // (2) top scores for OPUS-MT or external
 
 elseif ($model == 'all' && $benchmark == 'all'){
-    list($scores,$models) = get_topscores($langpair, $metric, $package);
+    list($scores,$models) = $opusmt->get_topscores($langpair, $metric, $package);
     print_display_options();
-    plot_topscores($scores, $models, $chart);
+    $graphics->plot_topscores($scores, $models, $chart);
     // plot_topscores($scores, $models, $chart, $chartlegend);
     echo '</div><div id="scores" class="query">';
     print_topscore_table($scores, $models, $langpair, $metric, $package);
@@ -82,9 +85,9 @@ elseif ($model == 'all' && $benchmark == 'all'){
 // (3) averaged scores for all models
 
 elseif ($benchmark == 'avg'){
-    $scores = get_benchmark_scores($langpair, $benchmark, $metric, $package, $model);
+    $scores = $opusmt->get_benchmark_scores($langpair, $benchmark, $metric, $package, $model, $userscores);
     print_display_options();
-    plot_benchmark_scores($scores, $chart, $chartlegend);
+    $graphics->plot_benchmark_scores($scores, $chart, $chartlegend);
     echo '</div><div id="scores" class="query">';
     print_testscores_table($scores, $langpair, $benchmark, $metric, $package, $model);
     echo('</div>');
@@ -100,8 +103,8 @@ elseif ($model != 'top' && $model != 'all' && $model != 'verified' && $model != 
         print_langpair_heatmap($model, $metric, $benchmark, $package);
     }
     else{
-        $scores = get_model_scores($model, $metric, $package, $benchmark, $showlang, $table_max_scores);
-        plot_model_scores($scores, $chart, $chartlegend);
+        $scores = $opusmt->get_model_scores($model, $metric, $package, $benchmark, $showlang, $table_max_scores);
+        $graphics->plot_model_scores($scores, $chart, $chartlegend);
         echo '</div><div id="scores" class="query">';
         print_modelscore_table($scores, $model,$showlang, $benchmark, $package, $metric);
         echo('</div>');
@@ -112,9 +115,9 @@ elseif ($model != 'top' && $model != 'all' && $model != 'verified' && $model != 
 // (5) scores for a specific benchmark
 
 elseif ($benchmark != 'avg' && $benchmark != 'all'){
-    $scores = get_benchmark_scores($langpair, $benchmark, $metric, $package, $model);
+    $scores = $opusmt->get_benchmark_scores($langpair, $benchmark, $metric, $package, $model, $userscores);
     print_display_options();
-    plot_benchmark_scores($scores, $chart, $chartlegend);
+    $graphics->plot_benchmark_scores($scores, $chart, $chartlegend);
     echo '</div><div id="scores" class="query">';
     print_testscores_table($scores, $langpair, $benchmark, $metric, $package, $model);
     echo('</div>');

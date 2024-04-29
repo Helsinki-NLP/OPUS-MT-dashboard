@@ -2,9 +2,10 @@
 
 include('inc/env.inc');
 include('inc/functions.inc');
-include('inc/scores.inc');
-include('inc/charts.inc');
 include('inc/tables.inc');
+
+include('inc/Graphics.inc');
+include('inc/ScoreReader.inc');
 
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
@@ -25,8 +26,11 @@ $model2    = get_param('model2', 'unknown');
 $showlang  = get_param('scoreslang', $langpair);
 
 include('inc/header.inc');
-
 echo('<h1>OPUS-MT Dashboard: Compare Models</h1>');
+
+$opusmt = ScoreReader::new($score_reader);
+$graphics = Graphics::new($renderlib);
+
 
 if ($model1 != 'unknown'){
     echo('<div id="chart"><ul>');
@@ -54,15 +58,31 @@ if ($model1 != 'unknown'){
 }
 
 if (($model1 != 'unknown') && ($model2 != 'unknown')){
+    
     if ($chart == 'heatmap'){
         $heatmap_shown = print_langpair_diffmap($m1_name, $m2_name,
                                                 $metric, $benchmark,
                                                 $m1_pkg, $m2_pkg);
     }
     else{
-        plot_model_comparison($chart);
+
+        $scores = array();
+        $scores[0] = $opusmt->get_model_scores($m1_name, $metric, $m1_pkg, $benchmark, $showlang);
+        $scores[1] = $opusmt->get_model_scores($m2_name, $metric, $m2_pkg, $benchmark, $showlang);
+        
+        $graphics->plot_model_comparison($scores, $metric, $chart);
         echo('</div><div id="scores">');
-        $langpairs = print_modelscore_differences_table($model1,$model2,$showlang,$benchmark, $metric);
+
+        // TODO: avoid reading the scores again (but for the table we need to know
+        //       whether there are other language pairs and benchmarks as well)
+        // BUT: with DB calls this is quite OK and fast enough
+        
+        $allscores = array();
+        $allscores[0] = $opusmt->get_model_scores($m1_name, $metric, $m1_pkg, 'all', 'all');
+        $allscores[1] = $opusmt->get_model_scores($m2_name, $metric, $m2_pkg, 'all', 'all');
+        
+        $langpairs = print_modelscore_differences_table($allscores, $showlang, $benchmark, $metric);
+        
         echo('</div><div id="list">');
         echo('<ul>');
         if (count($langpairs) > 1 && count($langpairs) < 20){
@@ -157,9 +177,6 @@ function print_model_list($pkg, $langpair, $model1, $model2){
     }
     echo("</ul>");
 }
-
-
-
 
 include('inc/footer.inc');
 

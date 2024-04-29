@@ -2,7 +2,8 @@
 
 include 'inc/env.inc';
 include 'inc/functions.inc';
-include 'inc/charts.inc';
+// include 'inc/charts.inc';
+include('inc/gd.inc');
 
 
 // adapted from https://www.infscripts.com/how-to-create-a-bar-chart-in-php

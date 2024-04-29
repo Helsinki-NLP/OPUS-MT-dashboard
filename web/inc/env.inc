@@ -12,6 +12,12 @@ if (isset($_GET['session'])){
 }
 
 
+// type of score reader (sqlite DB or from files)
+
+// $score_reader = 'file';
+$score_reader = 'db';
+
+
 // selected MT package and base leaderboard we will compare with
 
 $package = get_param('pkg', 'opusmt');

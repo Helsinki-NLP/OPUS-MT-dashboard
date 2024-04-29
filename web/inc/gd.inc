@@ -107,6 +107,14 @@ function filter_testsets($array){
 }
 
 
+
+function model_size_color($size, $chart){
+  list($red,$green,$blue) = size_to_rgb($size);
+  return imagecolorallocate($chart, $red,$green,$blue);
+}
+
+
+
 //////////////////////////////////////////////////////////////////
 // use GD to plot charts (separate scripts that produce an image)
 //////////////////////////////////////////////////////////////////

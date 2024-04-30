@@ -5,11 +5,13 @@ class ScoreFileReader {
 
     public $averaged_benchmarks = '';
 
+    static $exclude_benchmarks = array('flores101-dev','flores200-dev','wikipedia.dev',
+                                       'news2008','news-test2008','newsdiscussdev2015');
+
     // skip some benchmarks
 
     function skip_benchmark($benchmark){
-        $skipped = array('flores101-dev','flores200-dev','wikipedia.dev',
-                         'news2008','news-test2008','newsdiscussdev2015');
+        $skipped = self::$exclude_benchmarks;
         if (in_array($benchmark,$skipped)){ return true; }
         if (strpos($benchmark, 'newsdev') !== false){ return true; }
         return false;

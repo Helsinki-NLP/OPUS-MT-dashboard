@@ -10,8 +10,10 @@ class ScoreDbReader extends ScoreFileReader{
     public function get_topscores($langpair, $metric='bleu', $package='opusmt'){
 
         $db = $this->open_scoredb($metric, $package);
-        $results = $db->query("select model,testset,max(score) from scores where langpair='$langpair' group by testset");
-        // echo("select model,testset,max(score) from scores where langpair='$langpair' group by testset<br/>");
+        $condition = "where langpair='$langpair' and ".$this->exclude_benchmarks_clause();
+        $results = $db->query("select model,testset,max(score) from scores $condition group by testset");
+        // echo("select model,testset,max(score) from scores $condition group by testset");
+        // echo($this->exclude_benchmarks_clause());
                 
         $scores = array();
         $models = array();
@@ -19,9 +21,11 @@ class ScoreDbReader extends ScoreFileReader{
         if ($results){
             while ($row = $results->fetchArray(SQLITE3_NUM)) {
                 $testset = $row[1];
+                /*
                 if ($this->skip_benchmark($testset)){
                     continue;
                 }
+                */
                 $models[$testset] = $row[0];
                 $scores[$testset] = $row[2];
             }
@@ -36,13 +40,14 @@ class ScoreDbReader extends ScoreFileReader{
 
         $db = $this->open_scoredb($metric, $package);
         
-        $condition = "model='$model'";
+        $condition = "where model='$model'";
         if ($langpair != 'all')
             $condition .= " and langpair='$langpair'";
         if ($benchmark != 'all')
             $condition .= " and testset='$benchmark'";
+        $condition .= " and ".$this->exclude_benchmarks_clause();
 
-        $results = $db->query("select langpair,testset,score from scores where $condition");
+        $results = $db->query("select langpair,testset,score from scores $condition");
         
         $scores = array();
         $nrscores=0;
@@ -55,9 +60,11 @@ class ScoreDbReader extends ScoreFileReader{
                 $lang = $row[0];
                 $testset = $row[1];
                 $key = $testset.'/'.$lang;
+                /*
                 if ($this->skip_benchmark($testset)){
                     continue;
                 }
+                */
                 $scores[$key] = (float) $row[2];
                 $nrscores++;
             }
@@ -69,6 +76,7 @@ class ScoreDbReader extends ScoreFileReader{
 
     public function get_package_benchmark_scores($langpair, $benchmark, $metric='bleu', $package='opusmt'){
         if ($benchmark == 'avg'){
+            return $this->get_package_average_scores($langpair, $metric, $package);
             return parent::get_package_benchmark_scores($langpair, $benchmark, $metric, $package);
         }
         
@@ -86,7 +94,25 @@ class ScoreDbReader extends ScoreFileReader{
         $db->close();
         return $scores;
     }
-    
+
+    public function get_package_average_scores($langpair, $metric='bleu', $package='opusmt'){
+        
+        $db = $this->open_scoredb($metric, $package);
+        
+        $condition = "where langpair='$langpair' and ";
+        $condition .= $this->exclude_benchmarks_clause();
+        $results = $db->query("select model,avg(score) from scores $condition group by model order by avg(score) desc");
+        
+        $scores = array();
+        if ($results){
+            while ($row = $results->fetchArray(SQLITE3_NUM)) {
+                $scores[$package."\t".$row[0]] = (float) $row[1];
+            }
+        }
+        $db->close();
+        return $scores;
+    }
+
     
     private function open_scoredb($metric='bleu', $package='opusmt'){    
         $dbfile = $this->get_scoredb_file($metric, $package);
@@ -153,6 +179,15 @@ class ScoreDbReader extends ScoreFileReader{
             return $date;
         }
         return 'unknown';
+    }
+
+    private function exclude_benchmarks_clause(){
+        $conditions = array("testset not like 'newsdev%'");
+        // $conditions = array();
+        foreach (self::$exclude_benchmarks as $testset){
+            array_push($conditions,"testset != '$testset'");
+        }
+        return implode(' and ',$conditions);
     }
 
 }

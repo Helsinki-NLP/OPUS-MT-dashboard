@@ -53,7 +53,7 @@ function print_langpair_link(){
 // links for selecting the model package
 
 function model_selection_links(){
-    global $model, $package, $benchmark, $userscores_exists;
+    global $model, $package, $benchmark, $userscores, $userscores_exists;
 
     $test = $benchmark;
     if ($benchmark == 'all' || $benchmark == 'avg'){

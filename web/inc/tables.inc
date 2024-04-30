@@ -25,7 +25,7 @@ function print_topscore_comparison_table(&$scores, &$models,
         return print_topscore_table($scores[1], $models[1], $langpair, $metric, $package);
     }
     elseif (count($scores[0]) == 0 && count($scores[1]) == 0){
-        return print_topscore_table($scores[2], $model3, $langpair, $metric, $package);
+        return print_topscore_table($scores[2], $models[2], $langpair, $metric, $package);
     }
     
     $avg_score1 = 0;
@@ -58,8 +58,8 @@ function print_topscore_comparison_table(&$scores, &$models,
                 $diff3_pretty = $metric == 'bleu' ? sprintf('%4.1f',$diff3) : sprintf('%5.3f',$diff3);
                 $avg_score3 += $score3;
                 $count_scores3++;
-                $model3short = short_model_name($model3[$key]);
-                $url_param = make_query(['model' => $model3[$key], 'pkg' => 'contributed']);
+                $model3short = short_model_name($models[2][$key]);
+                $url_param = make_query(['model' => $models[2][$key], 'pkg' => 'contributed']);
                 $model3link = "<a rel=\"nofollow\" href=\"index.php?$url_param\">$model3short</a>";
             }
             else{

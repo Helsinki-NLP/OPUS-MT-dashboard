@@ -40,6 +40,7 @@ class GraphicsPlotly extends Graphics{
         $type = array();
         foreach ($reverse as $key => $value){
             list($pkg,$modelid) = explode("\t",$key);
+            // echo("$pkg - $modelid<br/>");
             $data[$modelid] = $value;
             if ($chartlegend == 'size' || $chart == 'scatterplot'){
                 $type[$modelid] = model_size($pkg,$modelid);
@@ -162,17 +163,19 @@ class GraphicsPlotly extends Graphics{
     
         echo('var data = [];');
         for ($i = 0; $i < count($data); $i++){
-            echo("data[$i] = { x: ['");
-            echo(implode("','",array_keys($data[$i])));
-            echo("'], y: ['");
-            echo(implode("','",array_values($data[$i])));
-            echo("'],");
-            echo("text: ['");
-            echo(implode("','",array_keys($data[$i])));
-            echo("'],");
-            echo('textposition: "auto",');
-            echo("type: 'bar', name: '".$group[$i]."',");
-            echo("marker: { color: '".$rgba[$i]."' } };");
+            if (count($data[$i]) > 0){
+                echo("data[$i] = { x: ['");
+                echo(implode("','",array_keys($data[$i])));
+                echo("'], y: ['");
+                echo(implode("','",array_values($data[$i])));
+                echo("'],");
+                echo("text: ['");
+                echo(implode("','",array_keys($data[$i])));
+                echo("'],");
+                echo('textposition: "auto",');
+                echo("type: 'bar', name: '".$group[$i]."',");
+                echo("marker: { color: '".$rgba[$i]."' } };");
+            }
         }
 
         echo("var layout = {

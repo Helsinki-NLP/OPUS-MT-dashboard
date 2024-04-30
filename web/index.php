@@ -60,7 +60,8 @@ if ($model == 'top' && $benchmark == 'all'){
             list($scores[2],$models[2]) = $opusmt->get_topscores($langpair, $metric, 'contributed');
         }
     }
-    
+
+        
     print_display_options();    
     $graphics->plot_topscore_comparison($scores, $models, $metric, $chart);
     echo '</div><div id="scores" class="query">';

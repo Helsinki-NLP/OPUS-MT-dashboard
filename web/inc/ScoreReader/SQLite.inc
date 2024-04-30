@@ -11,17 +11,20 @@ class ScoreDbReader extends ScoreFileReader{
 
         $db = $this->open_scoredb($metric, $package);
         $results = $db->query("select model,testset,max(score) from scores where langpair='$langpair' group by testset");
-
+        // echo("select model,testset,max(score) from scores where langpair='$langpair' group by testset<br/>");
+                
         $scores = array();
         $models = array();
 
-        while ($row = $results->fetchArray(SQLITE3_NUM)) {
-            $testset = $row[1];
-            if ($this->skip_benchmark($testset)){
-                continue;
+        if ($results){
+            while ($row = $results->fetchArray(SQLITE3_NUM)) {
+                $testset = $row[1];
+                if ($this->skip_benchmark($testset)){
+                    continue;
+                }
+                $models[$testset] = $row[0];
+                $scores[$testset] = $row[2];
             }
-            $models[$testset] = $row[0];
-            $scores[$testset] = $row[2];
         }
         $db->close();
         return [$scores,$models];
@@ -43,18 +46,21 @@ class ScoreDbReader extends ScoreFileReader{
         
         $scores = array();
         $nrscores=0;
-        while ($row = $results->fetchArray(SQLITE3_NUM)) {
-            if ($show_max_scores > 0 && $nrscores > $show_max_scores){
-                break;
+
+        if ($results){
+            while ($row = $results->fetchArray(SQLITE3_NUM)) {
+                if ($show_max_scores > 0 && $nrscores > $show_max_scores){
+                    break;
+                }
+                $lang = $row[0];
+                $testset = $row[1];
+                $key = $testset.'/'.$lang;
+                if ($this->skip_benchmark($testset)){
+                    continue;
+                }
+                $scores[$key] = (float) $row[2];
+                $nrscores++;
             }
-            $lang = $row[0];
-            $testset = $row[1];
-            $key = $testset.'/'.$lang;
-            if ($this->skip_benchmark($testset)){
-                continue;
-            }
-            $scores[$key] = (float) $row[2];
-            $nrscores++;
         }
         $db->close();
         return $scores;
@@ -72,8 +78,10 @@ class ScoreDbReader extends ScoreFileReader{
         $results = $db->query("select model,score from scores where $condition order by score desc");
         
         $scores = array();
-        while ($row = $results->fetchArray(SQLITE3_NUM)) {
-            $scores[$package."\t".$row[0]] = (float) $row[1];
+        if ($results){
+            while ($row = $results->fetchArray(SQLITE3_NUM)) {
+                $scores[$package."\t".$row[0]] = (float) $row[1];
+            }
         }
         $db->close();
         return $scores;
@@ -83,6 +91,9 @@ class ScoreDbReader extends ScoreFileReader{
     private function open_scoredb($metric='bleu', $package='opusmt'){    
         $dbfile = $this->get_scoredb_file($metric, $package);
         // echo("open DB file $dbfile");
+        // if (not file_exists($dbfile)){
+        //     echo("DB filed $dbfile does not exist");
+        // }
         return new SQLite3($dbfile,SQLITE3_OPEN_READONLY);
     }
     

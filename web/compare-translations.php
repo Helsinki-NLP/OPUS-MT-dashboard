@@ -101,7 +101,7 @@ if ($model1 != 'all' && $model2 != 'all'){
 }
 
 
-include('inc/footer.in');
+include('inc/footer.inc');
 
 ?>
 </body>

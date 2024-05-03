@@ -275,6 +275,10 @@ function show_page_links($start=0, $end=9, $nr_shown=10){
 
 
 function print_file_diff($file1, $file2, $diffstyle = 'wdiff'){
+    global $diffhighlight;
+
+    // $diffhighlight = '/opt/local/bin/diff-highlight';
+    // $wdiff = '/opt/local/bin/wdiff';
     
     // TODO: how safe is this?
     // TODO: ansi2html.sh should not be in this dir, should it?
@@ -284,10 +288,11 @@ function print_file_diff($file1, $file2, $diffstyle = 'wdiff'){
         system("git diff --color-words --no-index  $file1 $file2 | tail -n +6 | sed 's/\@\@.*\@\@//' | ./ansi2html.sh --body-only");
     }
     elseif ($diffstyle == 'diff'){
-        system("diff -u $file1 $file2 | colordiff | perl /usr/share/doc/git/contrib/diff-highlight/diff-highlight | tail -n +4 | grep -v '\@\@.*\@\@' | ./ansi2html.sh --body-only");
+        system("diff -u $file1 $file2 | colordiff | $diffhighlight | tail -n +4 | grep -v '\@\@.*\@\@' | ./ansi2html.sh --body-only");
     }
     else{
-        system("wdiff $file1 $file2 | colordiff | perl /usr/share/doc/git/contrib/diff-highlight/diff-highlight | ./ansi2html.sh --body-only");
+        system("wdiff $file1 $file2 | colordiff | $diffhighlight | ./ansi2html.sh --body-only");
+        // system("$wdiff $file1 $file2 | colordiff | $diffhighlight | ./ansi2html.sh --body-only");
     }
     echo '</pre></div>';
 }

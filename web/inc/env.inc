@@ -109,6 +109,27 @@ $evaluation_metrics = array('bleu', 'spbleu', 'chrf', 'chrf++', 'comet');
 // $diffstyles = array('diff','wdiff','gitdiff');
 $diffstyles = array('wdiff','gitdiff');
 
+/*
+echo(apache_getenv("PATH"));
+$path=apache_getenv("PATH");
+apache_setenv("PATH", $path.":/opt/local/bin");
+echo(apache_getenv("PATH"));
+passthru('which wdiff');
+*/
+
+if (exec('which diff-highlight', $output, $retval)){
+    if (file_exists($output)){
+        $diffhighlight = rtrim($output);
+    }
+}
+elseif (file_exists('/usr/share/doc/git/contrib/diff-highlight/diff-highlight')){
+    $diffhighlight = 'perl /usr/share/doc/git/contrib/diff-highlight/diff-highlight';
+}
+else{
+    $diffhighlight = 'grep .';
+}
+
+
 
 $show_max_scores = 50;
 $chart_max_scores = $show_max_scores;

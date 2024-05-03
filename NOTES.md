@@ -1,5 +1,11 @@
 
 
+# installation on Mac OS
+
+* install gawk, wdiff and colordiff (`sudo port install gawk, wdiff, colordiff`)
+* fix the hard-coded path to diff-highlight
+
+
 # show translation diffs
 
 

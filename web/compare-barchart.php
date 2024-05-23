@@ -7,10 +7,12 @@
 //       for generating barcharts
 
 
-include 'inc/env.inc';
-include 'inc/functions.inc';
-// include 'inc/charts.inc';
-include('inc/gd.inc');
+include('inc/env.inc');
+include('inc/functions.inc');
+include('inc/tables.inc');
+
+include('inc/Graphics.inc');
+include('inc/ScoreReader.inc');
 
 
 // get query parameters
@@ -26,118 +28,83 @@ list($srclang, $trglang, $langpair) = get_langpair();
 
 $showlang  = get_param('scoreslang', $langpair);
 
+$opusmt = ScoreReader::new($score_reader);
+$graphics = Graphics::new($renderlib);
+
 
 //-----------------------------------------
 // read scores from file or cache
 //-----------------------------------------
 
-$lines = array();
-$lines[3] = array();
+$scores = array();
+$models = array();
+$scores[2] = array();
+
+$nr_score_files = 2;
+$scores_exist = array(true, true, false);
 
 if ($model1 != 'unknown' and $model2 != 'unknown'){
     $parts = explode('/',$model1);
     $pkg1 = array_shift($parts);
     $name1 = implode('/',$parts);
-    $lines[1] = read_scores($langpair, 'all', $metric, $name1, $pkg1);
-
     $parts = explode('/',$model2);
     $pkg2 = array_shift($parts);
     $name2 = implode('/',$parts);
-    $lines[2] = read_scores($langpair, 'all', $metric, $name2, $pkg2);
+    
+    $scores[0] = $opusmt->get_model_scores($name1, $metric, $pkg1, $benchmark, $showlang);
+    $scores[1] = $opusmt->get_model_scores($name2, $metric, $pkg2, $benchmark, $showlang);
+
     $topscores = false;
 }
-elseif ($model == 'verified'){
-    $lines[1] = read_scores($langpair, 'all', $metric, 'all', 'opusmt', 'scores');
-    $lines[2] = read_scores($langpair, 'all', $metric, 'all', 'external', 'external-scores');
-    $topscores = true;
-}
-elseif ($model == 'unverified'){
-    $lines[1] = read_scores($langpair, 'all', $metric, 'all', 'opusmt', 'scores');
-    $lines[3] = read_scores($langpair, 'all', $metric, 'all', 'contributed', 'user-scores');
-    $topscores = true;
-}
-elseif ($model == 'top'){
-    $lines[1] = read_scores($langpair, 'all', $metric, 'all', 'opusmt', 'scores');
-    $lines[2] = read_scores($langpair, 'all', $metric, 'all', 'external', 'external-scores');
+// elseif ($model == 'top'){
+else{
+    list($scores[0],$models[0]) = $opusmt->get_topscores($langpair, $metric, 'opusmt');
+    list($scores[1],$models[1]) = $opusmt->get_topscores($langpair, $metric, 'external');
     if ($userscores == "yes"){
         if (local_scorefile_exists($langpair, 'all', $metric, 'all', 'contributed', 'user-scores')){
-            $lines[3] = read_scores($langpair, 'all', $metric, 'all', 'contributed', 'user-scores');
+            list($scores[2],$models[2]) = $opusmt->get_topscores($langpair, $metric, 'external');
+            $scores_exist[2] = true;
+            $nr_score_files = 3;
         }
     }
     $topscores = true;
 }
-else{
-    $lines = read_model_scores($langpair, $benchmark, $metric, $model, $package);
-}
-
-
-//-----------------------------------------
-// extract scores from score file lines
-//-----------------------------------------
-
-$data = array();
-$colors = array();
-
-$maxscore = 0;
-$scores = array();
-
-$nr_score_files = 0;
-foreach (array(1, 2, 3) as $v) {
-    $scores_exist[$v] = false;
-    if (count($lines[$v])){
-        $scores[$v] = array();
-        $nr_score_files++;
-        $scores_exist[$v] = true;
-        foreach($lines[$v] as $line) {
-            $array = explode("\t", $line);
-            if ($topscores){
-                $score = (float) $array[1];
-                $key = $array[0];
-                $scores[$v][$key] = $score;
-                if ( $maxscore < $score ){
-                    $maxscore = $score;
-                }
-            }
-            elseif ($showlang == 'all' || $showlang == $array[0]){
-                if ($benchmark == 'all' || $benchmark == $array[1]){
-                    $score = (float) $array[2];
-                    $key = $array[0].'/'.$array[1];
-                    $scores[$v][$key] = $score;
-                    if ( $maxscore < $score ){
-                        $maxscore = $score;
-                    }
-                }
-            }
-        }
-    }
-}
-
 
 
 //-----------------------------------------
 // prepare data array for the chart
 //-----------------------------------------
 
+$data = array();
+$colors = array();
 
-$nrscores=0;
+$nrscores = 0;
+$maxscore = 0;
+
 $model2_color = $model2 == 'unknown' ? 'grey' : 'orange';
-$model_colors = array('orange', 'blue', $model2_color, 'purple');
+$model_colors = array('blue', $model2_color, 'purple');
   
-foreach($scores[1] as $key => $value) {
+foreach($scores[0] as $key => $value) {
     if ($nrscores > $chart_max_scores){
         break;
     }
 
-    if ((array_key_exists($key,$scores[2])) or ($topscores)){
+    if ((array_key_exists($key,$scores[1])) or ($topscores)){
         $nrscores++;
         array_push($data,$value);
         array_push($colors,'blue');
+        if ($value > $maxscore){
+            $maxscore=$value;
+        }
     
-        foreach (array(2, 3) as $v) {
+        foreach (array(1, 2) as $v) {
             if ($scores_exist[$v]){
                 if (array_key_exists($key,$scores[$v])){
                     array_push($data,$scores[$v][$key]);
                     array_push($colors,$model_colors[$v]);
+                    if ($scores[$v][$key] > $maxscore){
+                        $maxscore=$scores[$v][$key];
+                    }
                 }
                 else{
                     array_push($data,0);
@@ -161,7 +128,7 @@ else{
 }
 
 $index_label = 'benchmark index (see ID in table of scores)';
-$chart = barchart($data, $maxscore, $colors, $index_label, $metric, $scale, 0, $nr_score_files);
+$chart = $graphics->barchart($data, $maxscore, $colors, $index_label, $metric, $scale, 0, $nr_score_files);
 
 header('Content-Type: image/png');
 imagepng($chart);

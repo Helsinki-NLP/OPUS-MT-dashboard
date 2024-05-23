@@ -38,7 +38,7 @@ $default_trglang = 'ara';
 
 // online file locations
 
-$leaderboard_urls['opusmt']      = 'https://raw.githubusercontent.com/Helsinki-NLP/'.$base_leaderboard.'/master';
+$leaderboard_urls['opusmt']      = 'https://raw.githubusercontent.com/Helsinki-NLP/'.$base_leaderboard.'/scoredb';
 $leaderboard_urls['external']    = 'https://raw.githubusercontent.com/Helsinki-NLP/External-MT-leaderboard/master';
 $leaderboard_urls['contributed'] = 'https://raw.githubusercontent.com/Helsinki-NLP/Contributed-MT-leaderboard/master';
 

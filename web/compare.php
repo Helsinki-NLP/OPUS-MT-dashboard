@@ -134,12 +134,13 @@ echo("</div>");
 
 
 function print_model_list($pkg, $langpair, $model1, $model2){
-    global $leaderboard_urls;
+    global $leaderboard_urls, $opusmt, $metric;
 
     $scores_url = $leaderboard_urls[$pkg].'/scores';
 
     // TODO: do we also want to cache model lists in the SESSION variable?
-    $models = file(implode('/',[$scores_url,$langpair,'model-list.txt']));
+    // $models = file(implode('/',[$scores_url,$langpair,'model-list.txt']));
+    $models = $opusmt->get_langpair_models($langpair, $metric, $pkg);
 
     $sorted_models = array();
     if (is_array($models)){

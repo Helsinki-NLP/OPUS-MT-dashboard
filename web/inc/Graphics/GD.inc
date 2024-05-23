@@ -167,7 +167,7 @@ class GraphicsGD extends Graphics{
 
     // barchart function that creates a plot using the GD library
 
-    private function barchart(&$data, $maxscore, &$colors, $index_label, $value_label,
+    function barchart(&$data, $maxscore, &$colors, $index_label, $value_label,
                       $scale=100, $minscore=0, $bars_per_index=1){
 
         // $maxscore = ceil($maxscore);
@@ -333,7 +333,7 @@ class GraphicsGD extends Graphics{
 
     // scatterplot function that creates a plot using the GD library
 
-    private function scatter_plot(&$data, &$colors, $xLabel, $yLabel, $xMaxValue=100, $yMaxValue=100, $xMinValue=1, $yMinValue=0){
+    function scatter_plot(&$data, &$colors, $xLabel, $yLabel, $xMaxValue=100, $yMaxValue=100, $xMinValue=1, $yMinValue=0){
         
         $logscaleX = true;
         $logscaleY = false;

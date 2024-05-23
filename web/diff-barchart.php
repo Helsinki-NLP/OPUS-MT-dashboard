@@ -1,9 +1,11 @@
 <?php
 
-include 'inc/env.inc';
-include 'inc/functions.inc';
-// include 'inc/charts.inc';
-include('inc/gd.inc');
+
+include('inc/env.inc');
+include('inc/functions.inc');
+include('inc/Graphics.inc');
+include('inc/ScoreReader.inc');
+
 
 
 // adapted from https://www.infscripts.com/how-to-create-a-bar-chart-in-php
@@ -20,31 +22,34 @@ list($srclang, $trglang, $langpair) = get_langpair();
 
 $showlang  = get_param('scoreslang', $langpair);
 
+$opusmt = ScoreReader::new($score_reader);
+$graphics = Graphics::new($renderlib);
+
+$scores1 = array();
+$scores2 = array();
 
 if ($model1 != 'unknown' and $model2 != 'unknown'){
     $parts = explode('/',$model1);
-    $pkg1 = array_shift($parts);
-    $name1 = implode('/',$parts);
-    $lines1 = read_scores($langpair, 'all', $metric, $name1, $pkg1);
-
+    $m1_pkg = array_shift($parts);
+    $m1_name = implode('/',$parts);
     $parts = explode('/',$model2);
-    $pkg2 = array_shift($parts);
-    $name2 = implode('/',$parts);
-    $lines2 = read_scores($langpair, 'all', $metric, $name2, $pkg2);
+    $m2_pkg = array_shift($parts);
+    $m2_name = implode('/',$parts);
+    $scores1 = $opusmt->get_model_scores($m1_name, $metric, $m1_pkg, $benchmark, $showlang);
+    $scores2 = $opusmt->get_model_scores($m2_name, $metric, $m2_pkg, $benchmark, $showlang);
     $topscores = false;
 }
 elseif ($model == 'top'){
-    list($srclang, $trglang, $langpair) = get_langpair();
-    $lines1 = read_scores($langpair, 'all', $metric, 'all', 'opusmt', 'scores');
-    $lines2 = read_scores($langpair, 'all', $metric, 'all', 'external', 'external-scores');
+    $models1 = array();
+    $models2 = array();
+    list($scores1,$models1) = $opusmt->get_topscores($langpair, $metric, 'opusmt');
+    list($scores2,$models2) = $opusmt->get_topscores($langpair, $metric, 'external');
     $topscores = true;
 }
 
 
-
 $data = array();
 $colors = array();
-
 
 if ($metric == 'bleu' || $metric == 'spbleu'){
     $maxscore = 1;
@@ -57,40 +62,6 @@ else{
     $scale = 1;
 }
 
-
-// read model-specific scores
-$scores1 = array();
-foreach($lines1 as $line1) {
-    $array = explode("\t", $line1);
-    if ($topscores){
-        $score = (float) $array[1];
-        $key = $array[0];
-        $scores1[$key] = $score;
-    }
-    elseif ($showlang == 'all' || $showlang == $array[0]){
-        if ($benchmark == 'all' || $benchmark == $array[1]){
-            $score = (float) $array[2];
-            $key = $array[0].'/'.$array[1];
-            $scores1[$key] = $score;
-        }
-    }
-}
-
-foreach($lines2 as $line2) {
-    $array = explode("\t", $line2);
-    if ($topscores){
-        $score = (float) $array[1];
-        $key = $array[0];
-        $scores2[$key] = $score;
-    }
-    elseif ($showlang == 'all' || $showlang == $array[0]){
-        if ($benchmark == 'all' || $benchmark == $array[1]){
-            $score = (float) $array[2];
-            $key = $array[0].'/'.$array[1];
-            $scores2[$key] = $score;
-        }
-    }
-}
 
 $nrscores=0;
 foreach($scores1 as $key => $value) {
@@ -109,15 +80,15 @@ foreach($scores1 as $key => $value) {
             }
         }
         else{
-	  if ($topscores){
-            array_push($colors,'grey');
-	  }
-	  else{
-	    array_push($colors,'orange');
-	  }
-	  if ( $diff < $minscore ){
-	    $minscore = $diff;
-	  }
+            if ($topscores){
+                array_push($colors,'grey');
+            }
+            else{
+                array_push($colors,'orange');
+            }
+            if ( $diff < $minscore ){
+                $minscore = $diff;
+            }
         }
     }
 }
@@ -134,7 +105,7 @@ $nrscores = sizeof($data);
 $index_label = 'benchmark index (see ID in table of scores)';
 $value_label = 'difference in '.$metric;
 
-$chart = barchart($data, $maxscore, $colors, $index_label, $value_label, $scale, $minscore);
+$chart = $graphics->barchart($data, $maxscore, $colors, $index_label, $value_label, $scale, $minscore);
 
 /*
  * Output image to browser

@@ -3,10 +3,11 @@
 // adapted from https://www.infscripts.com/how-to-create-a-bar-chart-in-php
 
 
-include 'inc/env.inc';
-include 'inc/functions.inc';
-include 'inc/scores.inc';
-include 'inc/gd.inc';
+include('inc/env.inc');
+include('inc/functions.inc');
+include('inc/Graphics.inc');
+include('inc/ScoreReader.inc');
+
 
 // get query parameters
 $package   = get_param('pkg', 'opusmt');
@@ -20,80 +21,62 @@ $chartlegend = get_param('legend', 'type');
 
 list($srclang, $trglang, $langpair) = get_langpair();
 
-$lines = read_model_scores($langpair, $benchmark, $metric, $model, $package);
 
-if ($benchmark == 'avg'){
-    $averaged_benchmarks = array_shift($lines);
+$opusmt = ScoreReader::new($score_reader);
+$graphics = Graphics::new($renderlib);
+
+
+$scores = array();
+$models = array();
+$type = array();
+
+if ($model == 'all' && $benchmark == 'all'){
+    $index_label = 'benchmark index (see ID in table of scores)';
+    list($scores,$models) = $opusmt->get_topscores($langpair, $metric, $package);
+    foreach ($models as $key => $model){
+        array_push($type,$graphics->modelid_color($model, $package));
+    }
+}
+elseif ($benchmark == 'avg'){
+    $index_label = 'model index (see ID in table of scores)';
+    $scores = $opusmt->get_benchmark_scores($langpair, $benchmark, $metric, $package, $model, $userscores);
+    $scores = array_reverse($scores);
+    foreach ($scores as $key => $score){
+        list($pkg,$modelid) = explode("\t",$key);
+        $color = $chartlegend == 'size' ? (int) model_size($pkg, $modelid) : $graphics->modelid_color($modelid, $pkg);
+        array_push($type,$color);
+    }
+}
+elseif ($model != 'top' && $model != 'all' && $model != 'verified' && $model != 'unverified'){
+    $index_label = 'benchmark index (see ID in table of scores)';
+    $scores = $opusmt->get_model_scores($model, $metric, $package, $benchmark, $showlang, $table_max_scores);
+    $color = $graphics->modelid_color($model, $package);
+    foreach ($scores as $key => $score){
+        array_push($type,$color);
+    }
+}
+elseif ($benchmark != 'avg' && $benchmark != 'all'){
+    $index_label = 'model index (see ID in table of scores)';
+    $scores = $opusmt->get_benchmark_scores($langpair, $benchmark, $metric, $package, $model, $userscores);
+    $scores = array_reverse($scores);
+    foreach ($scores as $key => $score){
+        list($pkg,$modelid) = explode("\t",$key);
+        $color = $chartlegend == 'size' ? (int) model_size($pkg, $modelid) : $graphics->modelid_color($modelid, $pkg);
+        array_push($type,$color);
+    }
 }
 
 $data = array();
-$type = array();
 $nrscores = 0;
+$maxscore = 0;
 
-// get model-specific scores
-if ($model != 'all' && $model != 'top'){
-    $maxscore = 0;
-    $index_label = 'benchmark index (see ID in table of scores)';
-    foreach($lines as $line) {
-        if ($nrscores > $chart_max_scores){
-            break;
-        }
-        $array = explode("\t", rtrim($line));
-        if ($showlang != 'all'){
-            if ($showlang != $array[0]){
-                continue;
-            }
-        }
-        if ($benchmark != 'all'){
-            if ($array[1] != $benchmark){
-                continue;
-            }
-        }
-        // $score = $metric == 'bleu' ? $array[3] : $array[2];
-        $score = (float) $array[2];
-        array_push($data,$score);
-        array_push($type,model_color($array[count($array)-1], $model));
-
-        $nrscores++;
-        if ( $maxscore < $score ){
-            $maxscore = $score;
-        }
+foreach ($scores as $key => $score){
+    array_push($data,$score);
+    $nrscores++;
+    if ( $maxscore < $score ){
+        $maxscore = $score;
     }
 }
-// get scores from benchmark-specific leaderboard
-elseif ($benchmark != 'all'){
-    $index_label = 'model index (see ID in table of scores)';
-    foreach($lines as $line) {
-        $array = explode("\t", rtrim($line));
-        array_unshift($data,$array[0]);
-        list($modelid, $modelurl) = normalize_modelname($array[1]);
-        if ($chartlegend == 'size'){
-            $size = ceil(model_size($array[count($array)-1], $modelid));
-            array_unshift($type,$size);
-        }
-        else{
-            array_unshift($type,model_color($array[count($array)-1], $modelid));
-        }
-        $nrscores++;
-    }
-    $maxscore = end($data);
- }
-// get top-scores
-else{
-    $maxscore = 0;
-    $index_label = 'benchmark index (see ID in table of scores)';
-    foreach($lines as $line) {
-        $array = explode("\t", rtrim($line));
-        array_push($data,$array[1]);
-        array_push($type,model_color($array[count($array)-1], $array[2]));
-        $nrscores++;
-        if ( $maxscore < $array[1] ){
-            $maxscore = $array[1];
-        }
-    }
-    // list($data, $type) = get_topscores($langpair, $metric, $package);
-}
-
 
 if ($metric == 'bleu' || $metric == 'spbleu'){
   $scale = 100;
@@ -102,6 +85,6 @@ else{
   $scale = 1;
 }
 
-$chart = barchart($data, $maxscore, $type, $index_label, $metric, $scale);
+$chart = $graphics->barchart($data, $maxscore, $type, $index_label, $metric, $scale);
 header('Content-Type: image/png');
 imagepng($chart);

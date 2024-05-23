@@ -1,8 +1,9 @@
 <?php
 
 include('inc/env.inc');
-include 'inc/functions.inc';
-include 'inc/gd.inc';
+include('inc/functions.inc');
+include('inc/Graphics.inc');
+include('inc/ScoreReader.inc');
 
 
 // get query parameters
@@ -17,15 +18,32 @@ $chartlegend = get_param('legend', 'type');
 
 list($srclang, $trglang, $langpair) = get_langpair();
 
-$lines = read_model_scores($langpair, $benchmark, $metric, $model, $package);
 
+$opusmt = ScoreReader::new($score_reader);
+$graphics = Graphics::new($renderlib);
 
-if ($benchmark == 'avg'){
-    $averaged_benchmarks = array_shift($lines);
-}
 
 $data = array();
 $type = array();
+
+if ($benchmark == 'avg'){
+    $scores = $opusmt->get_benchmark_scores($langpair, $benchmark, $metric, $package, $model, $userscores);
+    foreach ($scores as $key => $score){
+        list($pkg,$modelid) = explode("\t",$key);
+        $color = $chartlegend == 'size' ? (int) model_size($pkg, $modelid) : $graphics->modelid_color($modelid, $pkg);
+        array_push($type,$color);
+    }
+}
+else{
+    $scores = $opusmt->get_benchmark_scores($langpair, $benchmark, $metric, $package, $model, $userscores);
+    foreach ($scores as $key => $score){
+        list($pkg,$modelid) = explode("\t",$key);
+        $color = $chartlegend == 'size' ? (int) model_size($pkg, $modelid) : $graphics->modelid_color($modelid, $pkg);
+        array_push($type,$color);
+    }
+}
+
+
 
 $maxscore = 0;
 $maxsize = 0;
@@ -35,17 +53,12 @@ $minsize = 1000;
 
 $index_label = 'benchmark index (see ID in table of scores)';
 
-$id = sizeof($lines);
-foreach($lines as $line) {
-    $array = explode("\t", rtrim($line));
-    $score = (float) $array[0];
-    $size = ceil(model_size($array[count($array)-1], modelurl_to_model($array[1])));
-    if ($chartlegend == 'size'){
-        $color = $size;
-    }
-    else{
-        $color = model_color($array[count($array)-1], modelurl_to_model($array[1]));
-    }
+$id = sizeof($scores);
+foreach($scores as $key => $score) {
+    list($pkg,$modelid) = explode("\t",$key);
+    $size = model_size($pkg, $modelid);
+    $color = $chartlegend == 'size' ? ceil($size) : $graphics->modelid_color($modelid, $pkg);
+    array_push($type,$color);
 
     $id--;
     if ($size == 0){
@@ -71,7 +84,7 @@ foreach($lines as $line) {
 }
 
 
-$chart = scatter_plot($data, $type, 'size in millions of parameters', $metric,
-                      ceil($maxsize), ceil($maxscore*10)/10, floor($minsize), floor($minscore*10)/10);
+$chart = $graphics->scatter_plot($data, $type, 'size in millions of parameters', $metric,
+                                 ceil($maxsize), ceil($maxscore*10)/10, floor($minsize), floor($minscore*10)/10);
 header('Content-Type: image/png');
 imagepng($chart);

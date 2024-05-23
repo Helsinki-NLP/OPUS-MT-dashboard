@@ -113,6 +113,20 @@ class ScoreDbReader extends ScoreFileReader{
         return $scores;
     }
 
+    public function get_langpair_models($langpair, $metric='bleu', $package='opusmt'){
+        
+        $db = $this->open_scoredb($metric, $package);
+        $results = $db->query("select distinct model from scores where langpair='$langpair'");        
+        $models = array();
+        if ($results){
+            while ($row = $results->fetchArray(SQLITE3_NUM)) {
+                array_push($models,$row[0]);
+            }
+        }
+        $db->close();
+        return $models;
+    }
+
     
     private function open_scoredb($metric='bleu', $package='opusmt'){    
         $dbfile = $this->get_scoredb_file($metric, $package);

@@ -23,13 +23,13 @@ function print_display_options(){
 // langpair link
 
 function langpair_link(){
-    global $model, $langpair, $multilingual_model, $showlang;
+    global $model, $langpair, $benchmark, $multilingual_model, $showlang;
     
     $langpair_link = $langpair;
 
-    if ($model != 'all' && $model != 'top'){
-        if ($multilingual_model){
-            if ($showlang != 'all'){
+    if ( ($model != 'all' && $model != 'top' && $multilingual_model) ||
+         ($benchmark != 'avg' && $benchmark != 'all') ){
+                    if ($showlang != 'all'){
                 $url_param = make_query(['scoreslang' => 'all']);
                 $alllangs_link = "<a rel=\"nofollow\" href=\"index.php?$url_param\">all languages</a>";
                 $langpair_link = "$langpair [$alllangs_link]";
@@ -39,8 +39,8 @@ function langpair_link(){
                 $lang_link = "<a rel=\"nofollow\" href=\"index.php?$url_param\">$langpair</a>";
                 $langpair_link = "[$lang_link] all languages";
             }
-        }
     }
+
     return $langpair_link;
 }
 
@@ -171,8 +171,8 @@ function print_benchmark_link(){
 // display options
 // --> move to display_options.inc
 
-function print_chart_type_options($selected_type="standard", $heatmap=false){
-    $chart_types = $heatmap ? array('standard', 'diff', 'heatmap'): array('standard', 'diff');
+function print_chart_type_options($selected_type="barchart", $heatmap=false){
+    $chart_types = $heatmap ? array('barchart', 'diff', 'heatmap'): array('barchart', 'diff');
     foreach ($chart_types as $c){
         if ($c == $selected_type){
             echo("[$c]");
@@ -187,7 +187,7 @@ function print_chart_type_options($selected_type="standard", $heatmap=false){
 
 
 function print_chart_type_links(){
-    global $model, $benchmark, $chart, $multilingual_model, $chartlegend;
+    global $model, $benchmark, $chart, $multilingual_model, $chartlegend, $showlang, $langpair;
 
     $show_size_link = false;
     if ($model == 'top' && $benchmark == 'all'){
@@ -199,19 +199,34 @@ function print_chart_type_links(){
         if ($multilingual_model){
             echo('<li><b>Chart Type:</b> ');
             if ($chart == 'heatmap'){
-                $query = make_query(['chart' => 'standard']);
+                $query = make_query(['chart' => 'barchart']);
                 $link = $_SERVER['PHP_SELF'].'?'.$query;
-                echo("[<a rel=\"nofollow\" href=\"$link\">standard</a>] [heatmap]</li>");
+                echo("[<a rel=\"nofollow\" href=\"$link\">barchart</a>] [heatmap]</li>");
             }
             else{
                 $query = make_query(['chart' => 'heatmap', 'scoreslang' => 'all']);
                 $link = $_SERVER['PHP_SELF'].'?'.$query;
-                echo("[standard] [<a rel=\"nofollow\" href=\"$link\">heatmap</a>]");
+                echo("[barchart] [<a rel=\"nofollow\" href=\"$link\">heatmap</a>]");
                 // $show_size_link = true;
             }
         }
     }
     elseif ($benchmark != 'all'){
+        if ($showlang == 'all'){
+            echo('<li><b>Highlighting colors:</b> ');
+            $chart_legends = $model == "top" ? array('score', 'type', 'size', 'diff') : array('score', 'type', 'size');
+            foreach ($chart_legends as $l){
+                if ($chartlegend == $l){
+                    echo(" [model $l]");
+                }
+                else{
+                    $query = make_query(['legend' => $l]);
+                    $link = $_SERVER['PHP_SELF'].'?'.$query;
+                    echo(" [<a rel=\"nofollow\" href=\"$link\">model $l</a>]");
+                }
+            }
+            return;
+        }
         echo('<li><b>Chart Type:</b> ');
         print_plot_type_options($chart);
         $show_size_link = true;
@@ -268,7 +283,7 @@ function print_plot_type_options($selected_type="barchart"){
 
 function print_contributed_link(){
     global $userscores, $userscores_exists, $chart;
-    if ($userscores_exists  and $chart == "standard"){
+    if ($userscores_exists  and $chart == "barchart"){
         if ($userscores == "yes"){
             $url_param = make_query(['userscores' => 'no']);
             echo('<li><a rel="nofollow" href="index.php?'. SID . '&'.$url_param.'">exclude scores of user-contributed translations</a></li>');

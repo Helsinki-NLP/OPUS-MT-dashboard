@@ -99,12 +99,22 @@ elseif ($benchmark == 'avg'){
 
 elseif ($model != 'top' && $model != 'all' && $model != 'verified' && $model != 'unverified'){
     $chartlegend = 'type';
+
+    // get scores and set chart type automatically to heatmap if we have too many scores
+    $scores = $opusmt->get_model_scores($model, $metric, $package, $benchmark, $showlang, $table_max_scores);
+    if ($multilingual_model){
+        if ($chart != 'barchart'){
+            if (count($scores) >= $table_max_scores){
+                $chart = 'heatmap';
+            }
+        }
+    }
+    
     print_display_options();
     if ($chart == 'heatmap' && $multilingual_model){
         print_langpair_heatmap($model, $metric, $benchmark, $package);
     }
     else{
-        $scores = $opusmt->get_model_scores($model, $metric, $package, $benchmark, $showlang, $table_max_scores);
         $graphics->plot_model_scores($scores, $chart, $chartlegend);
         echo '</div><div id="scores" class="query">';
         print_modelscore_table($scores, $model,$showlang, $benchmark, $package, $metric);
@@ -116,12 +126,18 @@ elseif ($model != 'top' && $model != 'all' && $model != 'verified' && $model != 
 // (5) scores for a specific benchmark
 
 elseif ($benchmark != 'avg' && $benchmark != 'all'){
-    $scores = $opusmt->get_benchmark_scores($langpair, $benchmark, $metric, $package, $model, $userscores);
-    print_display_options();
-    $graphics->plot_benchmark_scores($scores, $chart, $chartlegend);
-    echo '</div><div id="scores" class="query">';
-    print_testscores_table($scores, $langpair, $benchmark, $metric, $package, $model);
-    echo('</div>');
+    if ($showlang == 'all'){
+        print_display_options();
+        print_benchmark_heatmap($model, $metric, $benchmark, $package, $chartlegend);
+    }
+    else{
+        $scores = $opusmt->get_benchmark_scores($langpair, $benchmark, $metric, $package, $model, $userscores);
+        print_display_options();
+        $graphics->plot_benchmark_scores($scores, $chart, $chartlegend);
+        echo '</div><div id="scores" class="query">';
+        print_testscores_table($scores, $langpair, $benchmark, $metric, $package, $model);
+        echo('</div>');
+    }
 }
 
 

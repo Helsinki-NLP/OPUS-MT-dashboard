@@ -34,6 +34,28 @@ class ScoreDbReader extends ScoreFileReader{
         return [$scores,$models];
     }
 
+    public function get_benchmark_topscores($model, $benchmark, $metric='bleu', $package='opusmt'){
+
+        $db = $this->open_scoredb($metric, $package);
+        $condition = "where testset='$benchmark'";
+        $results = $db->query("select langpair,model,max(score) from scores $condition group by langpair");
+                
+        $scores = array();
+        $models = array();
+
+        if ($results){
+            while ($row = $results->fetchArray(SQLITE3_NUM)) {
+                $langpair = $row[0];
+                $models[$langpair] = $row[1];
+                $scores[$langpair] = $row[2];
+            }
+        }
+        $db->close();
+        return [$scores,$models];
+
+    }
+
+
     public function get_model_scores($model, $metric='bleu', $package='opusmt',
                                      $benchmark='all', $langpair='all',
                                      $show_max_scores=0){
@@ -157,6 +179,7 @@ class ScoreDbReader extends ScoreFileReader{
         $db_file = implode('/',[$tmpdir,$package,$db_filename.$date]);
     
         if (file_exists($db_file)){
+            // unlink($db_file);
             return $db_file;
         }
 

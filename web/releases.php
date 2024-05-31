@@ -18,10 +18,22 @@ include('inc/functions.inc');
                                
 
 list($srclang, $trglang, $langpair) = get_langpair();
+$collection = get_param('collection', 'all');
+
 
 include('inc/header.inc');
 echo('<h1>OPUS-MT Dashboard: Release History</h1>');
 
+$collections = array('all', 'Tatoeba-MT-models', 'OPUS-MT-models', 'HPLT-MT-models');
+echo('Select collection: ');
+foreach ($collections as $col){
+    if ($collection == $col){
+        echo("[$col] ");
+    }
+    else{
+        echo("[<a href='?collection=$col'>$col</a>] ");
+    }
+}
 
 $releases_url = $leaderboard_url."/release-history.txt";
 $releases = file($releases_url);
@@ -35,24 +47,29 @@ if ($base_leaderboard == 'HPLT-MT-leaderboard'){
 $lastdate = '';
 foreach ($releases as $release){
     list($date,$pkg,$langpair,$model) = explode("\t",$release);
+    if ($collection != 'all'){
+        if ($collection != $pkg){
+            continue;
+        }
+    }
+    if ($lastdate != $date){
+        if ($lastdate != ''){
+            echo '</ul>';
+        }
+        echo "<h2>$date</h2><ul>";
+        $lastdate = $date;
+    }
     $model = rtrim($model);
     if ($pkg == "HPLT-MT-models"){
         if ($model != ''){
             $model_url = urlencode("$langpair/$model");
-            echo("<li><a rel=\"nofollow\" href='https://huggingface.co/HPLT/$model'>$langpair/$model</a> (<a href='index.php?pkg=opusmt&model=$pkg/$model_url&test=all&scoreslang=all'>benchmark results</a>)</li>");
+            echo("<li><a rel=\"nofollow\" href='https://huggingface.co/HPLT/$model'>$langpair/$model</a> (<a href='index.php?pkg=opusmt&model=$pkg/$model_url&chart=standard&test=all&scoreslang=all'>benchmark results</a>)</li>");
         }
     }
     else{
-        if ($lastdate != $date){
-            if ($lastdate != ''){
-                echo '</ul>';
-            }
-            echo "<h2>$date</h2><ul>";
-            $lastdate = $date;
-        }
         if ($model != ''){
             $model_url = urlencode("$langpair/$model");
-            echo "<li><a rel=\"nofollow\" href='$storage/$pkg/$langpair/$model.zip'>$langpair/$model</a> (<a href='index.php?pkg=opusmt&model=$pkg/$model_url&test=all&scoreslang=all'>benchmark results</a>)</li>";
+            echo "<li><a rel=\"nofollow\" href='$storage/$pkg/$langpair/$model.zip'>$langpair/$model</a> (<a href='index.php?pkg=opusmt&model=$pkg/$model_url&chart=standard&test=all&scoreslang=all'>benchmark results</a>)</li>";
         }
     }
 }

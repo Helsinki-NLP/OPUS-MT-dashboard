@@ -25,6 +25,8 @@ $model1    = get_param('model1', 'unknown');
 $model2    = get_param('model2', 'unknown');
 $showlang  = get_param('scoreslang', $langpair);
 
+set_param('scoreslang', $showlang);
+
 include('inc/header.inc');
 echo('<h1>OPUS-MT Dashboard: Compare Models</h1>');
 

@@ -86,10 +86,10 @@ function print_topscore_comparison_table(&$scores, &$models,
                 $model1short = short_model_name($models[0][$key]);
                 $model2short = short_model_name($models[1][$key]);
                 
-                $url_param = make_query(['model' => $models[0][$key], 'pkg' => 'opusmt']);
+                $url_param = make_query(['model' => $models[0][$key], 'scoreslang' => $langpair, 'pkg' => 'opusmt']);
                 $model1link = "<a rel=\"nofollow\" href=\"index.php?$url_param\">$model1short</a>";
 
-                $url_param = make_query(['model' => $models[1][$key], 'pkg' => 'external']);
+                $url_param = make_query(['model' => $models[1][$key], 'scoreslang' => $langpair, 'pkg' => 'external']);
                 $model2link = "<a rel=\"nofollow\" href=\"index.php?$url_param\">$model2short</a>";
 
 
@@ -98,7 +98,7 @@ function print_topscore_comparison_table(&$scores, &$models,
                                      'model2' => 'external/'.$models[1][$key],
                                      'start' => 0, 'end' => 9]);
                 $translink = "<a rel=\"nofollow\" href=\"compare-translations.php?".SID.'&'.$query."\">compare</a>";
-                $url_param = make_query(['test' => $key]);
+                $url_param = make_query(['test' => $key, 'scoreslang' => $langpair]);
                 $testlink = "<a rel=\"nofollow\" href=\"index.php?$url_param\">$key</a>";
 
                     
@@ -121,7 +121,7 @@ function print_topscore_comparison_table(&$scores, &$models,
                 $count_scores1++;
                 $model1short = short_model_name($models[0][$key]);
                 
-                $url_param = make_query(['model' => $models[0][$key], 'pkg' => 'opusmt']);
+                $url_param = make_query(['model' => $models[0][$key], 'pkg' => 'opusmt', 'scoreslang' => $langpair]);
                 $model1link = "<a rel=\"nofollow\" href=\"index.php?$url_param\">$model1short</a>";
                 $query = make_query(['test' => $key, 'model' => 'opusmt/'.$models[0][$key], 'start' => 0, 'end' => 9]);
                 $translink = "<a rel=\"nofollow\" href=\"translations.php?".SID.'&'.$query."\">show</a>";
@@ -740,6 +740,153 @@ function print_langpair_heatmap($model, $metric='bleu', $benchmark='all', $pkg='
 }
 
 
+
+
+function print_benchmark_heatmap($model, $metric='bleu', $benchmark='flores200-devtest', $package='opusmt', $chart='score'){
+    global $opusmt;
+    
+    $scores = array();
+    $trglangs = array();
+    $benchmarks = array();
+
+    $scores = array();
+    $models = array();
+    
+    if ($chart == 'diff'){
+        list($opus_scores,$opus_models) = $opusmt->get_benchmark_topscores($model, $benchmark, $metric, 'opusmt');
+        list($external_scores,$external_models) = $opusmt->get_benchmark_topscores($model, $benchmark, $metric, 'external');
+        $minscore=0;
+        $maxscore=0;
+        foreach ($opus_scores as $langpair => $score){
+            $diff = array_key_exists($langpair, $external_scores) ? $score - $external_scores[$langpair] : $score;
+            if ($diff < 0){
+                $scores['external'][$langpair] = $diff;
+                $models['external'][$langpair] = $external_models[$langpair];
+                if ($diff < $minscore) $minscore = $diff;
+            }
+            else{
+                $scores['opusmt'][$langpair] = $diff;
+                $models['opusmt'][$langpair] = $opus_models[$langpair];
+                if ($diff > $maxscore) $maxscore = $diff;
+            }
+        }
+        foreach ($external_scores as $langpair => $score){
+            if ( ! array_key_exists($langpair, $scores['opusmt']) ){
+                $diff = 0 - $score;
+                $scores['external'][$langpair] = $diff;
+                $models['external'][$langpair] = $external_models[$langpair];
+                if ($diff < $minscore) $minscore = $diff;
+            }
+        }
+    }
+    elseif ($package == 'all' || $model == 'top'){
+        list($scores['opusmt'],$models['opusmt']) = $opusmt->get_benchmark_topscores($model, $benchmark, $metric, 'opusmt');
+        list($scores['external'],$models['external']) = $opusmt->get_benchmark_topscores($model, $benchmark, $metric, 'external');
+    }
+    else{
+        list($scores[$package],$models[$package]) = $opusmt->get_benchmark_topscores($model, $benchmark, $metric, $package);
+    }
+
+    $score_table = array();
+    $model_table = array();
+    $pkg_table = array();
+    $trglangs = array();
+    $model_size = array();
+    
+    foreach ($scores as $pkg => $pkg_scores){
+        foreach ($pkg_scores as $langpair => $score){
+ 
+            list($src,$trg) = explode('-',$langpair);
+            $value = ($metric == 'bleu' or $metric == 'spbleu') ? $score : 100*$score;
+            $trglangs[$trg] = 1;
+            
+            if (array_key_exists($src,$score_table)){
+                if (array_key_exists($trg,$score_table[$src])){
+                    if ($value > $score_table[$src][$trg]){
+                        $score_table[$src][$trg] = $value;
+                        $pkg_table[$src][$trg] = $pkg;
+                        $model_table[$src][$trg] = $models[$pkg][$langpair];
+                        $model_size[$pkg][$models[$pkg][$langpair]] = 1;
+                    }
+                    continue;
+                }
+            }
+            $score_table[$src][$trg] = $value;
+            $pkg_table[$src][$trg] = $pkg;
+            $model_table[$src][$trg] = $models[$pkg][$langpair];
+            $model_size[$pkg][$models[$pkg][$langpair]] = 1;
+        }
+    }
+
+
+    if ($chart == 'size'){
+        foreach ($model_size as $pkg => $list){
+            foreach ($list as $model => $size){
+                $model_size[$pkg][$model] =  model_size($pkg,$model);
+                // echo "$model -- ".$model_size[$pkg][$model]."</br>";
+            }
+        }
+    }
+    
+    ksort($trglangs);
+    echo('<div class="heatmap"><table><tr><th></th>');
+    foreach ($trglangs as $t => $count){
+        echo('<th>'.$t.'</th>');
+    }
+    echo('</tr>');
+    
+    ksort($score_table);
+    foreach ($score_table as $s => $tab){
+        echo('<th>'.$s.'</th>');
+        foreach ($trglangs as $t => $count){
+            if (array_key_exists($t,$tab)){
+                $pkg = $pkg_table[$s][$t];
+                $model = $model_table[$s][$t];
+                $score = sprintf('%4.1f',$tab[$t]);
+                $query = make_query(['test' => $benchmark,
+                                     'pkg' => $pkg,
+                                     'model' => $model,
+                                     'langpair' => "$s-$t",
+                                     'start' => 0, 'end' => 9]);
+                $translink = "<a rel=\"nofollow\" href=\"translations.php?".SID.'&'.$query."\">";
+                if ($chart == 'size'){
+                    $size = $model_size[$pkg][$model];
+                    $color = size_color($size);
+                }
+                elseif ($chart == 'type'){
+                    $color = collection_color($pkg, $model);
+                }
+                elseif ($chart == 'diff'){
+                    // $color = scorediff_color($score, 100, -100);
+                    $color = scorediff_color($score, $maxscore, $minscore);
+                }
+                else{
+                    $color = score_color($score);
+                }
+                echo('<td bgcolor="'.$color.'">'.$translink.$score.'</a></td>');
+            }
+            elseif ($s == $t){
+                echo('<th>'.$s.'</th>');
+            }
+            else{
+                echo('<td></td>');
+            }
+        }
+        echo('</tr>');
+    }
+    echo('</tr></table></div>');
+    if ($chart == 'size'){
+        print_size_legend();
+    }
+    elseif ($chart == 'score'){
+        print_legend();
+    }
+    return true;
+}
+
+
+
+
 function scorediff_color($score, $max, $min){
 
     $red = 255;
@@ -768,6 +915,41 @@ function scorediff_color($score, $max, $min){
     }
 
     return sprintf("#%02x%02x%02x",$red,$green,$blue);
+}
+
+
+function collection_color($pkg, $model){
+    /*
+    $collection_colors = array(
+        'opusmt' => [47, 133, 217],
+        'external' => [164, 164, 164],
+        'students' => [47, 196, 47],
+        'Tatoeba-MT-models' => [47, 133, 217],
+        'OPUS-MT-models' => [217, 133, 47],
+        'contributed' => [133, 133, 164],
+        'HPLT-MT-models' => [196, 28, 42]);
+    */
+
+    $collection_colors = array(
+        'opusmt' => [77, 163, 247],
+        'external' => [194, 194, 194],
+        'students' => [77, 226, 77],
+        'Tatoeba-MT-models' => [77, 163, 247],
+        'OPUS-MT-models' => [247, 163, 77],
+        'contributed' => [163, 163, 194],
+        'HPLT-MT-models' => [246, 78, 92]);
+
+    
+    if ($pkg == 'opusmt'){
+        $parts = explode('/',$model);
+        if (array_key_exists($parts[0],$collection_colors)){
+            list($red, $green, $blue) = $collection_colors[$parts[0]];
+            return sprintf("#%02x%02x%02x",$red,$green,$blue);    
+        }
+    }
+
+    list($red, $green, $blue) = $collection_colors[$pkg];
+    return sprintf("#%02x%02x%02x",$red,$green,$blue);    
 }
 
 function score_color($nr){

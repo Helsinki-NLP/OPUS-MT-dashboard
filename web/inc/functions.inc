@@ -449,6 +449,9 @@ function size_to_rgb($size){
     if ($size <= 0){
         return [164, 164, 164];
     }
+    if ($size > 1000){
+        $size = 1000;
+    }
 
     $max = log(100);
     $size = $size < 24 ? 1 : $size-24;

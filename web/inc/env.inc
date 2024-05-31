@@ -139,12 +139,12 @@ $table_max_scores = $show_max_scores;
 $model       = get_param('model', 'top');
 $benchmark   = get_param('test', 'all');
 $metric      = get_param('metric', 'bleu');
-$showlang    = get_param('scoreslang', 'all');
+$showlang    = get_param('scoreslang', 'default');
 $renderlib   = get_param('renderlib', 'plotly');
 
 list($srclang, $trglang, $langpair) = get_langpair();
 
-if ($showlang != 'all'){
+if ($showlang != 'all' && $showlang != 'default'){
     if ($showlang != $langpair){
         set_langpair($showlang);
         list($srclang, $trglang, $langpair) = get_langpair();

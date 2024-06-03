@@ -751,33 +751,53 @@ function print_benchmark_heatmap($model, $metric='bleu', $benchmark='flores200-d
 
     $scores = array();
     $models = array();
-    
+
     if ($chart == 'diff'){
         list($opus_scores,$opus_models) = $opusmt->get_benchmark_topscores($model, $benchmark, $metric, 'opusmt');
         list($external_scores,$external_models) = $opusmt->get_benchmark_topscores($model, $benchmark, $metric, 'external');
         $minscore=0;
         $maxscore=0;
-        foreach ($opus_scores as $langpair => $score){
-            $diff = array_key_exists($langpair, $external_scores) ? $score - $external_scores[$langpair] : $score;
-            if ($diff < 0){
-                $scores['external'][$langpair] = $diff;
-                $models['external'][$langpair] = $external_models[$langpair];
-                if ($diff < $minscore) $minscore = $diff;
-            }
-            else{
-                $scores['opusmt'][$langpair] = $diff;
-                $models['opusmt'][$langpair] = $opus_models[$langpair];
-                if ($diff > $maxscore) $maxscore = $diff;
-            }
-        }
-        foreach ($external_scores as $langpair => $score){
-            if ( ! array_key_exists($langpair, $scores['opusmt']) ){
-                $diff = 0 - $score;
-                $scores['external'][$langpair] = $diff;
-                $models['external'][$langpair] = $external_models[$langpair];
-                if ($diff < $minscore) $minscore = $diff;
+        $scores['opusmt'] = array();
+        if ($model == 'top' || $package == 'opusmt'){
+            foreach ($opus_scores as $langpair => $score){
+                $diff = array_key_exists($langpair, $external_scores) ? $score - $external_scores[$langpair] : $score;
+                if ($diff < 0){
+                    $scores['external'][$langpair] = $diff;
+                    $models['external'][$langpair] = $external_models[$langpair];
+                    if ($diff < $minscore) $minscore = $diff;
+                }
+                else{
+                    $scores['opusmt'][$langpair] = $diff;
+                    $models['opusmt'][$langpair] = $opus_models[$langpair];
+                    if ($diff > $maxscore) $maxscore = $diff;
+                }
             }
         }
+        if ($model == 'top' || $package == 'external'){
+            foreach ($external_scores as $langpair => $score){
+                if ( ! array_key_exists($langpair, $scores['opusmt']) ){
+                    $diff = array_key_exists($langpair, $opus_scores) ? $opus_scores[$langpair] - $score : 0-$score;
+                    if ($diff <= 0){
+                        $scores['external'][$langpair] = $diff;
+                        $models['external'][$langpair] = $external_models[$langpair];
+                        if ($diff < $minscore) $minscore = $diff;
+                    }
+                    else{
+                        $scores['opusmt'][$langpair] = $diff;
+                        $models['opusmt'][$langpair] = $opus_models[$langpair];
+                        if ($diff > $maxscore) $maxscore = $diff;
+                    }
+                    /*
+                    $diff = 0 - $score;
+                    $scores['external'][$langpair] = $diff;
+                    $models['external'][$langpair] = $external_models[$langpair];
+                    if ($diff < $minscore) $minscore = $diff;
+                    */
+                }
+            }
+        }
+        $minscore = ($metric == 'bleu' or $metric == 'spbleu') ? $minscore : 100*$minscore;
+        $maxscore = ($metric == 'bleu' or $metric == 'spbleu') ? $maxscore : 100*$maxscore;
     }
     elseif ($package == 'all' || $model == 'top'){
         list($scores['opusmt'],$models['opusmt']) = $opusmt->get_benchmark_topscores($model, $benchmark, $metric, 'opusmt');
@@ -829,6 +849,19 @@ function print_benchmark_heatmap($model, $metric='bleu', $benchmark='flores200-d
     }
     
     ksort($trglangs);
+    if ($chart == 'diff'){
+        if ($model == 'top'){
+            echo("Table of $metric score differences between the best OPUS-MT model and the best external model:<br/><br/>");
+        }
+        elseif ($package == 'opusmt'){
+            echo("Table of $metric score differences between the best OPUS-MT model and the best external model");
+            echo("for language pairs with an existing OPUS-MT model (other cells are left blank):<br/><br/>");
+        }
+        elseif ($package == 'external'){
+            echo("Table of $metric score differences between the best OPUS-MT model and the best external model");
+            echo("for language pairs with an existing external model (other cells are left blank):<br/><br/>");
+        }        
+    }
     echo('<div class="heatmap"><table><tr><th></th>');
     foreach ($trglangs as $t => $count){
         echo('<th>'.$t.'</th>');

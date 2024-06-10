@@ -24,6 +24,7 @@ $chart     = get_param('chart', 'standard');
 $model1    = get_param('model1', 'unknown');
 $model2    = get_param('model2', 'unknown');
 $showlang  = get_param('scoreslang', $langpair);
+$userscores  = get_param('userscores', 'no');
 
 set_param('scoreslang', $showlang);
 
@@ -114,11 +115,16 @@ echo("</div>");
 
 
 function print_model_selection($langpair, $model1, $model2){
-    global $opusmt, $metric;
+    global $opusmt, $metric, $userscores;
 
     $models = array();
     $models['opusmt'] = $opusmt->get_langpair_models($langpair, $metric, 'opusmt');
     $models['external'] = $opusmt->get_langpair_models($langpair, $metric, 'external');
+    if ($userscores == "yes" && $chart != 'diff'){
+        if (local_scorefile_exists($langpair, 'all', $metric, 'all', 'contributed', 'user-scores')){
+            $models['contributed'] = $opusmt->get_langpair_models($langpair, $metric, 'contributed');
+        }
+    }
 
     $sorted_models = array();
     foreach ($models as $pkg => $pkg_models){

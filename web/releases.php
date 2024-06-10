@@ -63,13 +63,15 @@ foreach ($releases as $release){
     if ($pkg == "HPLT-MT-models"){
         if ($model != ''){
             $model_url = urlencode("$langpair/$model");
-            echo("<li><a rel=\"nofollow\" href='https://huggingface.co/HPLT/$model'>$langpair/$model</a> (<a href='index.php?pkg=opusmt&model=$pkg/$model_url&chart=standard&test=all&scoreslang=all'>benchmark results</a>)</li>");
+            // echo("<li><a rel=\"nofollow\" href='https://huggingface.co/HPLT/$model'>$langpair/$model</a> (<a href='index.php?pkg=opusmt&model=$pkg/$model_url&chart=standard&test=all&scoreslang=all'>benchmark results</a>)</li>");
+            echo("<li><a href='index.php?pkg=opusmt&model=$pkg/$model_url&chart=standard&test=all&scoreslang=all'>$langpair/$model</a>  (<a rel=\"nofollow\" href='https://huggingface.co/HPLT/$model'>download model</a>)</li>");
         }
     }
     else{
         if ($model != ''){
             $model_url = urlencode("$langpair/$model");
-            echo "<li><a rel=\"nofollow\" href='$storage/$pkg/$langpair/$model.zip'>$langpair/$model</a> (<a href='index.php?pkg=opusmt&model=$pkg/$model_url&chart=standard&test=all&scoreslang=all'>benchmark results</a>)</li>";
+            // echo "<li><a rel=\"nofollow\" href='$storage/$pkg/$langpair/$model.zip'>$langpair/$model</a> (<a href='index.php?pkg=opusmt&model=$pkg/$model_url&chart=standard&test=all&scoreslang=all'>benchmark results</a>)</li>";
+            echo "<li><a href='index.php?pkg=opusmt&model=$pkg/$model_url&chart=standard&test=all&scoreslang=all'>$langpair/$model</a> (<a rel=\"nofollow\" href='$storage/$pkg/$langpair/$model.zip'>download model</a>)</li>";
         }
     }
 }

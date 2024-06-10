@@ -33,31 +33,31 @@ echo('<h1>OPUS-MT Dashboard: Compare Models</h1>');
 $opusmt = ScoreReader::new($score_reader);
 $graphics = Graphics::new($renderlib);
 
+echo('<div id="chart"><form action="'.$_SERVER['PHP_SELF'].'" method="get"><ul>');
+print_model_selection($langpair, $model1, $model2);
 
 if ($model1 != 'unknown'){
-    echo('<div id="chart"><ul>');
 
     $parts = explode('/',$model1);
     $m1_pkg = array_shift($parts);
     $m1_name = implode('/',$parts);
-    $url_param = make_query(['model' => $m1_name, 'pkg' => $m1_pkg]);
-    $m_link = "<a rel=\"nofollow\" href=\"index.php?".$url_param."\">";
-    echo('<li><b>Model 1 (blue):</b> '.$m_link.$m1_name.'</a></li>');
-
+    
     if ($model2 != 'unknown'){
+        
         $parts = explode('/',$model2);
         $m2_pkg = array_shift($parts);
         $m2_name = implode('/',$parts);
-        $url_param = make_query(['model' => $m2_name, 'pkg' => $m2_pkg]);
-        $m_link = "<a rel=\"nofollow\" href=\"index.php?".$url_param."\">";
-        echo('<li><b>Model 2 (orange):</b> '.$m_link.$m2_name.'</a></li>');
+    
+        echo("<li><b>Evaluation metric:</b> ");
+        print_metric_options($metric);
+        echo('</li><li><b>Chart Type:</b> ');
+        print_chart_type_options($chart, true);
+        echo('</li>');
     }
-    echo("<li><b>Evaluation metric:</b> ");
-    print_metric_options($metric);
-    echo('</li><li><b>Chart Type:</b> ');
-    print_chart_type_options($chart, true);
-    echo('</li></ul>');
 }
+echo('</ul></form>');
+
+
 
 if (($model1 != 'unknown') && ($model2 != 'unknown')){
     
@@ -109,76 +109,96 @@ if (($model1 != 'unknown') && ($model2 != 'unknown')){
     }
     echo('</div>');
 }
-
-
-if ($model1 != 'unknown'){
-    if ($model2 != 'unknown'){
-        echo('<h2>Start with a new model</h2>');
-    }
-    else{
-        echo('<h2>Select the second model to compare with</h2>');
-    }
-}
-else{
-    echo('<h2>Select a model</h2>');
-}
-
-echo('<table><tr><th>OPUS-MT models</th><th>External models</th><tr><tr><td>');
-print_model_list('opusmt', $langpair, $model1, $model2);
-echo('</td><td>');
-print_model_list('external', $langpair, $model1, $model2);
-echo('</td></tr></table>');
-
 echo("</div>");
 
 
 
+function print_model_selection($langpair, $model1, $model2){
+    global $opusmt, $metric;
 
-
-function print_model_list($pkg, $langpair, $model1, $model2){
-    global $leaderboard_urls, $opusmt, $metric;
-
-    $scores_url = $leaderboard_urls[$pkg].'/scores';
-
-    // TODO: do we also want to cache model lists in the SESSION variable?
-    // $models = file(implode('/',[$scores_url,$langpair,'model-list.txt']));
-    $models = $opusmt->get_langpair_models($langpair, $metric, $pkg);
+    $models = array();
+    $models['opusmt'] = $opusmt->get_langpair_models($langpair, $metric, 'opusmt');
+    $models['external'] = $opusmt->get_langpair_models($langpair, $metric, 'external');
 
     $sorted_models = array();
-    if (is_array($models)){
-        foreach ($models as $model){
-            $parts = explode('-',rtrim($model));
-            $day = array_pop($parts);
-            $month = array_pop($parts);
-            $year = array_pop($parts);
-            $sorted_models[$model] = "$year$month$day";
+    foreach ($models as $pkg => $pkg_models){
+        if (is_array($pkg_models)){
+            foreach ($pkg_models as $model){
+                if ($pkg == 'opusmt'){
+                    $parts = explode('-',rtrim($model));
+                    $day = array_pop($parts);
+                    $month = array_pop($parts);
+                    $year = array_pop($parts);
+                    $sorted_models[$pkg.'/'.$model] = "$pkg/$year$month$day/$model";
+                }
+                else{
+                    $sorted_models[$pkg.'/'.$model] = "$pkg/$model";
+                }
+            }
         }
         arsort($sorted_models);
     }
 
-    echo("<ul>");
+    if ($model1 != 'unknown'){
+        $parts = explode('/',$model1);
+        $m1_pkg = array_shift($parts);
+        $m1_name = implode('/',$parts);
+        $url_param = make_query(['model' => $m1_name, 'pkg' => $m1_pkg]);
+        $m_link = "<a rel=\"nofollow\" title=\"$m1_name\" href=\"index.php?".$url_param."\">";
+        echo('<li><b>'.$m_link.'Model 1</a>:</b> ');
+    }
+    else{
+        echo('<li><b>Model 1:</b> ');
+    }
+    echo '<select name="model1" id="model1" onchange="this.form.submit()">';
+    if ($model1 == 'unknown'){
+        echo "<option value=\"unknown\" selected>-- select a model --</option>";        
+    }
     foreach ($sorted_models as $model => $release){
-        $parts = explode('/',rtrim($model));
-        $modelzip = array_pop($parts);
-
-        list($modelbase,$modelurl) = normalize_modelname(rtrim($model));
-        $new_model = implode('/',[$pkg, $modelbase]);
-
-        if (($model1 != 'unknown') && ($model2 == 'unknown')){
-            if ($model1 == $new_model){
-                echo("<li>$modelbase</li>");
+        if ($model != $model2){
+            $model_short = short_model_name($model,60,47,10);
+            if ($model1 == $model){
+                echo "<option value=\"$model\" selected>$model_short</option>";
             }
             else{
-                $url_param = make_query(['model1' => $model1, 'model2' => $new_model]);
-                echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$modelbase</a></li>");
+                echo "<option value=\"$model\">$model_short</option>";
             }
         }
-        else{        
-            $url_param = make_query(['model1' => $new_model, 'model2' => 'unknown']);
-            echo("<li><a rel=\"nofollow\" href=\"compare.php?".$url_param."\">$modelbase</a></li>");
-        }   
     }
-    echo("</ul>");
+    echo '</select>';
+    if ($model1 != 'unknown' && $model2 != 'unknown') echo(' (blue)');
+    echo '</li>';
+
+
+    if ($model2 != 'unknown'){
+        $parts = explode('/',$model2);
+        $m2_pkg = array_shift($parts);
+        $m2_name = implode('/',$parts);
+        $url_param = make_query(['model' => $m2_name, 'pkg' => $m2_pkg]);
+        $m_link = "<a rel=\"nofollow\" title=\"$m2_name\" href=\"index.php?".$url_param."\">";
+        echo('<li><b>'.$m_link.'Model 2</a>:</b> ');
+    }
+    else{
+        echo('<li><b>Model 2:</b> ');
+    }
+    echo '<select name="model2" id="model2" onchange="this.form.submit()">';
+    if ($model2 == 'unknown'){
+        echo "<option value=\"unknown\" selected>-- select a model --</option>";        
+    }
+    foreach ($sorted_models as $model => $release){
+        if ($model != $model1){
+            $model_short = short_model_name($model,60,47,10);
+            if ($model2 == $model){
+                echo "<option value=\"$model\" selected>$model_short</option>";
+            }
+            else{
+                echo "<option value=\"$model\">$model_short</option>";
+            }
+        }
+    }
+    echo '</select>';
+    if ($model1 != 'unknown' && $model2 != 'unknown') echo(' (orange)');
+    echo '</li>';
 }
 
 include('inc/footer.inc');

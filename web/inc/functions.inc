@@ -274,14 +274,14 @@ function get_logfile_with_cache($model, $pkg='opusmt', $ext='.eval.zip', $cache_
 
 // an abbreviated model name for displaying in the table
 
-function short_model_name($modelid){
+function short_model_name($modelid, $maxlength=25, $prefix=12, $suffix=10){
     $model = explode('/',$modelid);
     $provider = array_shift($model);
     $modelname = implode('/',$model);
-    if ( strlen($modelname) > 24 ){
-        $prefix = substr($modelname,0,12);
-        $suffix = substr($modelname,-10,10);
-        return $prefix.'..'.$suffix;
+    if ( strlen($modelname) > $maxlength ){
+        $prefix = substr($modelname,0,$prefix);
+        $suffix = substr($modelname,0-$suffix,$suffix);
+        return $prefix.'...'.$suffix;
         // return $prefix.' .. '.$suffix;
     }
     return $modelname;

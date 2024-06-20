@@ -9,6 +9,7 @@ echo '<form action="index.php" method="get">';
 echo '  [<a href="index.php?session=clear">restart</a>]';
 $query = make_share_link();
 echo '  [<a href="'.$_SERVER['PHP_SELF'].'?'.$query.'">share link</a>]';
+echo '  [<a href="api.php?'.$query.'">json</a>]';
 
 // echo '<form action="'.$_SERVER['PHP_SELF'].'" method="get">';
 // echo '<input type="hidden" id="session" name="session" value="clear">';

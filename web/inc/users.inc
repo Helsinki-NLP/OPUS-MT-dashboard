@@ -1,4 +1,4 @@
-<?php
+<?php //-*-php-*-
 
 
 function logged_in ( ) {
@@ -97,6 +97,15 @@ function userdir_exists($user){
         return true;
     }
     return false;
+}
+
+function create_userdir($user){
+    global $LEADERBOARD_DIR;
+    $userdir = implode('/',[$LEADERBOARD_DIR,'models',$user]);
+    if (! file_exists($userdir)){
+        return mkdir($userdir);
+    }
+    return true;
 }
 
 
@@ -198,6 +207,9 @@ function add_user($user_db,$user,$password, $email){
         echo "Username '".$user."' exists already! ";
         echo "Try again with a different name!";
         return false;
+    }
+    else{
+        create_userdir($user);
     }
 
     if ($dbh = new PDO('sqlite:'.$user_db)){

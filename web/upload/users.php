@@ -99,6 +99,15 @@ function userdir_exists($user){
     return false;
 }
 
+function create_userdir($user){
+    global $LEADERBOARD_DIR;
+    $userdir = implode('/',[$LEADERBOARD_DIR,'models',$user]);
+    if (! file_exists($userdir)){
+        return mkdir $userdir;
+    }
+    return true;
+}
+
 
 function prepare_password_reset($user_db, $email){
 
@@ -198,6 +207,8 @@ function add_user($user_db,$user,$password, $email){
         echo "Username '".$user."' exists already! ";
         echo "Try again with a different name!";
         return false;
+    }
+    else{
     }
 
     if ($dbh = new PDO('sqlite:'.$user_db)){

@@ -1,4 +1,4 @@
-<?php
+<?php //-*-php-*-
 
 session_start();
 
@@ -70,7 +70,7 @@ $storage_urls['user-scores']         = $storage_urls['contributed'];
 
 // $local_datahome       = '/media/OPUS';
 // $local_datahome       = '/media/OPUS/dev';
-$local_datahome       = '/media/OPUS-MT';
+/$local_datahome       = '/media/OPUS-MT';
 
 $leaderboard_dirs['opusmt']      = $local_datahome.'/'.$base_leaderboard;
 $leaderboard_dirs['external']    = $local_datahome.'/External-MT-leaderboard';

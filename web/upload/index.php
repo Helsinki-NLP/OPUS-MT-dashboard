@@ -2,6 +2,7 @@
 
 include('../inc/env.inc');
 include('../inc/functions.inc');
+include('../inc/translations.inc')
 
 ?>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">

@@ -1,4 +1,4 @@
-<?php
+<?php //-*-php-*-
 
 
 // check whether the given model is a multilingual one
@@ -65,16 +65,22 @@ function get_score_filename($langpair, $benchmark, $metric='bleu', $model='all',
         }
     }
     elseif ($benchmark == 'avg'){
-        $url  = implode('/',[$base_url,'scores',$langpair,'avg-'.$metric.'-scores.txt']);
-        $file = implode('/',[$base_dir,'scores',$langpair,'avg-'.$metric.'-scores.txt']);
+        // $url  = implode('/',[$base_url,'scores',$langpair,'avg-'.$metric.'-scores.txt']);
+        // $file = implode('/',[$base_dir,'scores',$langpair,'avg-'.$metric.'-scores.txt']);
+        $url  = implode('/',[$base_url,'scores',$metric.'_scores.db']);
+        $file = implode('/',[$base_dir,'scores',$metric.'_scores.db']);
     }
     elseif ($benchmark != 'all'){
-        $url  = implode('/',[$base_url,'scores',$langpair,$benchmark,$metric.'-scores.txt']);
-        $file = implode('/',[$base_dir,'scores',$langpair,$benchmark,$metric.'-scores.txt']);
+        // $url  = implode('/',[$base_url,'scores',$langpair,$benchmark,$metric.'-scores.txt']);
+        // $file = implode('/',[$base_dir,'scores',$langpair,$benchmark,$metric.'-scores.txt']);
+        $url  = implode('/',[$base_url,'scores',$metric.'_scores.db']);
+        $file = implode('/',[$base_dir,'scores',$metric.'_scores.db']);
     }
     else{
-        $url  = implode('/',[$base_url,'scores',$langpair,'top-'.$metric.'-scores.txt']);
-        $file = implode('/',[$base_dir,'scores',$langpair,'top-'.$metric.'-scores.txt']);
+        // $url  = implode('/',[$base_url,'scores',$langpair,'top-'.$metric.'-scores.txt']);
+        // $file = implode('/',[$base_dir,'scores',$langpair,'top-'.$metric.'-scores.txt']);
+        $url  = implode('/',[$base_url,'scores',$metric.'_scores.db']);
+        $file = implode('/',[$base_dir,'scores',$metric.'_scores.db']);
     }
     if (file_exists($file)){
         return $file;

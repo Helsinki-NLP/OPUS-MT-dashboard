@@ -1,6 +1,7 @@
 <?php //-*-php-*-
 
 session_start();
+cleanup_tmp();
 
 if (isset($_GET['session'])){
     if ($_GET['session'] == 'clear'){
@@ -70,7 +71,7 @@ $storage_urls['user-scores']         = $storage_urls['contributed'];
 
 // $local_datahome       = '/media/OPUS';
 // $local_datahome       = '/media/OPUS/dev';
-/$local_datahome       = '/media/OPUS-MT';
+$local_datahome       = '/media/OPUS-MT';
 
 $leaderboard_dirs['opusmt']      = $local_datahome.'/'.$base_leaderboard;
 $leaderboard_dirs['external']    = $local_datahome.'/External-MT-leaderboard';
@@ -256,7 +257,14 @@ function cleanup_cache(){
         }
         $_SESSION['files'] = array();
     }
-    system("find ".sys_get_temp_dir()." -maxdepth 1 -mtime +1 -type f -name 'opusmteval*' -delete");
+    cleanup_tmp();
+    // system("find ".sys_get_temp_dir()." -maxdepth 1 -mmin +10 -type f -name 'opusmteval*' -delete");
+    // system("find /tmp/ -maxdepth 1 -mmin +10 -type f -name 'opusmteval*' -delete");
+}
+
+function cleanup_tmp(){
+    system("find ".sys_get_temp_dir()." -maxdepth 1 -mmin +10 -type f -name 'opusmteval*' -delete");
+    system("find /tmp/ -maxdepth 1 -mmin +10 -type f -name 'opusmteval*' -delete");
 }
 
 

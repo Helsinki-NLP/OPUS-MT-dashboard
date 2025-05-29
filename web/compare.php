@@ -88,7 +88,7 @@ if (($model1 != 'unknown') && ($model2 != 'unknown')){
         
         echo('</div><div id="list">');
         echo('<ul>');
-        if (count($langpairs) > 1 && count($langpairs) < 20){
+        if (is_array($langpairs) && count($langpairs) > 1 && count($langpairs) < 20){
             echo('<li><b>Langpair(s):</b> ');
             ksort($langpairs);
             foreach ($langpairs as $lp => $count){

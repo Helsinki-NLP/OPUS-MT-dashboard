@@ -26,13 +26,13 @@ function get_file_location($file, $pkg='opusmt'){
     global $leaderboard_urls, $leaderboard_url;
     global $leaderboard_dirs, $leaderboard_dir;
 
-    $base_dir = $leaderboard_dirs[$pkg];
+    $base_dir = array_key_exists($pkg, $leaderboard_dirs) ? $leaderboard_dirs[$pkg] : '';
     $localfile = implode('/',[$base_dir,$file]);
     if (file_exists($localfile)){
         return $localfile;
     }
 
-    $base_url = $leaderboard_urls[$pkg];
+    $base_url = array_key_exists($pkg, $leaderboard_urls) ? $leaderboard_urls[$pkg] : '';
     $url  = implode('/',[$base_url,$file]);
     return $url;
 }
@@ -136,7 +136,10 @@ function read_file_with_cache($file, $cache_size=10){
 function get_file_with_cache($path, $pkg='opusmt', $cache_size=10){
     global $github_urls, $storage_dirs;
     
-    $url  = implode('/',[$github_urls[$pkg],$path]);
+    // $url  = implode('/',[$github_urls[$pkg],$path]);
+    
+    $pathurl = implode('/',array_map('urlencode',explode('/',$path)));
+    $url  = implode('/',[$github_urls[$pkg],$pathurl]);
     $file = implode('/',[$storage_dirs[$pkg],$path]);
 
     // local file exists? --> return it
@@ -206,7 +209,9 @@ function print_translation_logfile($benchmark, $langpair, $model, $pkg='opusmt')
         $zip->close();
     }
     if ( ! isset( $_COOKIE['PHPSESSID'] ) ) {
-        unlink($tmpfile);
+        if (file_exists($tmpfile)){
+            unlink($tmpfile);
+        }
     }
 }
 

@@ -5,6 +5,7 @@ function logged_in ( ) {
 
     // already logged in! --> return true
 
+    // create_userdir($_SESSION['user']);
     if (isset($_SESSION['user'])){
         return true;
     }

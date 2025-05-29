@@ -92,9 +92,11 @@ function get_testset_input($benchmark, $langpair, $start=0, $end=-1){
 
 function get_testset_reference($benchmark, $langpair, $start=0, $end=-1){
     $files = get_reference_filenames($benchmark, $langpair);
-    if (count($files) > 0){
-        $file = get_file_with_cache($files[0],'testsets');
-        return selected_lines_from_file($file, $start, $end);    
+    if (is_array($files)){
+        if (count($files) > 0){
+            $file = get_file_with_cache($files[0],'testsets');
+            return selected_lines_from_file($file, $start, $end);    
+        }
     }
 }
 
@@ -206,7 +208,9 @@ function get_examples_from_cached_files($benchmark, $langpair, $model, $pkg='opu
     // make it compatible with content in compare files
     $examples = array();
     for ($i = 1; $i < count($input); $i++) {
-        array_push($examples, rtrim($input[$i]), rtrim($reference[$i]), rtrim($system[$i]), '');        
+        $ref = count($reference) > $i ? $reference[$i] : "";
+        $sys = count($system) > $i ? $system[$i] : "";
+        array_push($examples, rtrim($input[$i]), rtrim($ref), rtrim($sys), '');        
     }
     return $examples;
 }

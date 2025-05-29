@@ -263,8 +263,8 @@ function cleanup_cache(){
 }
 
 function cleanup_tmp(){
-    system("find ".sys_get_temp_dir()." -maxdepth 1 -mmin +10 -type f -name 'opusmteval*' -delete");
-    system("find /tmp/ -maxdepth 1 -mmin +10 -type f -name 'opusmteval*' -delete");
+    system("find ".sys_get_temp_dir()." -maxdepth 1 -mmin +1 -type f -name 'opusmteval*' -delete");
+    system("find /tmp/ -maxdepth 1 -mmin +1 -type f -name 'opusmteval*' -delete");
 }
 
 

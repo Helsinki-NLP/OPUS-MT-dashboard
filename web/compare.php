@@ -115,7 +115,7 @@ echo("</div>");
 
 
 function print_model_selection($langpair, $model1, $model2){
-    global $opusmt, $metric, $userscores;
+    global $opusmt, $metric, $userscores, $chart;
 
     $models = array();
     $models['opusmt'] = $opusmt->get_langpair_models($langpair, $metric, 'opusmt');

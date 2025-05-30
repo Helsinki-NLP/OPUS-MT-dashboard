@@ -7,11 +7,13 @@ function get_testset_filename($testset, $langpair){
             }
         }
     }
-    cache_testset_filenames($testset, $langpair);
-    return $_SESSION['testset-files'][$testset][$langpair];
+    return cache_testset_filenames($testset, $langpair);
+    // return $_SESSION['testset-files'][$testset][$langpair];
 }
 
 function get_reference_filenames($testset, $langpair){
+    if (! $testset) return '';
+    if (! $langpair) return '';
     if (array_key_exists('reference-files', $_SESSION)){
         if (array_key_exists($testset, $_SESSION['reference-files'])){
             if (array_key_exists($langpair, $_SESSION['reference-files'][$testset])){
@@ -20,7 +22,15 @@ function get_reference_filenames($testset, $langpair){
         }
     }
     cache_testset_filenames($testset, $langpair);
-    return $_SESSION['reference-files'][$testset][$langpair];
+    if (array_key_exists('reference-files', $_SESSION)){
+        if (array_key_exists($testset, $_SESSION['reference-files'])){
+            if (array_key_exists($langpair, $_SESSION['reference-files'][$testset])){
+                return $_SESSION['reference-files'][$testset][$langpair];
+            }
+        }
+    }
+    return '';
+    // return $_SESSION['reference-files'][$testset][$langpair];
 }
 
 
@@ -38,12 +48,15 @@ function cache_testset_filenames($testset, $langpair){
                 if ($lp == $langpair){
                     $_SESSION['testset-files'][$fields[2]][$lp] = $fields[6];
                     $_SESSION['reference-files'][$fields[2]][$lp] = array_slice($fields, 7);
-                    break;
+                    fclose($fp);
+                    return $_SESSION['testset-files'][$fields[2]][$lp];
+                    // break;
                 }
             }
         }
         fclose($fp);
     }
+    return '';
 }
 
 

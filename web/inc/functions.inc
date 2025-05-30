@@ -135,7 +135,9 @@ function read_file_with_cache($file, $cache_size=10){
 
 function get_file_with_cache($path, $pkg='opusmt', $cache_size=10){
     global $github_urls, $storage_dirs;
-    
+
+    if (! array_key_exists($pkg, $github_urls)) return;
+    if (! array_key_exists($pkg, $storage_dirs)) return;
     // $url  = implode('/',[$github_urls[$pkg],$path]);
     
     $pathurl = implode('/',array_map('urlencode',explode('/',$path)));
@@ -198,15 +200,17 @@ function print_translation_logfile($benchmark, $langpair, $model, $pkg='opusmt')
     // $tmpfile = get_logfile_with_cache($model, $pkg);
     $tmpfile = get_logfile_with_cache($model, $pkg, '.log.zip');
 
-    $zip = new ZipArchive;
-    if ($zip->open($tmpfile) === TRUE) {
-        if ($fp = $zip->getStream($logfile)){
-            while (!feof($fp)) {
-                echo(fread($fp, 8192));
+    if ($tmpfile && file_exists($tmpfile)){
+        $zip = new ZipArchive;
+        if ($zip->open($tmpfile) === TRUE) {
+            if ($fp = $zip->getStream($logfile)){
+                while (!feof($fp)) {
+                    echo(fread($fp, 8192));
+                }
+                fclose($fp);
             }
-            fclose($fp);
+            $zip->close();
         }
-        $zip->close();
     }
     if ( ! isset( $_COOKIE['PHPSESSID'] ) ) {
         if (file_exists($tmpfile)){
@@ -217,6 +221,9 @@ function print_translation_logfile($benchmark, $langpair, $model, $pkg='opusmt')
 
 function get_logfile_with_cache($model, $pkg='opusmt', $ext='.eval.zip', $cache_size=10){
     global $storage_urls, $storage_dirs;
+
+    if (! array_key_exists($pkg, $storage_urls)) return;
+    if (! array_key_exists($pkg, $storage_dirs)) return;
     
     $url  = implode('/',[$storage_urls[$pkg],'models',$model]).$ext;
     $file = implode('/',[$storage_dirs[$pkg],'models',$model]).$ext;

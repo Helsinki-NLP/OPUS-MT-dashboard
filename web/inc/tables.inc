@@ -6,6 +6,7 @@
 function print_topscore_comparison_table(&$scores, &$models,
                                          $langpair='deu-eng', $benchmark='all', $metric='bleu',
                                          $contributed='no', $chart='standard'){
+    global $package;
 
     if (count($scores) < 3){
         $scores[2] = array();
@@ -370,6 +371,9 @@ function print_modelscore_differences_table(&$scores, $langpair='all',$benchmark
     
     // get all common lang-pairs and testsets
     // (that's for showing a link to expand the list)
+
+    $common_tests = array();
+    $common_langs = array();
     
     foreach($scores[0] as $key => $score1) {
         list($test, $lang) = explode('/',$key);

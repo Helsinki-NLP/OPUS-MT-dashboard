@@ -9,7 +9,9 @@ include('inc/functions.inc');
 <html>
 <head>
   <title>OPUS-MT Dashboard - Release History</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="robots" content="nofollow">
   <link rel="stylesheet" href="index.css" type="text/css">
 </head>
 <body>

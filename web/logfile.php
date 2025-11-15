@@ -11,6 +11,8 @@ include 'inc/functions.inc';
   <title>OPUS-MT Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1"> 
   <link rel="stylesheet" href="index.css" type="text/css">
+  <meta name="robots" content="noindex">
+  <meta name="robots" content="nofollow">
 </head>
 <body>
 <?php

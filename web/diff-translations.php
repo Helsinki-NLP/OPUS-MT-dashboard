@@ -11,6 +11,8 @@ $style = get_param('style', 'light');
 <head>
 <title>OPUS-MT Dashboard - Benchmark Translations</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <meta name="robots" content="nofollow">
   <link rel="stylesheet" href="index.css" type="text/css">
 <?php
 if ($style == 'dark'){

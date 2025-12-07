@@ -236,7 +236,7 @@ function get_logfile_with_cache($model, $pkg='opusmt', $ext='.eval.zip', $cache_
     // permanently cached files
     $tmpdir = sys_get_temp_dir();
     $filename = implode('/',[$tmpdir,$pkg,$model.'.eval.zip']);
-    // echo("check for $filename");
+    // echo("check for $filename ($url)");
     if (file_exists($filename)){
         // echo("found permanently cached file $filename");
         return $filename;
@@ -294,7 +294,9 @@ function get_logfile_with_cache($model, $pkg='opusmt', $ext='.eval.zip', $cache_
 
 function short_model_name($modelid, $maxlength=25, $prefix=12, $suffix=10){
     $model = explode('/',$modelid);
-    $provider = array_shift($model);
+    if ($model[0]=='huggingface' or $model[0]=='Tatoeba-MT-models' or $model[0]=='OPUS-MT-models'){
+        $provider = array_shift($model);
+    }
     $modelname = implode('/',$model);
     if ( strlen($modelname) > $maxlength ){
         $prefix = substr($modelname,0,$prefix);
@@ -347,6 +349,12 @@ function modelid_to_url($modelid, $package='opusmt'){
     elseif ($modelparts[0] == 'huggingface'){
         array_shift($modelparts);
         return implode('/',['https://huggingface.co',implode('/',$modelparts)]);
+    }
+    elseif ($modelparts[0] == 'mozilla'){
+        array_shift($modelparts);
+        $mozillamodels = 'https://github.com/mozilla/firefox-translations-models/tree/main/models';
+        $mozilladir = str_replace('_','/',$modelparts[0]);
+        return implode('/',[$mozillamodels,$mozilladir]);
     }
     return '';
 }

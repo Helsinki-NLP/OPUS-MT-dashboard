@@ -212,7 +212,8 @@ class GraphicsPlotly extends Graphics{
             array_push($rgba,"rgba($red,$green,$blue,1)");
             if ($benchmark != 'all'){
                 $path = explode('/',$key);
-                if (count($path)>1){
+                // if (count($path)>1){
+                if ($path[0]=='huggingface' or $path[0]=='Tatoeba-MT-models' or $path[0]=='OPUS-MT-models' or $path[0]=='HPLT-MT-models'){
                     array_shift($path);
                     array_push($text,implode('/',$path));
                 }

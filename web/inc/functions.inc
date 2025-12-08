@@ -294,7 +294,7 @@ function get_logfile_with_cache($model, $pkg='opusmt', $ext='.eval.zip', $cache_
 
 function short_model_name($modelid, $maxlength=25, $prefix=12, $suffix=10){
     $model = explode('/',$modelid);
-    if ($model[0]=='huggingface' or $model[0]=='Tatoeba-MT-models' or $model[0]=='OPUS-MT-models'){
+    if ($model[0]=='huggingface' or $model[0]=='Tatoeba-MT-models' or $model[0]=='OPUS-MT-models' or $model[0]=='HPLT-MT-models'){
         $provider = array_shift($model);
     }
     $modelname = implode('/',$model);

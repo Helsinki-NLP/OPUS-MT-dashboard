@@ -64,7 +64,7 @@ function logged_in ( ) {
     elseif (isset($_GET['reset']) && isset($_GET['email'])){
         // echo "resetting with get ...";
         echo "Password reset requested: Change your password below!<br/><br/>";
-        echo "<form action=\"$PHP_SELF\" method=\"post\"><table>";
+        echo '<form action="'.$_SERVER['PHP_SELF'].'" method="post"><table>';
         echo '<tr><td>username:</td><td><input type="user" value="'.$_GET['user'].'" name="user"></td></tr>';
         echo '<tr><td>  e-mail:</td><td><input type="email" value="'.$_GET['email'].'" name="email"></td></tr>';
         echo '<tr><td>password:</td><td><input type="password" name="password"></td></tr>';
@@ -82,7 +82,7 @@ function logged_in ( ) {
         echo "Please use the following characters for your username: a-zA-Z0-9_<br /><br/>";
     }
 
-    echo '<form action="'.$_SERVER['PHP_SELF'].' method="post"><table>';
+    echo '<form action="'.$_SERVER['PHP_SELF'].'" method="post"><table>';
     echo '<tr><td>username:</td><td><input type="user" name="user"></td></tr>';
     echo '<tr><td>  e-mail:</td><td><input type="email" name="email"></td></tr>';
     echo '<tr><td>password:</td><td><input type="password" name="password"></td></tr>';

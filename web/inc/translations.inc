@@ -70,6 +70,8 @@ function cache_testset_filenames($testset, $langpair){
 
 function selected_lines_from_file($file, $start=0, $end=-1){
     $output = array();
+    if (!$file)
+        return $output;
     $fp = @fopen($file, "r");
     if ($fp) {
         $count = 0;

@@ -44,6 +44,18 @@ include('inc/header.inc');
 echo("<h1>OPUS-MT Dashboard: Benchmark Translations</h1>");
 
 
+$USER_DATADIR   = $local_datahome.'/Contributed-MT-leaderboard-data';
+$USER_NAME_FILE = $USER_DATADIR.'/users.php';
+$USER_DB        = $USER_DATADIR.'/users.db';
+
+include('inc/users.inc');
+
+$ALLOW_NEW_USERS = 1;
+if (!logged_in()){
+	exit;
+}
+
+
 if ($model != 'all'){
     if ($benchmark != 'all'){
 

@@ -114,7 +114,12 @@ echo '  [<a href="compare.php?'.SID.'&'.$query.'">compare models</a>]';
 echo '  [<a href="https://opus.nlpl.eu/NMT-map/Tatoeba-all/src2trg/index.html">map</a>]';
 echo '  [<a href="releases.php">release history</a>]';
 echo '  [<a href="upload/">uploads</a>]';
+if (isset($_SESSION["user"])){
+    echo '  [logged in as: '.$_SESSION["user"].']';
+    echo '  [<a href="index.php?session=logout">logout</a>]';
+}
 echo '</form>';
+
 echo '<hr/>';
 echo '</div>';
 

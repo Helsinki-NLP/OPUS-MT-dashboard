@@ -5,6 +5,15 @@ cleanup_tmp();
 
 if (isset($_GET['session'])){
     if ($_GET['session'] == 'clear'){
+        if (isset($_SESSION['user'])){
+            $stay_logged_in = $_SESSION['user'];
+        }
+        clear_session();
+        if (isset($stay_logged_in)){
+            $_SESSION['user'] = $stay_logged_in;
+        }
+    }
+    elseif ($_GET['session'] == 'logout'){
         clear_session();
     }
     elseif ($_GET['session'] == 'refresh'){

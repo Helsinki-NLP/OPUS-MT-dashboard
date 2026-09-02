@@ -2,7 +2,7 @@
 
 
 function logged_in ( ) {
-
+    
     // already logged in! --> return true
 
     // create_userdir($_SESSION['user']);
@@ -15,7 +15,8 @@ function logged_in ( ) {
 
     
     if (isset($_POST['reset'])){
-        if ($_POST[email]){
+        // echo "resetting ...";
+        if (isset($_POST['email'])){
             if (prepare_password_reset($USER_DB, $_POST['email'])){
                 echo("Message sent to reset your password, please, check your e-mail!");
             }
@@ -28,6 +29,7 @@ function logged_in ( ) {
         }
     }
     elseif ($_POST['user'] && $_POST['password']){
+        // echo "logging in ...";
         if (verify_password($USER_DB, $_POST['user'], $_POST['email'], $_POST['password'])){
             $_SESSION['user'] = $_POST['user'];
             $_SESSION['email'] = $_POST['email'];
@@ -53,12 +55,14 @@ function logged_in ( ) {
         }
     }
     elseif (isset($_GET['verify'])){
+        // echo "verifying ...";
         if (verify_user($USER_DB, $_GET['email'], $_GET['verify'])){
             echo "Successfully verified account for ".$_GET['email']."!<br/>";
             echo "Please, login with your username and password below!<br/>";
         }
     }
     elseif ($_GET['reset'] && $_GET['email']){
+        // echo "resetting with get ...";
         echo "Password reset requested: Change your password below!<br/><br/>";
         echo "<form action=\"$PHP_SELF\" method=\"post\"><table>";
         echo '<tr><td>username:</td><td><input type="user" value="'.$_GET['user'].'" name="user"></td></tr>';
@@ -127,6 +131,9 @@ function prepare_password_reset($user_db, $email){
         $secret = password_hash($email, PASSWORD_DEFAULT);
         $sth = $dbh->prepare('UPDATE users SET status = ?, secret = ? WHERE email = ?');
         if (! $sth->execute(array('reset', $secret, $email))) return false;
+    }
+    else {
+        echo "problem opening user DB";
     }
 
 
